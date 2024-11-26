@@ -104,13 +104,13 @@ res/: Resources such as layouts, drawables, and strings.
 We welcome contributions to the Provigos Android App! Please read our CONTRIBUTING.md to get started.
 
 ### How to Contribute
-<quote>
+```
 Fork this repository.
 Create a new branch (git checkout -b feature-xyz).
 Commit your changes (git commit -m "Add feature XYZ").
 Push to the branch (git push origin feature-xyz).
 Open a Pull Request.
-</quote>
+```
 
 ## License
 Provigos is licensed under the MIT License.
