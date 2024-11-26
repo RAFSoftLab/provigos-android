@@ -56,4 +56,55 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    /* DATA */
+    // ------------
+    // Koin
+    implementation(libs.koin.bom)
+    implementation(libs.koin.core)
+    testImplementation(libs.koin.test)
+
+    // Retrofit
+    implementation(libs.retrofit)
+
+    // OkHttp
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+
+    // Moshi
+    implementation(libs.moshi)
+    // ------------
+
+    // Rx
+    implementation(libs.rxandroid)
+    implementation(libs.rxjava)
+
+    // Stetho
+    implementation(libs.stetho)
+    implementation (libs.stetho.okhttp3)
+    implementation(libs.stetho.urlconnection)
+    implementation (libs.stetho.js.rhino)
+
+    // Timber
+    implementation(libs.timber)
+
+    // UI
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.constraintlayout)
+
+    // Fragment
+    implementation(libs.androidx.fragment.ktx)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.common.java8)
+
+    // Activity
+    implementation(libs.androidx.activity.ktx)
+}
+
+kotlin {
+    tasks.register("testClasses")
 }
