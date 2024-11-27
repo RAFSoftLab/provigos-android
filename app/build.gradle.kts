@@ -61,12 +61,16 @@ dependencies {
     /* DATA */
     // ------------
     // Koin
-    implementation(libs.koin.bom)
+    implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.core)
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose)
     testImplementation(libs.koin.test)
 
     // Retrofit
     implementation(libs.retrofit)
+    implementation(libs.adapter.rxjava2)
+    implementation("com.squareup.retrofit2", name = "converter-moshi", version = "2.9.0")
 
     // OkHttp
     implementation(platform(libs.okhttp.bom))
@@ -75,6 +79,8 @@ dependencies {
 
     // Moshi
     implementation(libs.moshi)
+    ksp(libs.moshi.kotlin.codegen)
+    implementation("com.squareup.moshi", name = "moshi-adapters", version = "1.12.0")
     // ------------
 
     // Rx
