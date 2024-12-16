@@ -59,7 +59,7 @@ The Provigos Android App allows users to:
 ### Prerequisites
 
 - **Android Studio**: Download and install the latest version from [developer.android.com](https://developer.android.com/studio).
-- **Minimum SDK**: 29 (Android 10 Quince Tart).
+- **Minimum SDK**: 26 (Android 8 Oreo).
 
 ### Clone the Repository
 
