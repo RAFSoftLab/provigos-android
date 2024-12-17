@@ -20,26 +20,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.presentation.view.fragments
+package com.provigos.android.data
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
-import com.provigos.android.R
+import com.squareup.moshi.Json
+import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.http.Body
+import retrofit2.http.Headers
+import retrofit2.http.POST
 
-class SettingsFragment: Fragment(R.layout.fragment_settings) {
 
-    private lateinit var settingsView: View
+interface RetrofitAPI {
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        settingsView = inflater.inflate(R.layout.fragment_settings, container, false)
-        requireActivity().supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.view_settings, SettingsFragmentCompat(), "settings_fragment")
-            .commit()
-        return settingsView
+    companion object {
+        const val userId = "mobiletest1234"
+        const val code = "d6TaJkgiVWPzFXVyw4t3iAbEZbtngYY5P5RTswy0wEFpAzFuG6Xmzg%3D%3D"
+        const val URL = "https://provigos-prod-api.azurewebsites.net/api/"
     }
-
+    @Headers("Accept: */*", "Content-Type: application/json")
+    @POST("healthConnectIngetration?code=d6TaJkgiVWPzFXVyw4t3iAbEZbtngYY5P5RTswy0wEFpAzFuG6Xmzg%3D%3D&userId=mobiletest1234")
+    fun postRawJSON(@Body json: Any): Call<String>
 }

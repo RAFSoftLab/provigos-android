@@ -20,26 +20,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.presentation.view.fragments
+package com.provigos.android.modules
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
-import com.provigos.android.R
+import com.provigos.android.application.ProvigosApplication
+import com.provigos.android.presentation.viewmodel.HealthConnectViewModel
+import org.koin.android.ext.koin.androidApplication
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
 
-class SettingsFragment: Fragment(R.layout.fragment_settings) {
+val healthConnectModule = module {
 
-    private lateinit var settingsView: View
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        settingsView = inflater.inflate(R.layout.fragment_settings, container, false)
-        requireActivity().supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.view_settings, SettingsFragmentCompat(), "settings_fragment")
-            .commit()
-        return settingsView
-    }
+    viewModel { HealthConnectViewModel(healthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager) }
 
 }

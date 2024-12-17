@@ -1,9 +1,33 @@
+/* MIT License
+ *
+ * Copyright 2024 Provigos
+
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.provigos.android.modules
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.preference.PreferenceDataStore
 import com.facebook.stetho.BuildConfig
 import com.facebook.stetho.okhttp3.StethoInterceptor
+import com.provigos.android.data.RetrofitAPI
 import com.squareup.moshi.Moshi
 import org.koin.android.ext.koin.androidApplication
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
@@ -35,7 +59,7 @@ val coreModule = module {
 
     fun createRetrofit(moshi: Moshi, httpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://provigos-prod-api.azurewebsites.net/api/helloWorldEndpoint?code=Q49EQQVcMm9G8cPqSdJ2XSdPfRPXmLuqiEkZdsxkS_5HAzFu9Lw5jg%3D%3D")
+            .baseUrl(RetrofitAPI.URL)
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(MoshiConverterFactory.create(moshi).asLenient())
             .client(httpClient)
@@ -58,8 +82,7 @@ val coreModule = module {
 
         return httpClient.build()
     }
-
-    single { createRetrofit(moshi = get(), httpClient = get()) }
+    single { createRetrofit(get(), get()) }
     single { createMoshi() }
     single { createOkHttpClient() }
 

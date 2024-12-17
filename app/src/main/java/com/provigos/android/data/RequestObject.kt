@@ -20,26 +20,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.presentation.view.fragments
+package com.provigos.android.data
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
-import com.provigos.android.R
+import com.squareup.moshi.JsonClass
 
-class SettingsFragment: Fragment(R.layout.fragment_settings) {
-
-    private lateinit var settingsView: View
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        settingsView = inflater.inflate(R.layout.fragment_settings, container, false)
-        requireActivity().supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.view_settings, SettingsFragmentCompat(), "settings_fragment")
-            .commit()
-        return settingsView
-    }
-
-}
+@JsonClass(generateAdapter = true)
+class RequestObject(val values: Map<String, Map<String, Long>> = HashMap())

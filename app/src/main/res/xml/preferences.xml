@@ -2,7 +2,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="Integrations">
-        <SwitchPreference
+        <Preference
+            android:id="@+id/switch_preference_hc"
             android:key="@string/switch_pref1_key"
             android:title="@string/switch_pref1_title"
             android:icon="@drawable/health_connect"/>

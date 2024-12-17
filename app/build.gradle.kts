@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.provigos.android"
-        minSdk = 29
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -72,6 +72,7 @@ dependencies {
 
     // Retrofit
     implementation(libs.retrofit)
+    implementation(libs.converter.gson)
     implementation(libs.adapter.rxjava2)
     implementation("com.squareup.retrofit2", name = "converter-moshi", version = "2.9.0")
 
@@ -83,6 +84,7 @@ dependencies {
     // Moshi
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)
+    implementation(libs.moshi.kotlin)
     implementation("com.squareup.moshi", name = "moshi-adapters", version = "1.12.0")
     // ------------
 
@@ -122,10 +124,12 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.rxjava2)
 
-    //Google Fit
-    //implementation(libs.play.services.fitness)
-    //implementation(libs.play.services.auth)
+    //Health Connect
     implementation(libs.androidx.connect.client)
+
+    //Debug
+    debugImplementation(libs.ui.tooling)
+
 }
 
 kotlin {

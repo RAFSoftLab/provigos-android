@@ -20,26 +20,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.presentation.view.fragments
+package com.provigos.android.data
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
-import com.provigos.android.R
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
 
-class SettingsFragment: Fragment(R.layout.fragment_settings) {
+class SharedPreferenceDataSource(context: Context) {
 
-    private lateinit var settingsView: View
+    private var sharedPreferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    private var editor: SharedPreferences.Editor = sharedPreferences.edit()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        settingsView = inflater.inflate(R.layout.fragment_settings, container, false)
-        requireActivity().supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.view_settings, SettingsFragmentCompat(), "settings_fragment")
-            .commit()
-        return settingsView
+    companion object {
+        const val PRIVATE_POLICY_KEY = "privacy_policy"
     }
 
+    fun setPrivacyPolicy(boolean: Boolean) {
+        editor.putBoolean(PRIVATE_POLICY_KEY, boolean)
+        editor.apply()
+    }
+
+    fun getPrivacyPolicy(): Boolean {
+        return sharedPreferences.getBoolean(PRIVATE_POLICY_KEY, false)
+    }
 }
