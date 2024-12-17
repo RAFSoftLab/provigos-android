@@ -40,8 +40,11 @@ class PrivacyPolicyActivity: AppCompatActivity(R.layout.activity_privacy_policy)
 
         binding = ActivityPrivacyPolicyBinding.inflate(layoutInflater)
         val view = binding.root
+        if(SharedPreferenceDataSource(this).getPrivacyPolicy()) {
+            startHealthConnectIntent()
+            finish()
+        }
         setContentView(view)
-
         initListeners()
     }
 
@@ -53,14 +56,17 @@ class PrivacyPolicyActivity: AppCompatActivity(R.layout.activity_privacy_policy)
 
         binding.ppContinueButton.setOnClickListener {
             if(binding.ppCheckbox.isChecked) {
-                val healthConnectActivity = Intent()
-                healthConnectActivity.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
                 SharedPreferenceDataSource(this).setPrivacyPolicy(true)
-                this.startActivity(healthConnectActivity)
                 finish()
             } else Toast.makeText(this, "You didn't accept the Privacy Policy",
                 Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun startHealthConnectIntent() {
+        val healthConnectActivity = Intent()
+        healthConnectActivity.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
+        this.startActivity(healthConnectActivity)
     }
 
 }
