@@ -57,6 +57,7 @@ class PrivacyPolicyActivity: AppCompatActivity(R.layout.activity_privacy_policy)
         binding.ppContinueButton.setOnClickListener {
             if(binding.ppCheckbox.isChecked) {
                 SharedPreferenceDataSource(this).setPrivacyPolicy(true)
+                startHealthConnectIntent()
                 finish()
             } else Toast.makeText(this, "You didn't accept the Privacy Policy",
                 Toast.LENGTH_LONG).show()
