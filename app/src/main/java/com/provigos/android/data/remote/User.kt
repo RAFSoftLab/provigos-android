@@ -20,33 +20,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.presentation.view.activities
+package com.provigos.android.data.remote
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import com.provigos.android.R
-import com.provigos.android.data.SharedPreferenceDataSource
-import com.provigos.android.data.remote.DatabaseConnection
-import com.provigos.android.data.remote.User
-import com.provigos.android.databinding.ActivityLoginBinding
+import com.squareup.moshi.JsonClass
 
-class LoginActivity: AppCompatActivity(R.layout.activity_login) {
 
-    private lateinit var binding: ActivityLoginBinding
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
-
-        binding.loginButton.setOnClickListener {
-            if(binding.loginCheckbox.isChecked) SharedPreferenceDataSource(this).setRememberMe(true)
-            DatabaseConnection().postLogin(User(binding.loginText.text.toString(),
-                binding.loginPassword.text.toString()
-            ))
-            finish()
-        }
-    }
-}
+@JsonClass(generateAdapter=true)
+class User(val username: String, val password: String)

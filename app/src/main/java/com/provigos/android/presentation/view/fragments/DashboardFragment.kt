@@ -25,6 +25,7 @@ package com.provigos.android.presentation.view.fragments
 import android.content.Context
 import androidx.fragment.app.Fragment
 import com.provigos.android.R
+import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.presentation.viewmodel.HealthConnectViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -34,7 +35,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        viewModel.init()
+        viewModel.init(SharedPreferenceDataSource(context).getUserToken())
     }
 
 }

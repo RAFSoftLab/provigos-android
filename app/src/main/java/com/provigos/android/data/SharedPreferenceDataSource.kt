@@ -33,14 +33,19 @@ class SharedPreferenceDataSource(context: Context) {
 
     companion object {
         const val PRIVATE_POLICY_KEY = "privacy_policy"
+        const val REMEMBER_ME = "remember_me"
+        const val USER_TOKEN = "user_token"
     }
 
-    fun setPrivacyPolicy(boolean: Boolean) {
-        editor.putBoolean(PRIVATE_POLICY_KEY, boolean)
-        editor.apply()
-    }
+    fun setPrivacyPolicy(boolean: Boolean) { editor.putBoolean(PRIVATE_POLICY_KEY, boolean).apply() }
 
-    fun getPrivacyPolicy(): Boolean {
-        return sharedPreferences.getBoolean(PRIVATE_POLICY_KEY, false)
-    }
+    fun isPrivacyPolicy(): Boolean { return sharedPreferences.getBoolean(PRIVATE_POLICY_KEY, false) }
+
+    fun setRememberMe(boolean: Boolean) { editor.putBoolean(REMEMBER_ME, boolean).apply() }
+
+    fun isRememberMe(): Boolean { return sharedPreferences.getBoolean(REMEMBER_ME, false) }
+
+    fun setUserToken(token: String) { editor.putString(USER_TOKEN, token).apply() }
+
+    fun getUserToken(): String { return sharedPreferences.getString(USER_TOKEN, "empty")!! }
 }

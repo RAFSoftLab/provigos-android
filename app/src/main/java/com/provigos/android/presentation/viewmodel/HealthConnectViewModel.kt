@@ -40,6 +40,8 @@ import androidx.health.connect.client.records.WeightRecord
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.HealthConnectManager
+import com.provigos.android.data.SharedPreferenceDataSource
+import com.provigos.android.data.remote.DatabaseConnection
 import kotlinx.coroutines.launch
 import okio.IOException
 import java.lang.IllegalStateException
@@ -117,15 +119,23 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         }
     }
 
-    fun init() {
+    fun init(token: String) {
         viewModelScope.launch {
             tryWithPermissionCheck {
-                readWeightForToday()
-                aggregateStepsForToday()
-                //readSteps()
-                //DatabaseConnection().postData(healthConnectData)
+                //steps()
+                //weight()
+                //DatabaseConnection().postHealthConnectData(token, healthConnectData)
             }
         }
+    }
+
+    private suspend fun steps() {
+        readSteps()
+        aggregateStepsForToday()
+    }
+
+    private suspend fun weight() {
+        readWeightForToday()
     }
 
     private suspend fun readSteps() {
@@ -147,9 +157,7 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         healthConnectData["weight"] = weightToday
     }
 
-    private fun pureDate(zdt: ZonedDateTime): String {
-        return "" + zdt.year + "-" + zdt.month.value + "-" + zdt.dayOfMonth
-    }
+    private fun pureDate(zdt: ZonedDateTime): String { return "" + zdt.year + "-" + zdt.month.value + "-" + zdt.dayOfMonth }
 
     sealed class UiState {
         data object Uninitialized: UiState()

@@ -26,13 +26,14 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.bundle.Bundle
+import com.provigos.android.R
+import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.databinding.ActivitySplashBinding
 
 @SuppressLint("CustomSplashScreen")
-class SplashActivity: AppCompatActivity() {
+class SplashActivity: AppCompatActivity(R.layout.activity_splash) {
 
     private lateinit var binding: ActivitySplashBinding
-    private var logged: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +44,7 @@ class SplashActivity: AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if(logged!!) startActivity(Intent(this@SplashActivity, MainActivity::class.java))
+        if(SharedPreferenceDataSource(this).isRememberMe()) startActivity(Intent(this@SplashActivity, MainActivity::class.java))
         else startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
         finish()
     }

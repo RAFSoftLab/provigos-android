@@ -24,18 +24,22 @@ package com.provigos.android.data.remote
 
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 
 interface RetrofitAPI {
 
     companion object {
-        const val userId = "mobiletest1234"
-        const val code = "d6TaJkgiVWPzFXVyw4t3iAbEZbtngYY5P5RTswy0wEFpAzFuG6Xmzg%3D%3D"
         const val URL = "https://provigos-prod-api.azurewebsites.net/api/"
     }
+
     @Headers("Accept: */*", "Content-Type: application/json")
-    @POST("healthConnectIngetration?code=d6TaJkgiVWPzFXVyw4t3iAbEZbtngYY5P5RTswy0wEFpAzFuG6Xmzg%3D%3D&userId=mobiletest1234")
-    fun postRawJSON(@Body json: Any): Call<String>
+    @POST("healthConnectIngetration")
+    fun postHealthConnectData(@Header("Authorization") token: String, @Body json: Any): Call<String>
+
+    @POST("login")
+    fun postLogin(@Body json: Any): Call<String>
 }

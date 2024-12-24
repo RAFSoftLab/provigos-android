@@ -40,7 +40,7 @@ class PrivacyPolicyActivity: AppCompatActivity(R.layout.activity_privacy_policy)
 
         binding = ActivityPrivacyPolicyBinding.inflate(layoutInflater)
         val view = binding.root
-        if(SharedPreferenceDataSource(this).getPrivacyPolicy()) {
+        if(SharedPreferenceDataSource(this).isPrivacyPolicy()) {
             startHealthConnectIntent()
             finish()
         }

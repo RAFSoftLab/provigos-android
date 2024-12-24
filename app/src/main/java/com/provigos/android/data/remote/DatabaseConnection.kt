@@ -59,21 +59,28 @@ class DatabaseConnection {
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun postData(healthConnectData:  MutableMap<String, MutableMap<String, Long>>) {
+    fun postHealthConnectData(token: String, healthConnectData:  MutableMap<String, MutableMap<String, Long>>) {
         val requestObject = RequestObject(healthConnectData as Map<String, Map<String, Long>>)
         val jsonAdapter: JsonAdapter<RequestObject> = moshi.adapter<RequestObject>()
-        val json = jsonAdapter.toJsonValue(requestObject)
+        val json = jsonAdapter.toJsonValue(requestObject)!!
         Timber.e(json.toString())
-        if (json != null) {
-            retrofitAPI.postRawJSON(json).enqueue(object: Callback<String> {
-                override fun onResponse(call: Call<String>, response: Response<String>) {
-                    Timber.e("POST Success")
-                }
-                override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
-            })
-        }
+        retrofitAPI.postHealthConnectData(token, json).enqueue(object: Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+                Timber.e("POST Success")
+            }
+            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
+        })
     }
 
-
-
+    @OptIn(ExperimentalStdlibApi::class)
+    fun postLogin(user: User) {
+        val jsonAdapter: JsonAdapter<User> = moshi.adapter<User>()
+        val json = jsonAdapter.toJsonValue(user)!!
+        retrofitAPI.postLogin(json).enqueue(object: Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+                TODO("Not yet implemented")
+            }
+            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
+        })
+    }
 }
