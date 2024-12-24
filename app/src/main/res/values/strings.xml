@@ -6,6 +6,8 @@
     <string name="pp_checkbox">I understand and accept Provigos data usage</string>
     <string name="cancel">Cancel</string>
     <string name="continyu">Continue</string>
+    <string name="app_title">PROVIGOS</string>
+    <string name="app_motto">the future of data aggregation now</string>
     <string name="provigos_title">login@PROVIGOS</string>
     <string name="text_username">Username</string>
     <string name="text_password">Password</string>

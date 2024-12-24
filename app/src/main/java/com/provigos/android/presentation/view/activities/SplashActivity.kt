@@ -24,11 +24,15 @@ package com.provigos.android.presentation.view.activities
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.bundle.Bundle
 import com.provigos.android.R
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.databinding.ActivitySplashBinding
+import java.util.Timer
+import kotlin.time.Duration
 
 @SuppressLint("CustomSplashScreen")
 class SplashActivity: AppCompatActivity(R.layout.activity_splash) {
@@ -40,13 +44,10 @@ class SplashActivity: AppCompatActivity(R.layout.activity_splash) {
         binding = ActivitySplashBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        Handler(Looper.getMainLooper()).postDelayed({
+            if(SharedPreferenceDataSource(this).isRememberMe()) startActivity(Intent(this@SplashActivity, MainActivity::class.java))
+            else startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+            finish()
+        }, 3000)
     }
-
-    override fun onResume() {
-        super.onResume()
-        if(SharedPreferenceDataSource(this).isRememberMe()) startActivity(Intent(this@SplashActivity, MainActivity::class.java))
-        else startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
-        finish()
-    }
-
 }
