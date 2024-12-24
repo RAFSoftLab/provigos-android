@@ -20,24 +20,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data
+package com.provigos.android.data.remote
 
-import com.squareup.moshi.Json
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.Headers
-import retrofit2.http.POST
+import com.squareup.moshi.JsonClass
 
-
-interface RetrofitAPI {
-
-    companion object {
-        const val userId = "mobiletest1234"
-        const val code = "d6TaJkgiVWPzFXVyw4t3iAbEZbtngYY5P5RTswy0wEFpAzFuG6Xmzg%3D%3D"
-        const val URL = "https://provigos-prod-api.azurewebsites.net/api/"
-    }
-    @Headers("Accept: */*", "Content-Type: application/json")
-    @POST("healthConnectIngetration?code=d6TaJkgiVWPzFXVyw4t3iAbEZbtngYY5P5RTswy0wEFpAzFuG6Xmzg%3D%3D&userId=mobiletest1234")
-    fun postRawJSON(@Body json: Any): Call<String>
-}
+@JsonClass(generateAdapter = true)
+class RequestObject(val values: Map<String, Map<String, Long>> = HashMap())

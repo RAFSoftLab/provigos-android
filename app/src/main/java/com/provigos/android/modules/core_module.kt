@@ -24,10 +24,9 @@ package com.provigos.android.modules
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.preference.PreferenceDataStore
 import com.facebook.stetho.BuildConfig
 import com.facebook.stetho.okhttp3.StethoInterceptor
-import com.provigos.android.data.RetrofitAPI
+import com.provigos.android.data.remote.RetrofitAPI
 import com.squareup.moshi.Moshi
 import org.koin.android.ext.koin.androidApplication
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter

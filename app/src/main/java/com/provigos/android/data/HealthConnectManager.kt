@@ -30,6 +30,11 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient.Companion.SDK_AVAILABLE
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BodyFatRecord
+import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.LeanBodyMassRecord
+import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateRequest
@@ -78,6 +83,7 @@ class HealthConnectManager(private val context: Context) {
         }
     }
 
+    // STEPS
     suspend fun readSteps(start: Instant, end: Instant): List<StepsRecord> {
         val request = ReadRecordsRequest(
             recordType = StepsRecord::class,
@@ -98,6 +104,17 @@ class HealthConnectManager(private val context: Context) {
         return response.longValues["Steps_count_total"]
     }
 
+    suspend fun aggregateStepsForLast30Days(date: Instant): Long? {
+        val request = AggregateRequest(
+            metrics = setOf(StepsRecord.COUNT_TOTAL),
+            timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.aggregate(request)
+        response.longValues.forEach { (s, l) -> Timber.e("%s, %d", s, l) }
+        return response.longValues["Steps_count_total"]
+    }
+
+    // WEIGHT
     suspend fun readWeightForToday(date: Instant): List<WeightRecord> {
         val request = ReadRecordsRequest(
             recordType = WeightRecord::class,
@@ -108,9 +125,112 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
-    suspend fun readHeartRate() {
-
+    suspend fun readWeightForLast30Days(date: Instant): List<WeightRecord> {
+        val request = ReadRecordsRequest(
+            recordType = WeightRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
+        return response.records
     }
+
+    // BODY FAT
+    suspend fun readBodyFatForToday(date: Instant): List<BodyFatRecord> {
+        val request = ReadRecordsRequest(
+            recordType = BodyFatRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    suspend fun readBodyFatForLast30Days(date: Instant): List<BodyFatRecord> {
+        val request = ReadRecordsRequest(
+            recordType = BodyFatRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    // HEART RATE
+    suspend fun readHeartRateFatForToday(date: Instant): List<HeartRateRecord> {
+        val request = ReadRecordsRequest(
+            recordType = HeartRateRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    suspend fun readHeartRateForLast30Days(date: Instant): List<HeartRateRecord> {
+        val request = ReadRecordsRequest(
+            recordType = HeartRateRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    // LEAN BODY MASS
+    suspend fun readLeanBodyMassFatForToday(date: Instant): List<LeanBodyMassRecord> {
+        val request = ReadRecordsRequest(
+            recordType = LeanBodyMassRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    suspend fun readLeanBodyMassForLast30Days(date: Instant): List<LeanBodyMassRecord> {
+        val request = ReadRecordsRequest(
+            recordType = LeanBodyMassRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    // ACTIVE CALORIES BURNED
+    suspend fun readActiveCaloriesBurnedFatForToday(date: Instant): List<ActiveCaloriesBurnedRecord> {
+        val request = ReadRecordsRequest(
+            recordType = ActiveCaloriesBurnedRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    suspend fun readActiveCaloriesBurnedForLast30Days(date: Instant): List<ActiveCaloriesBurnedRecord> {
+        val request = ReadRecordsRequest(
+            recordType = ActiveCaloriesBurnedRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    // SLEEP SESSION
+    suspend fun readSleepSessionForToday(date: Instant): List<SleepSessionRecord> {
+        val request = ReadRecordsRequest(
+            recordType = SleepSessionRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+    suspend fun readSleepSessionForLast30Days(date: Instant): List<SleepSessionRecord> {
+        val request = ReadRecordsRequest(
+            recordType = SleepSessionRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        return response.records
+    }
+
+
 
     enum class HealthConnectAvailability {
         INSTALLED,

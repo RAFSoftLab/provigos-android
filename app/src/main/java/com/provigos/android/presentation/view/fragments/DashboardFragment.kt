@@ -22,6 +22,7 @@
  */
 package com.provigos.android.presentation.view.fragments
 
+import android.content.Context
 import androidx.fragment.app.Fragment
 import com.provigos.android.R
 import com.provigos.android.presentation.viewmodel.HealthConnectViewModel
@@ -31,10 +32,9 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     private val viewModel by viewModel<HealthConnectViewModel>()
 
-    override fun onResume() {
-        super.onResume()
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         viewModel.init()
     }
-
 
 }

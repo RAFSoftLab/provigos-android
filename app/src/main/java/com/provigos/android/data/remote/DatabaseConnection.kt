@@ -20,7 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data
+package com.provigos.android.data.remote
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
