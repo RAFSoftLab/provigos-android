@@ -20,29 +20,34 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data.remote
+package com.provigos.android
 
-import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.Header
-import retrofit2.http.Headers
-import retrofit2.http.POST
-import retrofit2.http.Query
+import android.view.View
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
+import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.provigos.android.presentation.view.activities.MainActivity
+import org.hamcrest.CoreMatchers.allOf
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
 
 
-interface RetrofitAPI {
+@RunWith(AndroidJUnit4::class)
+class MainActivityTest {
 
-    companion object {
-        const val URL = "https://provigos-prod-api.azurewebsites.net/api/"
+
+    @get:Rule val activityScenario = ActivityScenarioRule<MainActivity>(MainActivity::class.java)
+
+    @Test
+    fun ensureMainWorks() {
+        var matcher: org.hamcrest.Matcher<View>? = allOf(withText("SETTINGS"), isDescendantOfA(withId(R.id.tabLayout)))
+        onView(matcher).perform(click())
+        matcher = allOf(withText("DASHBOARD"), isDescendantOfA(withId(R.id.tabLayout)))
+        onView(matcher).perform(click())
     }
-
-    @Headers("Accept: */*", "Content-Type: application/json")
-    @POST("healthConnectIntegration")
-    fun postHealthConnectData(@Header("Authorization") token: String, @Body json: Any): Call<String>
-
-    @POST("login")
-    fun postLogin(@Body json: Any): Call<String>
-
-    @POST("createUser")
-    fun postUser(@Body json: Any): Call<String>
 }

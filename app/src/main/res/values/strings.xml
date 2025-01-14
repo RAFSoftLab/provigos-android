@@ -13,6 +13,16 @@
     <string name="text_password">Password</string>
     <string name="text_to_register">Not yet registered? Sign-up now!</string>
     <string name="remember_me">Remember me</string>
+    <string name="steps_today">Steps today</string>
+    <string name="num_of_steps">%1$s/6000</string>
+    <string name="recent_weight">Most recent weight</string>
+    <string name="num_of_weight">%1$s %2$s</string>
+    <string name="heart_rate">Heart rate</string>
+    <string name="heart_bpm">%1$s BPM</string>
+    <string name="active_calories">Calories burned today</string>
+    <string name="calories_val">%1$s cal</string>
+    <string name="body_fat">Last measured body fat</string>
+    <string name="body_fat_val">%1$s %2$s</string>
     <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque odio lorem, lobortis et elit at, volutpat interdum ante. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec porta molestie justo nec venenatis. Donec pretium orci ac mollis pulvinar. Curabitur iaculis tincidunt neque, sit amet interdum turpis sodales feugiat. Fusce non turpis sit amet eros interdum congue eu vel diam. Fusce efficitur vitae sem quis imperdiet. Aliquam et feugiat nisi.
 
 Duis sagittis consequat est, sed luctus mauris. Vivamus velit felis, scelerisque sit amet nibh quis, viverra feugiat neque. Praesent varius lacus id rhoncus volutpat. Ut at elit eget risus ultricies malesuada. Nam sit amet nunc suscipit, convallis lorem quis, pharetra tellus. Ut mattis dapibus justo at euismod. Praesent vitae lacus at neque pulvinar sollicitudin. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent a tellus magna.
@@ -30,4 +40,6 @@ Sed in ex quis elit bibendum vestibulum. Phasellus ante nulla, tempor at lorem i
 Mauris at nibh libero. Aliquam scelerisque enim sit amet cursus semper. Pellentesque turpis ipsum, tincidunt ut nunc vitae, bibendum dictum nisi. Donec quis accumsan mauris. Nam porta augue quis magna commodo, in consequat nunc rutrum. Praesent eleifend erat nisi, eget volutpat mauris fermentum et. Maecenas et ultricies lectus, molestie molestie est. Quisque ut purus urna.
 
 Nullam placerat at justo sed scelerisque. Aliquam aliquam ornare mi ut fringilla. Aenean sollicitudin neque ante, eget cursus ante tempus sit amet. Proin vehicula in dui vitae gravida. Aenean venenatis enim pulvinar, fringilla mauris nec, fringilla urna. Vestibulum tincidunt mi sed egestas egestas. Duis gravida risus non nisi venenatis tincidunt.</string>
+    <string name="pictures">pictures</string>
+    <string name="contdesc">contdesc</string>
 </resources>

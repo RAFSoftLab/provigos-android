@@ -45,7 +45,7 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
         val view = binding.root
         setContentView(view)
 
-        /*StrictMode.setThreadPolicy(
+        StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
                 .detectAll()
                 .penaltyLog()
@@ -56,12 +56,9 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
             .detectLeakedClosableObjects()
             .penaltyLog()
             .build()
-        )*/
+        )
 
-        initUi()
-    }
 
-    private fun initUi() {
         val mainPagerAdapter = MainPagerAdapter(this)
         mainPagerAdapter.addFragment(DashboardFragment(), "Dashboard")
         mainPagerAdapter.addFragment(SettingsFragment(), "Settings")
@@ -71,7 +68,7 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = mainPagerAdapter.getTabTitle(position)
+            tab.tag = tab.text
         }.attach()
     }
-
 }

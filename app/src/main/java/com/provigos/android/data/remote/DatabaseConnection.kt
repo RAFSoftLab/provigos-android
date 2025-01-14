@@ -22,6 +22,7 @@
  */
 package com.provigos.android.data.remote
 
+import com.provigos.android.data.SharedPreferenceDataSource
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
@@ -71,12 +72,24 @@ class DatabaseConnection {
             override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
         })
     }
-
+    
     @OptIn(ExperimentalStdlibApi::class)
     fun postLogin(user: User) {
         val jsonAdapter: JsonAdapter<User> = moshi.adapter<User>()
         val json = jsonAdapter.toJsonValue(user)!!
         retrofitAPI.postLogin(json).enqueue(object: Callback<String> {
+            override fun onResponse(call: Call<String>, response: Response<String>) {
+                TODO("not yet implemented")
+            }
+            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
+        })
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    fun postUser(user: User) {
+        val jsonAdapter: JsonAdapter<User> = moshi.adapter<User>()
+        val json = jsonAdapter.toJsonValue(user)!!
+        retrofitAPI.postUser(json).enqueue(object: Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
                 TODO("Not yet implemented")
             }

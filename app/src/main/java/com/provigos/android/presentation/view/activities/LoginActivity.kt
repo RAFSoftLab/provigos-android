@@ -22,6 +22,7 @@
  */
 package com.provigos.android.presentation.view.activities
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.provigos.android.R
@@ -43,9 +44,10 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
 
         binding.loginButton.setOnClickListener {
             if(binding.loginCheckbox.isChecked) SharedPreferenceDataSource(this).setRememberMe(true)
-            DatabaseConnection().postLogin(User(binding.loginText.text.toString(),
+            DatabaseConnection().postLogin(User(binding.loginUsername.text.toString(),
                 binding.loginPassword.text.toString()
             ))
+            startActivity(Intent(this@LoginActivity, MainActivity::class.java))
             finish()
         }
     }

@@ -142,6 +142,7 @@ class HealthConnectManager(private val context: Context) {
             timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
         )
         val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
         return response.records
     }
 
@@ -161,6 +162,7 @@ class HealthConnectManager(private val context: Context) {
             timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
         )
         val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
         return response.records
     }
 
@@ -199,6 +201,7 @@ class HealthConnectManager(private val context: Context) {
             timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
         )
         val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
         return response.records
     }
 

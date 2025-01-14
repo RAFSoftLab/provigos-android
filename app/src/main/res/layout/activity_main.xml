@@ -11,12 +11,12 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_weight="1"
-        android:background="#1bb5b0"
+        android:background="@color/mat"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintCircleRadius="10dp"
-        app:tabMode="fixed"/>
+        tools:context=".presentation.view.activities.MainActivity"/>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
@@ -26,6 +26,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tabLayout"
         app:layout_constraintBottom_toBottomOf="parent"/>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

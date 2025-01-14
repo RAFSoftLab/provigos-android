@@ -26,6 +26,7 @@ import android.os.RemoteException
 import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,13 +38,19 @@ import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.HealthConnectManager
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.data.remote.DatabaseConnection
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import okio.IOException
+import timber.log.Timber
 import java.lang.IllegalStateException
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -54,6 +61,7 @@ import kotlin.math.roundToLong
 class HealthConnectViewModel(private val healthConnectManager: HealthConnectManager): ViewModel() {
 
     val healthConnectData:  MutableMap<String, MutableMap<String, Long>> = HashMap()
+    val healthConnectData1: MutableMap<String, Double> =  HashMap()
 
     private var zdt = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
 
@@ -93,11 +101,19 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         private set
     var bodyFatList: MutableState<List<BodyFatRecord>> = mutableStateOf(listOf())
         private set
+    var lastBodyFat: MutableState<Double> = mutableDoubleStateOf(0.0)
+        private set
     var heartRateList: MutableState<List<HeartRateRecord>> = mutableStateOf(listOf())
+        private set
+    var lastHeartRate: MutableState<Long> = mutableLongStateOf(0)
         private set
     var activeCaloriesBurnedList: MutableState<List<ActiveCaloriesBurnedRecord>> = mutableStateOf(listOf())
         private set
+    var lastActiveCaloriesBurned: MutableState<Double> = mutableDoubleStateOf(0.0)
+        private set
     var sleepSessionList: MutableState<List<SleepSessionRecord>> = mutableStateOf(listOf())
+        private set
+    var lastSleep: MutableState<Double> = mutableDoubleStateOf(0.0)
         private set
 
 
@@ -119,23 +135,17 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         }
     }
 
-    fun init(token: String) {
+    fun init() {
         viewModelScope.launch {
-            tryWithPermissionCheck {
-                //steps()
-                //weight()
+            //tryWithPermissionCheck {
+                //readCaloriesBurnedForToday()
+                aggregateStepsForToday()
+                readWeightForToday()
+                readBodyFatForToday()
+                readHeartRateForToday()
                 //DatabaseConnection().postHealthConnectData(token, healthConnectData)
-            }
+           // }
         }
-    }
-
-    private suspend fun steps() {
-        readSteps()
-        aggregateStepsForToday()
-    }
-
-    private suspend fun weight() {
-        readWeightForToday()
     }
 
     private suspend fun readSteps() {
@@ -147,6 +157,7 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
     private suspend fun aggregateStepsForToday() {
         aggregateStepsForToday.value = healthConnectManager.aggregateStepsForToday(zdt.toInstant())!!
         stepsToday[pureZdt] = aggregateStepsForToday.value
+        healthConnectData1["steps"] = aggregateStepsForToday.value.toDouble()
         healthConnectData["steps"] = stepsToday
     }
 
@@ -154,7 +165,26 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         weightList.value = healthConnectManager.readWeightForToday(zdt.toInstant())
         lastWeight.value = weightList.value.last().weight.inKilograms.roundToLong()
         weightToday[pureZdt] = lastWeight.value
+        healthConnectData1["weight"] = lastWeight.value.toDouble()
         healthConnectData["weight"] = weightToday
+    }
+
+    private suspend fun readHeartRateForToday() {
+        heartRateList.value = healthConnectManager.readHeartRateFatForToday(zdt.toInstant())
+        lastHeartRate.value = heartRateList.value.last().samples.last().beatsPerMinute
+        healthConnectData1["heart_rate"] = lastHeartRate.value.toDouble()
+    }
+
+    private suspend fun readCaloriesBurnedForToday() {
+        activeCaloriesBurnedList.value = healthConnectManager.readActiveCaloriesBurnedFatForToday(zdt.toInstant())
+        lastActiveCaloriesBurned.value = activeCaloriesBurnedList.value.last().energy.inCalories
+        healthConnectData1["calories_burned"] = lastActiveCaloriesBurned.value
+    }
+
+    private suspend fun readBodyFatForToday() {
+        bodyFatList.value = healthConnectManager.readBodyFatForToday(zdt.toInstant())
+        lastBodyFat.value = bodyFatList.value.last().percentage.value
+        healthConnectData1["body_fat"] = lastBodyFat.value
     }
 
     private fun pureDate(zdt: ZonedDateTime): String { return "" + zdt.year + "-" + zdt.month.value + "-" + zdt.dayOfMonth }
