@@ -25,6 +25,8 @@ package com.provigos.android.data
 import android.os.Build
 import android.content.Context
 import android.annotation.SuppressLint
+import android.health.connect.datatypes.HeartRateRecord.HeartRateSample
+import android.health.connect.datatypes.units.Mass
 import androidx.compose.runtime.mutableStateOf
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -40,8 +42,10 @@ import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.units.Percentage
 import timber.log.Timber
 import java.time.Instant
+import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 const val MIN_SUPPORTED_SDK = Build.VERSION_CODES.O_MR1
@@ -231,6 +235,52 @@ class HealthConnectManager(private val context: Context) {
         )
         val response = healthConnectClient.readRecords(request)
         return response.records
+    }
+
+    suspend fun writeSteps(start: ZonedDateTime, end: ZonedDateTime, count: Long) {
+        healthConnectClient.insertRecords(listOf(
+            StepsRecord(
+                startTime = start.toInstant(),
+                startZoneOffset = start.offset,
+                endTime = end.toInstant(),
+                endZoneOffset = end.offset,
+                count = count
+            )
+        ))
+    }
+
+    suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) {
+        healthConnectClient.insertRecords(listOf(
+            HeartRateRecord(
+                startTime = start.toInstant(),
+                startZoneOffset = start.offset,
+                endTime = end.toInstant(),
+                endZoneOffset = end.offset,
+                samples = listOf(HeartRateRecord.Sample(
+                    time = ZonedDateTime.now().toInstant(),
+                    beatsPerMinute = count
+                ))
+        )))
+    }
+
+    suspend fun writeWeight(date: ZonedDateTime, weight: Double) {
+        healthConnectClient.insertRecords(listOf(
+            WeightRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                weight = androidx.health.connect.client.units.Mass.kilograms(weight)
+            )
+        ))
+    }
+
+    suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) {
+        healthConnectClient.insertRecords(listOf(
+            BodyFatRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                percentage = Percentage(percentage)
+            )
+        ))
     }
 
 

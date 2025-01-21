@@ -137,14 +137,14 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
 
     fun init() {
         viewModelScope.launch {
-            //tryWithPermissionCheck {
+            tryWithPermissionCheck {
                 //readCaloriesBurnedForToday()
                 aggregateStepsForToday()
                 readWeightForToday()
                 readBodyFatForToday()
                 readHeartRateForToday()
                 //DatabaseConnection().postHealthConnectData(token, healthConnectData)
-           // }
+            }
         }
     }
 
@@ -186,6 +186,11 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         lastBodyFat.value = bodyFatList.value.last().percentage.value
         healthConnectData1["body_fat"] = lastBodyFat.value
     }
+    
+    private suspend fun writeWeight(date: ZonedDateTime, weight: Double) = healthConnectManager.writeWeight(date, weight)
+    private suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) = healthConnectManager.writeBodyFat(date, percentage)
+    private suspend fun writeSteps(start: ZonedDateTime, end: ZonedDateTime, count: Long) = healthConnectManager.writeSteps(start, end, count)
+    private suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) = healthConnectManager.writeSteps(start, end, count)
 
     private fun pureDate(zdt: ZonedDateTime): String { return "" + zdt.year + "-" + zdt.month.value + "-" + zdt.dayOfMonth }
 
