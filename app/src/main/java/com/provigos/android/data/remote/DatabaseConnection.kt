@@ -22,6 +22,7 @@
  */
 package com.provigos.android.data.remote
 
+import android.content.Context
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
@@ -60,12 +61,11 @@ class DatabaseConnection {
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun postHealthConnectData(token: String, healthConnectData:  MutableMap<String, MutableMap<String, Long>>) {
-        val requestObject = RequestObject(healthConnectData as Map<String, Map<String, Long>>)
-        val jsonAdapter: JsonAdapter<RequestObject> = moshi.adapter<RequestObject>()
-        val json = jsonAdapter.toJsonValue(requestObject)!!
+    fun postHealthConnectData(context: Context, healthConnectData:  MutableMap<String, MutableMap<String, String>>) {
+        val jsonAdapter: JsonAdapter<MutableMap<String, MutableMap<String,String>>> = moshi.adapter<MutableMap<String, MutableMap<String, String>>>()
+        val json = jsonAdapter.toJsonValue(healthConnectData)!!
         Timber.e(json.toString())
-        retrofitAPI.postHealthConnectData(token, json).enqueue(object: Callback<String> {
+        retrofitAPI.postHealthConnectData(SharedPreferenceDataSource(context).getUserToken(), json).enqueue(object: Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
                 Timber.e("POST Success")
             }
@@ -74,12 +74,21 @@ class DatabaseConnection {
     }
     
     @OptIn(ExperimentalStdlibApi::class)
-    fun postLogin(user: User) {
+    fun postLogin(user: User, context: Context) {
         val jsonAdapter: JsonAdapter<User> = moshi.adapter<User>()
         val json = jsonAdapter.toJsonValue(user)!!
         retrofitAPI.postLogin(json).enqueue(object: Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
-                TODO("not yet implemented")
+                SharedPreferenceDataSource(context).setUserToken(response.body().toString())
+            }
+            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
+        })
+    }
+
+    fun postLogin2(token: String) {
+        retrofitAPI.postLogin2(token).enqueue(object: Callback<String> {
+            override fun onResponse(p0: Call<String>, p1: Response<String>) {
+                TODO("Not yet implemented")
             }
             override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
         })

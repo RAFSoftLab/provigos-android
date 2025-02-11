@@ -43,6 +43,9 @@ interface RetrofitAPI {
     @POST("login")
     fun postLogin(@Body json: Any): Call<String>
 
+    @POST("login")
+    fun postLogin2(@Header("Authorization") token: String): Call<String>
+
     @POST("createUser")
     fun postUser(@Body json: Any): Call<String>
 }

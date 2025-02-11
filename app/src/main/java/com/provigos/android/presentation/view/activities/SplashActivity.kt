@@ -45,8 +45,7 @@ class SplashActivity: AppCompatActivity(R.layout.activity_splash) {
         val view = binding.root
         setContentView(view)
         Handler(Looper.getMainLooper()).postDelayed({
-            if(SharedPreferenceDataSource(this).isRememberMe()) startActivity(Intent(this@SplashActivity, MainActivity::class.java))
-            else startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+            startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
             finish()
         }, 3000)
     }

@@ -45,7 +45,7 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
         val view = binding.root
         setContentView(view)
 
-        StrictMode.setThreadPolicy(
+        /*StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
                 .detectAll()
                 .penaltyLog()
@@ -57,7 +57,7 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
             .penaltyLog()
             .build()
         )
-
+        */
 
         val mainPagerAdapter = MainPagerAdapter(this)
         mainPagerAdapter.addFragment(DashboardFragment(), "Dashboard")

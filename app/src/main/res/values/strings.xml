@@ -3,6 +3,8 @@
     <string name="privacy_policy">Politika privatnosti…</string>
     <string name="switch_pref1_key">health_connect_integration</string>
     <string name="switch_pref1_title">Health Connect</string>
+    <string name="switch_pref2_key">sign_out_account</string>
+    <string name="switch_pref2_title">Sign out</string>
     <string name="pp_checkbox">I understand and accept Provigos data usage</string>
     <string name="cancel">Cancel</string>
     <string name="continyu">Continue</string>
@@ -22,7 +24,16 @@
     <string name="active_calories">Calories burned today</string>
     <string name="calories_val">%1$s cal</string>
     <string name="body_fat">Last measured body fat</string>
+    <string name="lean_body_mass">Lean body mass</string>
     <string name="body_fat_val">%1$s %2$s</string>
+    <string name="datetime">Date \&amp; Time</string>
+    <string name="today">Today</string>
+    <string name="weight">Weight</string>
+    <string name="kg">kg</string>
+    <string name="save">Save</string>
+    <string name="SERVER_CLIENT_ID3">225554960679-g7krk3sp5jnn277h97t34h7sj898ddsi.apps.googleusercontent.com</string>
+    <string name="SERVER_CLIENT_ID">225554960679-t85j526vt715la1efggpcr1mgf16uk9t.apps.googleusercontent.com</string>
+    <string name="SERVER_CLIENT_ID2">225554960679-k9pc7l5e9sicc840k2h877bcbuqns9l0.apps.googleusercontent.com</string>
     <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque odio lorem, lobortis et elit at, volutpat interdum ante. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec porta molestie justo nec venenatis. Donec pretium orci ac mollis pulvinar. Curabitur iaculis tincidunt neque, sit amet interdum turpis sodales feugiat. Fusce non turpis sit amet eros interdum congue eu vel diam. Fusce efficitur vitae sem quis imperdiet. Aliquam et feugiat nisi.
 
 Duis sagittis consequat est, sed luctus mauris. Vivamus velit felis, scelerisque sit amet nibh quis, viverra feugiat neque. Praesent varius lacus id rhoncus volutpat. Ut at elit eget risus ultricies malesuada. Nam sit amet nunc suscipit, convallis lorem quis, pharetra tellus. Ut mattis dapibus justo at euismod. Praesent vitae lacus at neque pulvinar sollicitudin. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent a tellus magna.

@@ -22,19 +22,40 @@
  */
 package com.provigos.android.presentation.view.activities
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.lifecycle.lifecycleScope
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.provigos.android.R
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.data.remote.DatabaseConnection
 import com.provigos.android.data.remote.User
 import com.provigos.android.databinding.ActivityLoginBinding
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.security.MessageDigest
 
 class LoginActivity: AppCompatActivity(R.layout.activity_login) {
 
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var request: GetCredentialRequest
 
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -42,13 +63,76 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
         val view = binding.root
         setContentView(view)
 
-        binding.loginButton.setOnClickListener {
-            if(binding.loginCheckbox.isChecked) SharedPreferenceDataSource(this).setRememberMe(true)
-            DatabaseConnection().postLogin(User(binding.loginUsername.text.toString(),
-                binding.loginPassword.text.toString()
-            ))
+        request = GetCredentialRequest.Builder()
+            .addCredentialOption(getSignInWithGoogleOption())
+            .build()
+
+        val credentialManager = CredentialManager.create(this@LoginActivity)
+
+        /*if(SharedPreferenceDataSource(this).isRememberMe()) {
             startActivity(Intent(this@LoginActivity, MainActivity::class.java))
             finish()
+        }
+        *///else {
+            lifecycleScope.launch {
+                try {
+                    val result = credentialManager.getCredential(
+                        context = this@LoginActivity,
+                        request = request
+                    )
+                    handleSignIn(result)
+                } catch (e: GetCredentialException) {
+                    handleFailure(e)
+                }
+            }
+        //}
+
+    }
+
+    private fun getSignInWithGoogleOption(): GetSignInWithGoogleOption {
+        val rawNonce = "burka"
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(rawNonce.toByteArray())
+        val hashedNonce = digest.fold("") { str, it -> str + "%02x".format(it) }
+        return GetSignInWithGoogleOption.Builder(getString(R.string.SERVER_CLIENT_ID2))
+            .setNonce(hashedNonce)
+            .build()
+    }
+
+    private fun handleSignIn(result: GetCredentialResponse) {
+        when(val credential = result.credential) {
+            is CustomCredential -> {
+                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    try {
+                        val googleIdTokenCredential = GoogleIdTokenCredential
+                            .createFrom(credential.data)
+                        val googleIdToken = googleIdTokenCredential.idToken
+                        SharedPreferenceDataSource(this@LoginActivity).setUserToken(googleIdToken)
+                        SharedPreferenceDataSource(this@LoginActivity).setRememberMe(true)
+                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                        finish()
+                    } catch (e: GoogleIdTokenParsingException) {
+                        Timber.tag("GITPE").e(e, "Received an invalid google id token response")
+                    }
+                }
+                else {
+                    Timber.tag("badcred").e("Unexpected type of credential")
+                }
+            }
+            else -> {
+                Timber.tag("badcred").e("Unexpected type of credential")
+            }
+        }
+    }
+
+    private fun handleFailure(e: GetCredentialException) {
+        Timber.e(e.toString())
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    fun signout() {
+        GlobalScope.launch {
+            CredentialManager.create(this@LoginActivity).clearCredentialState(ClearCredentialStateRequest())
         }
     }
 }

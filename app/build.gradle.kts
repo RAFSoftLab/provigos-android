@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.material)
     implementation(libs.androidx.preference)
+    implementation(libs.play.services.base)
     //implementation(libs.appcompat.v7)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -66,6 +67,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(libs.androidx.swiperefreshlayout)
+
 
     /* DATA */
     // ------------
@@ -132,6 +135,9 @@ dependencies {
 
     //Health Connect
     implementation(libs.androidx.connect.client)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     //Debug
     debugImplementation(libs.ui.tooling)

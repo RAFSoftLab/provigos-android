@@ -22,16 +22,26 @@
  */
 package com.provigos.android.presentation.view.fragments
 
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import androidx.credentials.CredentialManager
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
+import com.provigos.android.data.SharedPreferenceDataSource
+import com.provigos.android.presentation.view.activities.LoginActivity
 import com.provigos.android.presentation.view.activities.PrivacyPolicyActivity
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 
 class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private lateinit var context: Context
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
@@ -40,6 +50,8 @@ class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSh
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         findPreference<Preference>(getString(R.string.switch_pref1_key))?.setOnPreferenceClickListener { privacyPolicy() }
+        findPreference<Preference>(getString(R.string.switch_pref2_key))?.setOnPreferenceClickListener { signOut() }
+        context = view.context
     }
 
     override fun onResume() {
@@ -61,6 +73,14 @@ class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSh
 
     private fun privacyPolicy(): Boolean {
         startActivity(Intent(activity, PrivacyPolicyActivity::class.java))
+        return true
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun signOut(): Boolean {
+        SharedPreferenceDataSource(context).setRememberMe(false)
+        SharedPreferenceDataSource(context).setUserToken("")
+        LoginActivity().signout()
         return true
     }
 

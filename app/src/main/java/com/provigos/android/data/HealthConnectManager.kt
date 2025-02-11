@@ -25,24 +25,36 @@ package com.provigos.android.data
 import android.os.Build
 import android.content.Context
 import android.annotation.SuppressLint
-import android.health.connect.datatypes.HeartRateRecord.HeartRateSample
-import android.health.connect.datatypes.units.Mass
+import android.health.connect.datatypes.BloodGlucoseRecord.RelationToMealType
 import androidx.compose.runtime.mutableStateOf
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient.Companion.SDK_AVAILABLE
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BloodGlucoseRecord
+import androidx.health.connect.client.records.BloodPressureRecord
 import androidx.health.connect.client.records.BodyFatRecord
+import androidx.health.connect.client.records.BodyTemperatureMeasurementLocation
+import androidx.health.connect.client.records.BodyTemperatureRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
+import androidx.health.connect.client.records.MealType
+import androidx.health.connect.client.records.OxygenSaturationRecord
+import androidx.health.connect.client.records.RespiratoryRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.units.BloodGlucose
+import androidx.health.connect.client.units.Length
+import androidx.health.connect.client.units.Mass
 import androidx.health.connect.client.units.Percentage
+import androidx.health.connect.client.units.Pressure
+import androidx.health.connect.client.units.Temperature
 import timber.log.Timber
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -199,7 +211,7 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // ACTIVE CALORIES BURNED
-    suspend fun readActiveCaloriesBurnedFatForToday(date: Instant): List<ActiveCaloriesBurnedRecord> {
+    suspend fun readActiveCaloriesBurnedForToday(date: Instant): List<ActiveCaloriesBurnedRecord> {
         val request = ReadRecordsRequest(
             recordType = ActiveCaloriesBurnedRecord::class,
             timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
@@ -215,6 +227,7 @@ class HealthConnectManager(private val context: Context) {
             timeRangeFilter = TimeRangeFilter.between(date, date.minus(30, ChronoUnit.DAYS))
         )
         val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
         return response.records
     }
 
@@ -225,6 +238,7 @@ class HealthConnectManager(private val context: Context) {
             timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
         )
         val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
         return response.records
     }
 
@@ -235,6 +249,134 @@ class HealthConnectManager(private val context: Context) {
         )
         val response = healthConnectClient.readRecords(request)
         return response.records
+    }
+
+    suspend fun readBloodPressureForToday(date: Instant): List<BloodPressureRecord> {
+        val request = ReadRecordsRequest(
+            recordType = BloodPressureRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
+        return response.records
+    }
+
+    suspend fun readHeightForToday(date: Instant): List<HeightRecord> {
+        val request = ReadRecordsRequest(
+            recordType = HeightRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
+        return response.records
+    }
+
+    suspend fun writeHeight(date: ZonedDateTime, height: Long) {
+        healthConnectClient.insertRecords(listOf(
+            HeightRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                height = Length.meters(height.toDouble()/100.00),
+            )
+        ))
+    }
+
+    suspend fun readBloodGlucoseForToday(date: Instant): List<BloodGlucoseRecord> {
+        val request = ReadRecordsRequest(
+            recordType = BloodGlucoseRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        Timber.e("AAAAAA")
+        response.records.forEach { w -> Timber.e(w.toString()) }
+        return response.records
+    }
+
+    suspend fun writeBloodGlucose(date: ZonedDateTime, level: Double) {
+        healthConnectClient.insertRecords(listOf(
+            BloodGlucoseRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                level = BloodGlucose.millimolesPerLiter(level),
+                specimenSource = BloodGlucoseRecord.SPECIMEN_SOURCE_SERUM,
+                mealType = MealType.MEAL_TYPE_UNKNOWN,
+                relationToMeal = BloodGlucoseRecord.RELATION_TO_MEAL_BEFORE_MEAL,
+            )
+        ))
+    }
+
+    suspend fun readOxygenSaturationForToday(date: Instant): List<OxygenSaturationRecord> {
+        val request = ReadRecordsRequest(
+            recordType = OxygenSaturationRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
+        return response.records
+    }
+
+    suspend fun writeOxygenSaturation(date: ZonedDateTime, percentage: Double) {
+        healthConnectClient.insertRecords(listOf(
+            OxygenSaturationRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                percentage = Percentage(percentage),
+            )
+        ))
+    }
+
+    suspend fun readBodyTemperatureForToday(date: Instant): List<BodyTemperatureRecord> {
+        val request = ReadRecordsRequest(
+            recordType = BodyTemperatureRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
+        return response.records
+    }
+
+    suspend fun writeBodyTemperature(date: ZonedDateTime, temperature: Double) {
+        healthConnectClient.insertRecords(listOf(
+            BodyTemperatureRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                temperature = Temperature.celsius(temperature),
+                measurementLocation = BodyTemperatureMeasurementLocation.MEASUREMENT_LOCATION_UNKNOWN,
+            )
+        ))
+    }
+
+    suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long) {
+        healthConnectClient.insertRecords(listOf(
+            BloodPressureRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                systolic = Pressure.millimetersOfMercury(upper.toDouble()),
+                diastolic = Pressure.millimetersOfMercury(lower.toDouble()),
+                bodyPosition = BloodPressureRecord.BODY_POSITION_UNKNOWN,
+                measurementLocation = BloodPressureRecord.MEASUREMENT_LOCATION_UNKNOWN,
+            )
+        ))
+    }
+
+    suspend fun readRespiratoryRateForToday(date: Instant): List<RespiratoryRateRecord> {
+        val request = ReadRecordsRequest(
+            recordType = RespiratoryRateRecord::class,
+            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
+        )
+        val response = healthConnectClient.readRecords(request)
+        response.records.forEach { w -> Timber.e(w.toString()) }
+        return response.records
+    }
+
+    suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double) {
+        healthConnectClient.insertRecords(listOf(
+            RespiratoryRateRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                rate = rate,
+            )
+        ))
     }
 
     suspend fun writeSteps(start: ZonedDateTime, end: ZonedDateTime, count: Long) {
@@ -268,7 +410,7 @@ class HealthConnectManager(private val context: Context) {
             WeightRecord(
                 time = date.toInstant(),
                 zoneOffset = date.offset,
-                weight = androidx.health.connect.client.units.Mass.kilograms(weight)
+                weight = Mass.kilograms(weight)
             )
         ))
     }
@@ -282,8 +424,6 @@ class HealthConnectManager(private val context: Context) {
             )
         ))
     }
-
-
 
     enum class HealthConnectAvailability {
         INSTALLED,

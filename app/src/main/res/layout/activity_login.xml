@@ -1,89 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_splash"
     xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".presentation.view.activities.SplashActivity"
+    tools:viewBindingIgnore="false"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:background="@color/mat"
-    tools:viewBindingIgnore="false">
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="30dp"
-        android:backgroundTint="@color/mat"
-        app:cardCornerRadius="30dp"
-        app:cardElevation="20dp">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_gravity="center_horizontal"
-            android:padding="24dp">
-            <TextView
-                android:textColor="@color/white"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/provigos_title"
-                android:id="@+id/loginText"
-                android:textSize="34sp"
-                android:textAlignment="center"
-                android:textStyle="bold" />
-            <EditText
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:id="@+id/login_username"
-                android:autofillHints="username"
-                android:inputType="text"
-                android:drawablePadding="8dp"
-                android:hint="@string/text_username"
-                android:padding="8dp"
-                android:textColorHint="@color/white"
-                android:textColor="@color/white"
-                android:textColorHighlight="@color/white"
-                android:layout_marginTop="40dp"/>
-            <EditText
-                android:layout_width="match_parent"
-                android:textColorHint="@color/white"
-                android:layout_height="50dp"
-                android:id="@+id/login_password"
-                android:autofillHints="password"
-                android:drawablePadding="8dp"
-                android:hint="@string/text_password"
-                android:padding="8dp"
-                android:inputType="textPassword"
-                android:textColor="@color/white"
-                android:textColorHighlight="@color/cardview_dark_background"
-                android:layout_marginTop="20dp"/>
-            <CheckBox
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/login_checkbox"
-                android:textColor="@color/white"
-                android:text="@string/remember_me"
-                android:layout_marginTop="16dp"
-                android:buttonTint="@color/white"
-                android:padding="8dp"/>
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:id="@+id/login_button"
-                android:text="@string/continyu"
-                android:textSize="18sp"
-                android:layout_marginTop="30dp"
-                app:cornerRadius = "20dp"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    android:layout_height="match_parent">
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:text="@string/text_to_register"
-        android:textSize="14sp"
-        android:textAlignment="center"
-        android:textColor="@color/white"
-        android:id="@+id/signupText"
-        android:layout_marginBottom="20dp"/>
-</LinearLayout>
+        android:text="@string/app_title"
+        android:id="@+id/splash_text"
+        android:textColor="@color/teal1"
+        android:textSize="52sp"
+        android:fontFamily="sans-serif-condensed"
+        android:layout_marginBottom="50dp"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/splash_desc"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/splash_desc"
+        android:textStyle="italic"
+        android:fontFamily="serif-monospace"
+        android:text="@string/app_motto"
+        android:textColor="@color/teal1"
+        android:textSize="18sp"
+        android:layout_marginBottom="50dp"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintTop_toBottomOf="@id/splash_text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
