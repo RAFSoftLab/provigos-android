@@ -191,7 +191,10 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.minValue = 20
                 numberPicker.maxValue = 100
                 binding.inputSave.setOnClickListener {
-
+                    GlobalScope.launch {
+                        viewModel.writeRespiratoryRate(zonedDateTime, numberPicker.value.toDouble())
+                        finish()
+                    }
                 }
             }
         }
