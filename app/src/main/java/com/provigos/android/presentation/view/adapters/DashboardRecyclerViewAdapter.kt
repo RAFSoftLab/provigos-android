@@ -45,7 +45,7 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
 
     override fun getItemCount() = hashMap.size
 
-    @SuppressLint("SetTextI18n")
+    @SuppressLint("SetTextI18n", "DefaultLocale")
     override fun onBindViewHolder(holder: DashboardRecyclerViewHolder, position: Int) {
         var k = 0
         var measurementType: String = ""
@@ -61,7 +61,7 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
         when (measurementType) {
             "steps" -> {
                 holder.measurementType.setText(R.string.steps_today)
-                holder.measurementNumber.text = holder.context.getString(R.string.num_of_steps, measurementValue.toDouble().roundToLong().toString())
+                holder.measurementNumber.text = measurementValue.toDouble().roundToLong().toString()
                 holder.itemView.setOnClickListener { onItemClicked?.invoke("steps") }
             }
             "weight" -> {
@@ -95,7 +95,7 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
             }
             "body_temperature" -> {
                 holder.measurementType.text = "Body temperature"
-                holder.measurementNumber.text = "$measurementValue ℃"
+                holder.measurementNumber.text = String.format("%.1f ℃", measurementValue.toDouble())
                 holder.itemView.setOnClickListener { onItemClicked?.invoke("body_temperature") }
             }
             "oxygen_saturation" -> {
@@ -110,7 +110,7 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
             }
             "respiratory_rate" -> {
                 holder.measurementType.text = "Respiratory rate"
-                holder.measurementNumber.text = "$measurementValue rpm"
+                holder.measurementNumber.text = "${measurementValue.toDouble().roundToLong()} rpm"
                 holder.itemView.setOnClickListener { onItemClicked?.invoke("respiratory_rate") }
             }
         }

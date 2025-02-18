@@ -48,6 +48,7 @@ import androidx.health.connect.client.records.WeightRecord
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.HealthConnectManager
+import com.provigos.android.data.remote.DatabaseConnection
 import kotlinx.coroutines.launch
 import okio.IOException
 import timber.log.Timber
@@ -196,7 +197,7 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
                 readOxygenSaturationForToday()
                 readRespiratoryRateForToday()
                 healthConnectData1.forEach { item -> Timber.e("${item.key}, ${item.value}")}
-                //DatabaseConnection().postHealthConnectData(context, healthConnectData)
+                DatabaseConnection().postHealthConnectData(context, healthConnectData)
             //}
         }
     }
@@ -207,89 +208,178 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         stepsList.value = healthConnectManager.readSteps(startOfDay.toInstant(), now)
     }
 
-    private suspend fun aggregateStepsForToday() {
-        aggregateStepsForToday.value = healthConnectManager.aggregateStepsForToday(zdt.toInstant())!!.toString()
-        stepsToday[pureZdt] = aggregateStepsForToday.value
-        healthConnectData1["steps"] = aggregateStepsForToday.value.toDouble().toString()
-        healthConnectData["steps"] = stepsToday
+    private suspend fun aggregateStepsForToday(): Boolean {
+        try {
+            aggregateStepsForToday.value = healthConnectManager.aggregateStepsForToday(zdt.toInstant())!!.toString()
+            if(!aggregateStepsForToday.value.equals(null)) {
+                stepsToday[pureZdt] = aggregateStepsForToday.value
+                healthConnectData1["steps"] = aggregateStepsForToday.value.toDouble().toString()
+                healthConnectData["steps"] = stepsToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
 
-    private suspend fun readWeightForToday() {
-        weightList.value = healthConnectManager.readWeightForToday(zdt.toInstant())
-        lastWeight = mutableDoubleStateOf(weightList.value.last().weight.inKilograms)
-        weightToday[pureZdt] = lastWeight.value.toLong().toString()
-        healthConnectData1["weight"] = lastWeight.value.toString()
-        healthConnectData["weight"] = weightToday
+    private suspend fun readWeightForToday(): Boolean {
+        try {
+            weightList.value = healthConnectManager.readWeightForToday(zdt.toInstant())
+            if(weightList.value.isNotEmpty()) {
+                lastWeight = mutableDoubleStateOf(weightList.value.last().weight.inKilograms)
+                weightToday[pureZdt] = lastWeight.value.toLong().toString()
+                healthConnectData1["weight"] = lastWeight.value.toString()
+                healthConnectData["weight"] = weightToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
 
-    private suspend fun readHeightForToday() {
-        heightList.value = healthConnectManager.readHeightForToday(zdt.toInstant())
-        lastHeight.value = (heightList.value.last().height.inMeters * 100).toLong().toString()
-        heightToday[pureZdt] = lastHeight.value
-        healthConnectData1["height"] = lastHeight.value
-        healthConnectData["height"] = heightToday
+    private suspend fun readHeightForToday(): Boolean {
+        try {
+            heightList.value = healthConnectManager.readHeightForToday(zdt.toInstant())
+            if(heightList.value.isNotEmpty()) {
+                lastHeight.value = (heightList.value.last().height.inMeters * 100).toLong().toString()
+                heightToday[pureZdt] = lastHeight.value
+                healthConnectData1["height"] = lastHeight.value
+                healthConnectData["height"] = heightToday
+                return true
+            }
+            else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
-    private suspend fun readHeartRateForToday() {
-        heartRateList.value = healthConnectManager.readHeartRateFatForToday(zdt.toInstant())
-        lastHeartRate.value = heartRateList.value.last().samples.last().beatsPerMinute
-        heartRateToday[pureZdt] = lastHeartRate.value.toString()
-        healthConnectData1["heart_rate"] = lastHeartRate.value.toDouble().toString()
-        healthConnectData["heart_rate"] = heartRateToday
-    }
-
-    private suspend fun readBodyFatForToday() {
-        bodyFatList.value = healthConnectManager.readBodyFatForToday(zdt.toInstant())
-        lastBodyFat.value = bodyFatList.value.last().percentage.value
-        bodyFatToday[pureZdt] = lastBodyFat.value.toLong().toString()
-        healthConnectData1["body_fat"] = lastBodyFat.value.toString()
-        healthConnectData["body_fat"] = bodyFatToday
-    }
-
-    private fun readLeanBodyMassForToday() {
-        val percentage = (100 - lastBodyFat.value.toLong()) / 100.00
-        lastLeanBodyMass.value = (percentage * lastWeight.value).toLong()
-        healthConnectData1["lean_body_mass"] = lastLeanBodyMass.value.toDouble().toString()
-        healthConnectData["lean_body_mass"] = mapOf(pureZdt to lastLeanBodyMass.value.toString()) as MutableMap<String, String>
-    }
-
-    private suspend fun readBloodPressureForToday() {
-        bloodPressureList.value = healthConnectManager.readBloodPressureForToday(zdt.toInstant())
-        lastBloodPressure.value = "${bloodPressureList.value.last().systolic.inMillimetersOfMercury.toLong()}/${bloodPressureList.value.last().diastolic.inMillimetersOfMercury.toLong()}"
-        bloodPressureToday[pureZdt] = lastBloodPressure.value
-        healthConnectData1["blood_pressure"] = lastBloodPressure.value
-        healthConnectData["blood_pressure"] = bloodPressureToday
+    private suspend fun readHeartRateForToday(): Boolean {
+        try {
+            heartRateList.value = healthConnectManager.readHeartRateFatForToday(zdt.toInstant())
+            if(heartRateList.value.isNotEmpty()) {
+                lastHeartRate.value = heartRateList.value.last().samples.last().beatsPerMinute
+                heartRateToday[pureZdt] = lastHeartRate.value.toString()
+                healthConnectData1["heart_rate"] = lastHeartRate.value.toDouble().toString()
+                healthConnectData["heartRate"] = heartRateToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
 
-    private suspend fun readBodyTemperatureForToday() {
-        bodyTemperatureList.value = healthConnectManager.readBodyTemperatureForToday(zdt.toInstant())
-        lastBodyTemperature.value = bodyTemperatureList.value.last().temperature.inCelsius.toString()
-        bodyTemperatureToday[pureZdt] = lastBodyTemperature.value
-        healthConnectData1["body_temperature"] = lastBodyTemperature.value
-        healthConnectData["body_temperature"] = bodyTemperatureToday
+    private suspend fun readBodyFatForToday(): Boolean {
+        try {
+            bodyFatList.value = healthConnectManager.readBodyFatForToday(zdt.toInstant())
+            if(bodyFatList.value.isNotEmpty()) {
+                lastBodyFat.value = bodyFatList.value.last().percentage.value
+                bodyFatToday[pureZdt] = lastBodyFat.value.toLong().toString()
+                healthConnectData1["body_fat"] = lastBodyFat.value.toString()
+                healthConnectData["bodyFat"] = bodyFatToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
 
-    private suspend fun readBloodGlucoseForToday() {
-        bloodGlucoseList.value = healthConnectManager.readBloodGlucoseForToday(zdt.toInstant())
-        lastBloodGlucose.value = bloodGlucoseList.value.last().level.inMillimolesPerLiter.toString()
-        bloodGlucoseToday[pureZdt] = lastBloodGlucose.value
-        healthConnectData1["blood_glucose"] = lastBloodGlucose.value
-        healthConnectData["blood_glucose"] = bloodGlucoseToday
+    private fun readLeanBodyMassForToday(): Boolean {
+        try {
+            if(lastBodyFat.value != 0.0 && lastWeight.value != 0.0) {
+                val percentage = (100 - lastBodyFat.value.toLong()) / 100.00
+                lastLeanBodyMass.value = (percentage * lastWeight.value).toLong()
+                healthConnectData1["lean_body_mass"] = lastLeanBodyMass.value.toDouble().toString()
+                healthConnectData["leanBodyMass"] = mapOf(pureZdt to lastLeanBodyMass.value.toString()) as MutableMap<String, String>
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
 
-    private suspend fun readOxygenSaturationForToday() {
-        oxygenSaturationList.value = healthConnectManager.readOxygenSaturationForToday(zdt.toInstant())
-        lastOxygenSaturation.value = oxygenSaturationList.value.last().percentage.value.toString()
-        oxygenSaturationToday[pureZdt] = lastOxygenSaturation.value
-        healthConnectData1["oxygen_saturation"] = lastOxygenSaturation.value
-        healthConnectData["oxygen_saturation"] = oxygenSaturationToday
+    private suspend fun readBloodPressureForToday(): Boolean {
+        try {
+            bloodPressureList.value = healthConnectManager.readBloodPressureForToday(zdt.toInstant())
+            if(bloodPressureList.value.isNotEmpty()) {
+                lastBloodPressure.value = "${bloodPressureList.value.last().systolic.inMillimetersOfMercury.toLong()}/${bloodPressureList.value.last().diastolic.inMillimetersOfMercury.toLong()}"
+                bloodPressureToday[pureZdt] = lastBloodPressure.value
+                healthConnectData1["blood_pressure"] = lastBloodPressure.value
+                healthConnectData["bloodPressure"] = bloodPressureToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
 
-    private suspend fun readRespiratoryRateForToday() {
-        respiratoryRateList.value = healthConnectManager.readRespiratoryRateForToday(zdt.toInstant())
-        lastRespiratoryRate.value = respiratoryRateList.value.last().rate.toString()
-        respiratoryRateToday[pureZdt] = lastRespiratoryRate.value
-        healthConnectData1["respiratory_rate"] = lastRespiratoryRate.value
-        healthConnectData["respiratory_rate"] = respiratoryRateToday
+    private suspend fun readBodyTemperatureForToday(): Boolean {
+        try {
+            bodyTemperatureList.value = healthConnectManager.readBodyTemperatureForToday(zdt.toInstant())
+            if(bodyTemperatureList.value.isNotEmpty()) {
+                lastBodyTemperature.value = bodyTemperatureList.value.last().temperature.inCelsius.toString()
+                bodyTemperatureToday[pureZdt] = lastBodyTemperature.value
+                healthConnectData1["body_temperature"] = lastBodyTemperature.value
+                healthConnectData["bodyTemperature"] = bodyTemperatureToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
+    }
+
+    private suspend fun readBloodGlucoseForToday(): Boolean {
+        try {
+            bloodGlucoseList.value = healthConnectManager.readBloodGlucoseForToday(zdt.toInstant())
+            if(bloodGlucoseList.value.isNotEmpty()) {
+                lastBloodGlucose.value = bloodGlucoseList.value.last().level.inMillimolesPerLiter.toString()
+                bloodGlucoseToday[pureZdt] = lastBloodGlucose.value
+                healthConnectData1["blood_glucose"] = lastBloodGlucose.value
+                healthConnectData["bloodGlucose"] = bloodGlucoseToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
+    }
+
+    private suspend fun readOxygenSaturationForToday(): Boolean {
+        try {
+            oxygenSaturationList.value = healthConnectManager.readOxygenSaturationForToday(zdt.toInstant())
+            if(oxygenSaturationList.value.isNotEmpty()) {
+                lastOxygenSaturation.value = oxygenSaturationList.value.last().percentage.value.toString()
+                oxygenSaturationToday[pureZdt] = lastOxygenSaturation.value
+                healthConnectData1["oxygen_saturation"] = lastOxygenSaturation.value
+                healthConnectData["oxygenSaturation"] = oxygenSaturationToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
+    }
+
+    private suspend fun readRespiratoryRateForToday(): Boolean {
+        try {
+            respiratoryRateList.value = healthConnectManager.readRespiratoryRateForToday(zdt.toInstant())
+            if(respiratoryRateList.value.isNotEmpty()) {
+                lastRespiratoryRate.value = respiratoryRateList.value.last().rate.toString()
+                respiratoryRateToday[pureZdt] = lastRespiratoryRate.value
+                healthConnectData1["respiratory_rate"] = lastRespiratoryRate.value
+                healthConnectData["respiratoryRate"] = respiratoryRateToday
+                return true
+            } else {
+                return false
+            }
+        } catch (_: NullPointerException) {}
+        return false
     }
 
     private fun getScreenTime(context: Context) {
