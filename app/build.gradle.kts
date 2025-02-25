@@ -50,33 +50,23 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.material)
     implementation(libs.androidx.preference)
     implementation(libs.play.services.base)
-    //implementation(libs.appcompat.v7)
+
+    // TEST
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.espresso.contrib)
     androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(libs.androidx.runner)
-   androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(libs.androidx.swiperefreshlayout)
 
-
-    /* DATA */
-    // ------------
     // Koin
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.koin.android)
-    //implementation(libs.koin.compose)
     testImplementation(libs.koin.test)
 
     // Retrofit
@@ -95,7 +85,6 @@ dependencies {
     ksp(libs.moshi.kotlin.codegen)
     implementation(libs.moshi.kotlin)
     implementation("com.squareup.moshi", name = "moshi-adapters", version = "1.12.0")
-    // ------------
 
     // Rx
     implementation(libs.rxandroid)
@@ -115,6 +104,12 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.drawerlayout)
     implementation(libs.androidx.preference.ktx)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.material)
+    implementation(libs.androidx.swiperefreshlayout)
 
     // Fragment
     implementation(libs.androidx.fragment.ktx)
@@ -141,6 +136,11 @@ dependencies {
 
     //Debug
     debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
+
+    //Security
+    implementation(libs.androidx.security.crypto)
 
 }
 

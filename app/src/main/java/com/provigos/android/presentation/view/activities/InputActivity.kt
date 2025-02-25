@@ -168,7 +168,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 15000
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        viewModel.writeSteps(zonedDateTime, zonedDateTime, numberPicker.value.toLong())
+                        viewModel.writeSteps(zonedDateTime, numberPicker.value.toLong())
                         finish()
                     }
                 }

@@ -61,7 +61,7 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
         when (measurementType) {
             "steps" -> {
                 holder.measurementType.setText(R.string.steps_today)
-                holder.measurementNumber.text = measurementValue.toDouble().roundToLong().toString()
+                holder.measurementNumber.text = measurementValue
                 holder.itemView.setOnClickListener { onItemClicked?.invoke("steps") }
             }
             "weight" -> {

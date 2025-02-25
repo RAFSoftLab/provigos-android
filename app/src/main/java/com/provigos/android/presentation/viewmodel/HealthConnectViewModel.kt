@@ -94,73 +94,45 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
 
     var stepsList: MutableState<List<StepsRecord>> = mutableStateOf(listOf())
         private set
-    var aggregateStepsForToday: MutableState<String> = mutableStateOf("")
-        private set
-    var stepsToday: MutableMap<String, String> = HashMap()
+    var stepsFor30Days: MutableMap<String, String> = HashMap()
         private set
     var weightList: MutableState<List<WeightRecord>> = mutableStateOf(listOf())
         private set
-    var weightToday: MutableMap<String, String> = HashMap()
-        private set
-    var lastWeight: MutableState<Double> = mutableDoubleStateOf(0.0)
+    var weightFor30Days: MutableMap<String, String> = HashMap()
         private set
     var lastLeanBodyMass: MutableState<Long> = mutableLongStateOf(0)
         private set
     var bodyFatList: MutableState<List<BodyFatRecord>> = mutableStateOf(listOf())
         private set
-    var lastBodyFat: MutableState<Double> = mutableDoubleStateOf(0.0)
-        private set
-    var bodyFatToday: MutableMap<String, String> = HashMap()
+    var bodyFatFor30Days: MutableMap<String, String> = HashMap()
         private set
     var heartRateList: MutableState<List<HeartRateRecord>> = mutableStateOf(listOf())
         private set
-    var heartRateToday: MutableMap<String, String> = HashMap()
-        private set
-    var lastHeartRate: MutableState<Long> = mutableLongStateOf(0)
-        private set
-    var activeCaloriesBurnedList: MutableState<List<ActiveCaloriesBurnedRecord>> = mutableStateOf(listOf())
-        private set
-    var lastActiveCaloriesBurned: MutableState<Double> = mutableDoubleStateOf(0.0)
-        private set
-    var sleepSessionList: MutableState<List<SleepSessionRecord>> = mutableStateOf(listOf())
-        private set
-    var lastSleep: MutableState<Double> = mutableDoubleStateOf(0.0)
+    var heartRateFor30Days: MutableMap<String, String> = HashMap()
         private set
     var bloodPressureList: MutableState<List<BloodPressureRecord>> = mutableStateOf(listOf())
         private set
-    var lastBloodPressure: MutableState<String> = mutableStateOf("")
-        private set
-    var bloodPressureToday: MutableMap<String, String> = HashMap()
+    var bloodPressureFor30Days: MutableMap<String, String> = HashMap()
         private set
     var bodyTemperatureList: MutableState<List<BodyTemperatureRecord>> = mutableStateOf(listOf())
         private set
-    var lastBodyTemperature: MutableState<String> = mutableStateOf("")
-        private set
-    var bodyTemperatureToday: MutableMap<String, String> = HashMap()
+    var bodyTemperatureFor30Days: MutableMap<String, String> = HashMap()
         private set
     var heightList: MutableState<List<HeightRecord>> = mutableStateOf(listOf())
         private set
-    var lastHeight: MutableState<String> = mutableStateOf("")
-        private set
-    var heightToday: MutableMap<String, String> = HashMap()
+    var heightFor30Days: MutableMap<String, String> = HashMap()
         private set
     var bloodGlucoseList: MutableState<List<BloodGlucoseRecord>> = mutableStateOf(listOf())
         private set
-    var lastBloodGlucose: MutableState<String> = mutableStateOf("")
-        private set
-    var bloodGlucoseToday: MutableMap<String, String> = HashMap()
+    var bloodGlucoseFor30Days: MutableMap<String, String> = HashMap()
         private set
     var oxygenSaturationList: MutableState<List<OxygenSaturationRecord>> = mutableStateOf(listOf())
         private set
-    var lastOxygenSaturation: MutableState<String> = mutableStateOf("")
-        private set
-    var oxygenSaturationToday: MutableMap<String, String> = HashMap()
+    var oxygenSaturationFor30Days: MutableMap<String, String> = HashMap()
         private set
     var respiratoryRateList: MutableState<List<RespiratoryRateRecord>> = mutableStateOf(listOf())
         private set
-    var lastRespiratoryRate: MutableState<String> = mutableStateOf("")
-        private set
-    var respiratoryRateToday: MutableMap<String, String> = HashMap()
+    var respiratoryRateFor30Days: MutableMap<String, String> = HashMap()
         private set
 
     private suspend fun tryWithPermissionCheck(block: suspend () -> Unit) {
@@ -183,38 +155,40 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
 
     fun init(context: Context) {
         viewModelScope.launch {
-            //tryWithPermissionCheck {
+            tryWithPermissionCheck {
                 healthConnectData1 = HashMap()
-                aggregateStepsForToday()
-                readWeightForToday()
-                readBodyFatForToday()
-                readHeartRateForToday()
-                readLeanBodyMassForToday()
-                readBloodPressureForToday()
-                readHeightForToday()
-                readBodyTemperatureForToday()
-                readBloodGlucoseForToday()
-                readOxygenSaturationForToday()
-                readRespiratoryRateForToday()
-                healthConnectData1.forEach { item -> Timber.e("${item.key}, ${item.value}")}
+                readStepsFor30Days()
+                readWeightFor30Days()
+                readBodyFatFor30Days()
+                readHeartRateFor30Days()
+                //readLeanBodyMassForToday()
+                readBloodPressureFor30Days()
+                readHeightFor30Days()
+                readBodyTemperatureFor30Days()
+                readBloodGlucoseFor30Days()
+                readOxygenSaturationFor30Days()
+                readRespiratoryRateFor30Days()
+                //healthConnectData.forEach { item -> Timber.e("${item.key}, ${item.value}")}
+                //healthConnectData1.forEach { item -> Timber.e("${item.key}, ${item.value}")}
                 DatabaseConnection().postHealthConnectData(context, healthConnectData)
-            //}
+            }
         }
     }
 
-    private suspend fun readSteps() {
-        val startOfDay = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
-        val now = Instant.now()
-        stepsList.value = healthConnectManager.readSteps(startOfDay.toInstant(), now)
-    }
-
-    private suspend fun aggregateStepsForToday(): Boolean {
+    private suspend fun readStepsFor30Days(): Boolean {
         try {
-            aggregateStepsForToday.value = healthConnectManager.aggregateStepsForToday(zdt.toInstant())!!.toString()
-            if(!aggregateStepsForToday.value.equals(null)) {
-                stepsToday[pureZdt] = aggregateStepsForToday.value
-                healthConnectData1["steps"] = aggregateStepsForToday.value.toDouble().toString()
-                healthConnectData["steps"] = stepsToday
+            stepsList.value = healthConnectManager.readStepsForLast30Days(zdt.toInstant())
+            if(stepsList.value.isNotEmpty()) {
+                stepsList.value.forEach { stepsRecord: StepsRecord ->
+                    val zdt = ZonedDateTime.ofInstant(stepsRecord.startTime, ZoneId.systemDefault())
+                    if(stepsFor30Days.containsKey(pureDate(zdt))) {
+                        stepsFor30Days[pureDate(zdt)] = (stepsFor30Days[pureDate(zdt)]!!.toLong() + stepsRecord.count).toString()
+                    } else {
+                        stepsFor30Days[pureDate(zdt)] = stepsRecord.count.toString()
+                    }
+                }
+                healthConnectData["steps"] = stepsFor30Days
+                healthConnectData1["steps"] = healthConnectManager.aggregateStepsForToday(zdt.toInstant())!!.toString()
                 return true
             } else {
                 return false
@@ -223,14 +197,16 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private suspend fun readWeightForToday(): Boolean {
+    private suspend fun readWeightFor30Days(): Boolean {
         try {
-            weightList.value = healthConnectManager.readWeightForToday(zdt.toInstant())
+            weightList.value = healthConnectManager.readWeightForLast30Days(zdt.toInstant())
             if(weightList.value.isNotEmpty()) {
-                lastWeight = mutableDoubleStateOf(weightList.value.last().weight.inKilograms)
-                weightToday[pureZdt] = lastWeight.value.toLong().toString()
-                healthConnectData1["weight"] = lastWeight.value.toString()
-                healthConnectData["weight"] = weightToday
+                weightList.value.forEach { weightRecord: WeightRecord ->
+                    val zdt = ZonedDateTime.ofInstant(weightRecord.time, ZoneId.systemDefault())
+                   weightFor30Days[pureDate(zdt)] = weightRecord.weight.inKilograms.toString()
+                }
+                healthConnectData["weight"] = weightFor30Days
+                healthConnectData1["weight"] = weightList.value.last().weight.inKilograms.toString()
                 return true
             } else {
                 return false
@@ -239,30 +215,34 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private suspend fun readHeightForToday(): Boolean {
+    private suspend fun readHeightFor30Days(): Boolean {
         try {
-            heightList.value = healthConnectManager.readHeightForToday(zdt.toInstant())
+            heightList.value = healthConnectManager.readHeightForLast30Days(zdt.toInstant())
             if(heightList.value.isNotEmpty()) {
-                lastHeight.value = (heightList.value.last().height.inMeters * 100).toLong().toString()
-                heightToday[pureZdt] = lastHeight.value
-                healthConnectData1["height"] = lastHeight.value
-                healthConnectData["height"] = heightToday
+                heightList.value.forEach { heightRecord: HeightRecord ->
+                    val zdt = ZonedDateTime.ofInstant(heightRecord.time, ZoneId.systemDefault())
+                    heightFor30Days[pureDate(zdt)] = (heightRecord.height.inMeters * 100).toLong().toString()
+                }
+                healthConnectData["height"] = heightFor30Days
+                healthConnectData1["height"] = (heightList.value.last().height.inMeters * 100).toLong().toString()
                 return true
-            }
-            else {
+            } else {
                 return false
             }
         } catch (_: NullPointerException) {}
         return false
     }
-    private suspend fun readHeartRateForToday(): Boolean {
+
+    private suspend fun readHeartRateFor30Days(): Boolean {
         try {
-            heartRateList.value = healthConnectManager.readHeartRateFatForToday(zdt.toInstant())
+            heartRateList.value = healthConnectManager.readHeartRateForLast30Days(zdt.toInstant())
             if(heartRateList.value.isNotEmpty()) {
-                lastHeartRate.value = heartRateList.value.last().samples.last().beatsPerMinute
-                heartRateToday[pureZdt] = lastHeartRate.value.toString()
-                healthConnectData1["heart_rate"] = lastHeartRate.value.toDouble().toString()
-                healthConnectData["heartRate"] = heartRateToday
+                heartRateList.value.forEach { heartRateRecord: HeartRateRecord ->
+                    val zdt = ZonedDateTime.ofInstant(heartRateRecord.startTime, ZoneId.systemDefault())
+                    heartRateFor30Days[pureDate(zdt)] = heartRateRecord.samples.last().beatsPerMinute.toString()
+                }
+                healthConnectData["heartRate"] = heartRateFor30Days
+                healthConnectData1["heart_rate"] = heartRateList.value.last().samples.last().beatsPerMinute.toString()
                 return true
             } else {
                 return false
@@ -271,14 +251,16 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private suspend fun readBodyFatForToday(): Boolean {
+    private suspend fun readBodyFatFor30Days(): Boolean {
         try {
-            bodyFatList.value = healthConnectManager.readBodyFatForToday(zdt.toInstant())
+            bodyFatList.value = healthConnectManager.readBodyFatForLast30Days(zdt.toInstant())
             if(bodyFatList.value.isNotEmpty()) {
-                lastBodyFat.value = bodyFatList.value.last().percentage.value
-                bodyFatToday[pureZdt] = lastBodyFat.value.toLong().toString()
-                healthConnectData1["body_fat"] = lastBodyFat.value.toString()
-                healthConnectData["bodyFat"] = bodyFatToday
+                bodyFatList.value.forEach { bodyFatRecord: BodyFatRecord ->
+                    val zdt = ZonedDateTime.ofInstant(bodyFatRecord.time, ZoneId.systemDefault())
+                    bodyFatFor30Days[pureDate(zdt)] = bodyFatRecord.percentage.value.toString()
+                }
+                healthConnectData["bodyFat"] = bodyFatFor30Days
+                healthConnectData1["body_fat"] = bodyFatList.value.last().percentage.value.toString()
                 return true
             } else {
                 return false
@@ -287,6 +269,7 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
+    /*
     private fun readLeanBodyMassForToday(): Boolean {
         try {
             if(lastBodyFat.value != 0.0 && lastWeight.value != 0.0) {
@@ -301,15 +284,18 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         } catch (_: NullPointerException) {}
         return false
     }
+     */
 
-    private suspend fun readBloodPressureForToday(): Boolean {
+    private suspend fun readBloodPressureFor30Days(): Boolean {
         try {
-            bloodPressureList.value = healthConnectManager.readBloodPressureForToday(zdt.toInstant())
+           bloodPressureList.value = healthConnectManager.readBloodPressureForLast30Days(zdt.toInstant())
             if(bloodPressureList.value.isNotEmpty()) {
-                lastBloodPressure.value = "${bloodPressureList.value.last().systolic.inMillimetersOfMercury.toLong()}/${bloodPressureList.value.last().diastolic.inMillimetersOfMercury.toLong()}"
-                bloodPressureToday[pureZdt] = lastBloodPressure.value
-                healthConnectData1["blood_pressure"] = lastBloodPressure.value
-                healthConnectData["bloodPressure"] = bloodPressureToday
+                bloodPressureList.value.forEach { bloodPressureRecord: BloodPressureRecord ->
+                    val zdt = ZonedDateTime.ofInstant(bloodPressureRecord.time, ZoneId.systemDefault())
+                    bloodPressureFor30Days[pureDate(zdt)] = "${bloodPressureRecord.systolic.inMillimetersOfMercury.toLong()}/${bloodPressureRecord.diastolic.inMillimetersOfMercury.toLong()}"
+                }
+                healthConnectData["bloodPressure"] = bloodPressureFor30Days
+                healthConnectData1["blood_pressure"] = "${bloodPressureList.value.last().systolic.inMillimetersOfMercury.toLong()}/${bloodPressureList.value.last().diastolic.inMillimetersOfMercury.toLong()}"
                 return true
             } else {
                 return false
@@ -318,14 +304,16 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private suspend fun readBodyTemperatureForToday(): Boolean {
+    private suspend fun readBodyTemperatureFor30Days(): Boolean {
         try {
-            bodyTemperatureList.value = healthConnectManager.readBodyTemperatureForToday(zdt.toInstant())
+           bodyTemperatureList.value = healthConnectManager.readBodyTemperatureForLast30Days(zdt.toInstant())
             if(bodyTemperatureList.value.isNotEmpty()) {
-                lastBodyTemperature.value = bodyTemperatureList.value.last().temperature.inCelsius.toString()
-                bodyTemperatureToday[pureZdt] = lastBodyTemperature.value
-                healthConnectData1["body_temperature"] = lastBodyTemperature.value
-                healthConnectData["bodyTemperature"] = bodyTemperatureToday
+                bodyTemperatureList.value.forEach { bodyTemperatureRecord: BodyTemperatureRecord ->
+                    val zdt = ZonedDateTime.ofInstant(bodyTemperatureRecord.time, ZoneId.systemDefault())
+                    bodyTemperatureFor30Days[pureDate(zdt)] = bodyTemperatureRecord.temperature.inCelsius.toString()
+                }
+                healthConnectData["bodyTemperature"] = bodyTemperatureFor30Days
+                healthConnectData1["body_temperature"] = bodyTemperatureList.value.last().temperature.inCelsius.toString()
                 return true
             } else {
                 return false
@@ -334,14 +322,16 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private suspend fun readBloodGlucoseForToday(): Boolean {
+    private suspend fun readBloodGlucoseFor30Days(): Boolean {
         try {
-            bloodGlucoseList.value = healthConnectManager.readBloodGlucoseForToday(zdt.toInstant())
+            bloodGlucoseList.value = healthConnectManager.readBloodGlucoseForLast30Days(zdt.toInstant())
             if(bloodGlucoseList.value.isNotEmpty()) {
-                lastBloodGlucose.value = bloodGlucoseList.value.last().level.inMillimolesPerLiter.toString()
-                bloodGlucoseToday[pureZdt] = lastBloodGlucose.value
-                healthConnectData1["blood_glucose"] = lastBloodGlucose.value
-                healthConnectData["bloodGlucose"] = bloodGlucoseToday
+                bloodGlucoseList.value.forEach { bloodGlucoseRecord: BloodGlucoseRecord ->
+                    val zdt = ZonedDateTime.ofInstant(bloodGlucoseRecord.time, ZoneId.systemDefault())
+                    bloodGlucoseFor30Days[pureDate(zdt)] = bloodGlucoseRecord.level.inMillimolesPerLiter.toString()
+                }
+                healthConnectData["bloodGlucose"] = bloodGlucoseFor30Days
+                healthConnectData1["blood_glucose"] = bloodGlucoseList.value.last().level.inMillimolesPerLiter.toString()
                 return true
             } else {
                 return false
@@ -350,14 +340,16 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private suspend fun readOxygenSaturationForToday(): Boolean {
+    private suspend fun readOxygenSaturationFor30Days(): Boolean {
         try {
-            oxygenSaturationList.value = healthConnectManager.readOxygenSaturationForToday(zdt.toInstant())
+            oxygenSaturationList.value = healthConnectManager.readOxygenSaturationForLast30Days(zdt.toInstant())
             if(oxygenSaturationList.value.isNotEmpty()) {
-                lastOxygenSaturation.value = oxygenSaturationList.value.last().percentage.value.toString()
-                oxygenSaturationToday[pureZdt] = lastOxygenSaturation.value
-                healthConnectData1["oxygen_saturation"] = lastOxygenSaturation.value
-                healthConnectData["oxygenSaturation"] = oxygenSaturationToday
+                oxygenSaturationList.value.forEach { oxygenSaturationRecord: OxygenSaturationRecord ->
+                    val zdt = ZonedDateTime.ofInstant(oxygenSaturationRecord.time, ZoneId.systemDefault())
+                    oxygenSaturationFor30Days[pureDate(zdt)] = oxygenSaturationRecord.percentage.value.toString()
+                }
+                healthConnectData["oxygenSaturation"] = oxygenSaturationFor30Days
+                healthConnectData1["oxygen_saturation"] = oxygenSaturationList.value.last().percentage.value.toString()
                 return true
             } else {
                 return false
@@ -366,14 +358,16 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private suspend fun readRespiratoryRateForToday(): Boolean {
+    private suspend fun readRespiratoryRateFor30Days(): Boolean {
         try {
-            respiratoryRateList.value = healthConnectManager.readRespiratoryRateForToday(zdt.toInstant())
+            respiratoryRateList.value = healthConnectManager.readRespiratoryRateForLast30Days(zdt.toInstant())
             if(respiratoryRateList.value.isNotEmpty()) {
-                lastRespiratoryRate.value = respiratoryRateList.value.last().rate.toString()
-                respiratoryRateToday[pureZdt] = lastRespiratoryRate.value
-                healthConnectData1["respiratory_rate"] = lastRespiratoryRate.value
-                healthConnectData["respiratoryRate"] = respiratoryRateToday
+                respiratoryRateList.value.forEach { respiratoryRateRecord: RespiratoryRateRecord ->
+                    val zdt = ZonedDateTime.ofInstant(respiratoryRateRecord.time, ZoneId.systemDefault())
+                    respiratoryRateFor30Days[pureDate(zdt)] = respiratoryRateRecord.rate.toString()
+                }
+                healthConnectData["respiratoryRate"] = respiratoryRateFor30Days
+                healthConnectData1["respiratory_rate"] = respiratoryRateList.value.last().rate.toString()
                 return true
             } else {
                 return false
@@ -394,7 +388,7 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
 
     suspend fun writeWeight(date: ZonedDateTime, weight: Double) = healthConnectManager.writeWeight(date, weight)
     suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) = healthConnectManager.writeBodyFat(date, percentage)
-    suspend fun writeSteps(start: ZonedDateTime, end: ZonedDateTime, count: Long) = healthConnectManager.writeSteps(start, end, count)
+    suspend fun writeSteps(start: ZonedDateTime, count: Long) = healthConnectManager.writeSteps(start, count)
     suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) = healthConnectManager.writeHeartRate(start, end, count)
     suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long) = healthConnectManager.writeBloodPressure(date, upper, lower)
     suspend fun writeHeight(date: ZonedDateTime, height: Long) = healthConnectManager.writeHeight(date, height)

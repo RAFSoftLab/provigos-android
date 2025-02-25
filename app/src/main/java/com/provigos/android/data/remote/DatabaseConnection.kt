@@ -65,7 +65,7 @@ class DatabaseConnection {
         val jsonAdapter: JsonAdapter<MutableMap<String, MutableMap<String,String>>> = moshi.adapter<MutableMap<String, MutableMap<String, String>>>()
         val json = jsonAdapter.toJsonValue(healthConnectData)!!
         Timber.e(json.toString())
-        retrofitAPI.postHealthConnectData(SharedPreferenceDataSource(context).getUserToken(), json).enqueue(object: Callback<String> {
+        retrofitAPI.postHealthConnectData(SharedPreferenceDataSource(context).getGoogleToken(), json).enqueue(object: Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
                 Timber.e("POST Success")
             }
@@ -79,7 +79,7 @@ class DatabaseConnection {
         val json = jsonAdapter.toJsonValue(user)!!
         retrofitAPI.postLogin(json).enqueue(object: Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
-                SharedPreferenceDataSource(context).setUserToken(response.body().toString())
+                SharedPreferenceDataSource(context).setGoogleToken(response.body().toString())
             }
             override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
         })

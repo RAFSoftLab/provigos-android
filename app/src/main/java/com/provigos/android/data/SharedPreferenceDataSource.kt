@@ -25,17 +25,36 @@ package com.provigos.android.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
 class SharedPreferenceDataSource(context: Context) {
+
+    companion object {
+        private const val PREFS_NAME = "encrypted_prefs"
+        private const val REMEMBER_ME = "remember_me"
+        private const val PRIVATE_POLICY_KEY = "privacy_policy"
+        private const val GOOGLE_TOKEN_KEY = "google_token"
+        private const val GITHUB_ACCESS_TOKEN_KEY = "github_access_token"
+        private const val GITHUB_REFRESH_TOKEN_KEY = "github_refresh_token"
+        private const val SPOTIFY_ACCESS_TOKEN_KEY = "spotify_access_token"
+    }
+
 
     private var sharedPreferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     private var editor: SharedPreferences.Editor = sharedPreferences.edit()
 
-    companion object {
-        const val PRIVATE_POLICY_KEY = "privacy_policy"
-        const val REMEMBER_ME = "remember_me"
-        const val USER_TOKEN = "user_token"
-    }
+    private var masterKey = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
+
+    private var encryptedSharedPreferences: SharedPreferences = EncryptedSharedPreferences.create(
+        context,
+        PREFS_NAME,
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
+    private var encryptedEditor: SharedPreferences.Editor = encryptedSharedPreferences.edit()
+
 
     fun setPrivacyPolicy(boolean: Boolean) { editor.putBoolean(PRIVATE_POLICY_KEY, boolean).apply() }
 
@@ -45,7 +64,7 @@ class SharedPreferenceDataSource(context: Context) {
 
     fun isRememberMe(): Boolean { return sharedPreferences.getBoolean(REMEMBER_ME, false) }
 
-    fun setUserToken(token: String) { editor.putString(USER_TOKEN, token).apply() }
+    fun setGoogleToken(token: String) { encryptedEditor.putString(GOOGLE_TOKEN_KEY, token).apply() }
 
-    fun getUserToken(): String { return sharedPreferences.getString(USER_TOKEN, "empty")!! }
+    fun getGoogleToken(): String { return encryptedSharedPreferences.getString(GOOGLE_TOKEN_KEY, "empty")!! }
 }

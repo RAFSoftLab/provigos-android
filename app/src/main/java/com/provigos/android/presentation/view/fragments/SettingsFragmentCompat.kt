@@ -27,7 +27,6 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
-import androidx.credentials.CredentialManager
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
@@ -35,9 +34,6 @@ import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.presentation.view.activities.LoginActivity
 import com.provigos.android.presentation.view.activities.PrivacyPolicyActivity
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlin.system.exitProcess
 
 class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -79,7 +75,7 @@ class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSh
     @OptIn(DelicateCoroutinesApi::class)
     private fun signOut(): Boolean {
         SharedPreferenceDataSource(context).setRememberMe(false)
-        SharedPreferenceDataSource(context).setUserToken("")
+        SharedPreferenceDataSource(context).setGoogleToken("")
         LoginActivity().signout()
         return true
     }

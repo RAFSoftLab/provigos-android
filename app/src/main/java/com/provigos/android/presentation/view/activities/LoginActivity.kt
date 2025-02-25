@@ -25,7 +25,6 @@ package com.provigos.android.presentation.view.activities
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
@@ -34,18 +33,14 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.provigos.android.R
 import com.provigos.android.data.SharedPreferenceDataSource
-import com.provigos.android.data.remote.DatabaseConnection
-import com.provigos.android.data.remote.User
 import com.provigos.android.databinding.ActivityLoginBinding
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.security.MessageDigest
@@ -107,7 +102,7 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
                         val googleIdTokenCredential = GoogleIdTokenCredential
                             .createFrom(credential.data)
                         val googleIdToken = googleIdTokenCredential.idToken
-                        SharedPreferenceDataSource(this@LoginActivity).setUserToken(googleIdToken)
+                        SharedPreferenceDataSource(this@LoginActivity).setGoogleToken(googleIdToken)
                         SharedPreferenceDataSource(this@LoginActivity).setRememberMe(true)
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
