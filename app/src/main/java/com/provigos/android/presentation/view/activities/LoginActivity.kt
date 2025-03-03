@@ -36,6 +36,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import com.provigos.android.BuildConfig
 import com.provigos.android.R
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.databinding.ActivityLoginBinding
@@ -47,16 +48,25 @@ import java.security.MessageDigest
 
 class LoginActivity: AppCompatActivity(R.layout.activity_login) {
 
+    companion object {
+        private const val GOOGLE_SERVER_CLIENT_ID = BuildConfig.GOOGLE_CLIENT_ID
+    }
+
     private lateinit var binding: ActivityLoginBinding
     private lateinit var request: GetCredentialRequest
+    private lateinit var sharedPrefs: SharedPreferenceDataSource
 
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        sharedPrefs = SharedPreferenceDataSource(this)
+
         binding = ActivityLoginBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
+
 
         request = GetCredentialRequest.Builder()
             .addCredentialOption(getSignInWithGoogleOption())
@@ -64,24 +74,17 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
 
         val credentialManager = CredentialManager.create(this@LoginActivity)
 
-        /*if(SharedPreferenceDataSource(this).isRememberMe()) {
-            startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-            finish()
-        }
-        *///else {
-            lifecycleScope.launch {
-                try {
-                    val result = credentialManager.getCredential(
-                        context = this@LoginActivity,
-                        request = request
-                    )
-                    handleSignIn(result)
-                } catch (e: GetCredentialException) {
-                    handleFailure(e)
-                }
+        lifecycleScope.launch {
+            try {
+                val result = credentialManager.getCredential(
+                    context = this@LoginActivity,
+                    request = request
+                )
+                handleSignIn(result)
+            } catch (e: GetCredentialException) {
+                handleFailure(e)
             }
-        //}
-
+        }
     }
 
     private fun getSignInWithGoogleOption(): GetSignInWithGoogleOption {
@@ -89,7 +92,7 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
         val md = MessageDigest.getInstance("SHA-256")
         val digest = md.digest(rawNonce.toByteArray())
         val hashedNonce = digest.fold("") { str, it -> str + "%02x".format(it) }
-        return GetSignInWithGoogleOption.Builder(getString(R.string.SERVER_CLIENT_ID2))
+        return GetSignInWithGoogleOption.Builder(GOOGLE_SERVER_CLIENT_ID)
             .setNonce(hashedNonce)
             .build()
     }
@@ -102,8 +105,8 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
                         val googleIdTokenCredential = GoogleIdTokenCredential
                             .createFrom(credential.data)
                         val googleIdToken = googleIdTokenCredential.idToken
-                        SharedPreferenceDataSource(this@LoginActivity).setGoogleToken(googleIdToken)
-                        SharedPreferenceDataSource(this@LoginActivity).setRememberMe(true)
+                        sharedPrefs.setGoogleToken(googleIdToken)
+                        sharedPrefs.setRememberMe(true)
                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                         finish()
                     } catch (e: GoogleIdTokenParsingException) {

@@ -18,6 +18,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         manifestPlaceholders["appAuthRedirectScheme"] = "com.provigos.android"
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"225554960679-k9pc7l5e9sicc840k2h877bcbuqns9l0.apps.googleusercontent.com\"")
+        buildConfigField("String", "GITHUB_CLIENT_ID", "\"Ov23linRizSf3bwscUP5\"")
+        buildConfigField("String", "GITHUB_CLIENT_SECRET", "\"4a64adaab35e8191d7dba91e47ad69b8fea3ce12\"")
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"69954a882b774dc493e26f4ccbbc35b3\"")
+        buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"6c2b7bb489ae40d79b586a4cda0dd391\"")
     }
 
     testOptions {
@@ -42,6 +47,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

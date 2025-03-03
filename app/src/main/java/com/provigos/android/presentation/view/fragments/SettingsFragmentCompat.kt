@@ -76,12 +76,12 @@ class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSh
     }
 
     private fun githubIntegration(): Boolean {
-        startActivity(Intent(activity, OAuthActivity::class.java).putExtra("oauth", "github"))
+        startActivity(Intent(activity, OAuthActivity::class.java).putExtra("oauth", "github").setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP))
         return true
     }
 
     private fun spotifyIntegration(): Boolean {
-        startActivity(Intent(activity, OAuthActivity::class.java).putExtra("oauth", "spotify"))
+        startActivity(Intent(activity, OAuthActivity::class.java).putExtra("oauth", "spotify").setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP))
         return true
     }
 

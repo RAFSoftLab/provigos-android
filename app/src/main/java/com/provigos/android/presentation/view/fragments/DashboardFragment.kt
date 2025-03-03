@@ -61,7 +61,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         recyclerView = root.findViewById(R.id.dashboard_recycler_view)
         recyclerView.postDelayed({
             recyclerView.layoutManager = LinearLayoutManager(context)
-        }, 800)
+        }, 1200)
         adapter = DashboardRecyclerViewAdapter(viewModel.healthConnectData1)
         recyclerView.adapter = adapter
         recyclerView.setHasFixedSize(true)

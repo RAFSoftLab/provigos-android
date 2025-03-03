@@ -41,12 +41,17 @@ class SplashActivity: AppCompatActivity(R.layout.activity_splash) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySplashBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
-        Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+
+        if(isTaskRoot) {
+            binding = ActivitySplashBinding.inflate(layoutInflater)
+            val view = binding.root
+            setContentView(view)
+            Handler(Looper.getMainLooper()).postDelayed({
+                startActivity(Intent(this@SplashActivity, LoginActivity::class.java))
+                finish()
+            }, 3000)
+        } else {
             finish()
-        }, 3000)
+        }
     }
 }

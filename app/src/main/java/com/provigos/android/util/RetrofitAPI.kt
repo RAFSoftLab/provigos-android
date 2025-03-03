@@ -20,15 +20,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data.remote
+package com.provigos.android.util
 
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
-import retrofit2.http.Query
-
 
 interface RetrofitAPI {
 
@@ -38,6 +36,6 @@ interface RetrofitAPI {
 
     @Headers("Accept: */*", "Content-Type: application/json")
     @POST("healthConnectIntegration")
-    fun postData(@Header("Authorization") token: String, @Body json: Any): Call<String>
+    fun postData(@Header("Authorization") token: String, @Body json: Any?): Call<String>
 
 }

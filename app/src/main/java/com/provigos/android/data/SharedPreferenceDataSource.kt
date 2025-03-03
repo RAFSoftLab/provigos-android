@@ -38,6 +38,9 @@ class SharedPreferenceDataSource(context: Context) {
         private const val GITHUB_ACCESS_TOKEN_KEY = "github_access_token"
         private const val SPOTIFY_ACCESS_TOKEN_KEY = "spotify_access_token"
         private const val SPOTIFY_REFRESH_TOKEN_KEY = "spotify_refresh_token"
+        private const val STATE = "state"
+        private const val AUTH_DESTINATION = "auth_destination"
+        private const val PKCE_CODE_VERIFIER = "code_verifier"
     }
 
     private var sharedPreferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -63,19 +66,31 @@ class SharedPreferenceDataSource(context: Context) {
 
     fun isRememberMe(): Boolean { return sharedPreferences.getBoolean(REMEMBER_ME, false) }
 
+    fun setState(token: String) { encryptedEditor.putString(STATE, token).apply() }
+
+    fun getState(): String? { return encryptedSharedPreferences.getString(STATE, null) }
+
     fun setGoogleToken(token: String) { encryptedEditor.putString(GOOGLE_TOKEN_KEY, token).apply() }
 
-    fun getGoogleToken(): String { return encryptedSharedPreferences.getString(GOOGLE_TOKEN_KEY, "empty_token")!! }
+    fun getGoogleToken(): String? { return encryptedSharedPreferences.getString(GOOGLE_TOKEN_KEY, null) }
 
     fun setGithubAccessToken(token: String) { encryptedEditor.putString(GITHUB_ACCESS_TOKEN_KEY, token).apply() }
 
-    fun getGithubAccessToken(): String { return encryptedSharedPreferences.getString(GITHUB_ACCESS_TOKEN_KEY, "empty_token")!! }
+    fun getGithubAccessToken(): String? { return encryptedSharedPreferences.getString(GITHUB_ACCESS_TOKEN_KEY, null) }
 
     fun setSpotifyAccessToken(token: String) { encryptedEditor.putString(SPOTIFY_ACCESS_TOKEN_KEY, token).apply() }
 
-    fun getSpotifyAccessToken(): String { return encryptedSharedPreferences.getString(SPOTIFY_ACCESS_TOKEN_KEY, "empty_token")!! }
+    fun getSpotifyAccessToken(): String? { return encryptedSharedPreferences.getString(SPOTIFY_ACCESS_TOKEN_KEY, null) }
 
     fun setSpotifyRefreshToken(token: String) { encryptedEditor.putString(SPOTIFY_REFRESH_TOKEN_KEY, token).apply() }
 
-    fun getSpotifyRefreshToken(): String { return encryptedSharedPreferences.getString(SPOTIFY_REFRESH_TOKEN_KEY, "empty_token")!! }
+    fun getSpotifyRefreshToken(): String? { return encryptedSharedPreferences.getString(SPOTIFY_REFRESH_TOKEN_KEY, null) }
+
+    fun setAuthDestination(token: String) { editor.putString(AUTH_DESTINATION, token).apply() }
+
+    fun getAuthDestination(): String? { return sharedPreferences.getString(AUTH_DESTINATION, null) }
+
+    fun setCodeVerifier(token: String) { encryptedEditor.putString(PKCE_CODE_VERIFIER, token).apply() }
+
+    fun getCodeVerifier(): String? { return encryptedSharedPreferences.getString(PKCE_CODE_VERIFIER, null) }
 }

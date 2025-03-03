@@ -22,18 +22,14 @@
  */
 package com.provigos.android.presentation.viewmodel
 
-import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.Context.USAGE_STATS_SERVICE
 import android.os.RemoteException
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.BloodGlucoseRecord
 import androidx.health.connect.client.records.BloodPressureRecord
 import androidx.health.connect.client.records.BodyFatRecord
@@ -42,24 +38,18 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.OxygenSaturationRecord
 import androidx.health.connect.client.records.RespiratoryRateRecord
-import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.HealthConnectManager
-import com.provigos.android.data.remote.DatabaseConnection
+import com.provigos.android.data.HttpManager
 import kotlinx.coroutines.launch
 import okio.IOException
-import timber.log.Timber
 import java.lang.IllegalStateException
-import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import java.util.Calendar
-import java.util.Date
 import java.util.UUID
 
 class HealthConnectViewModel(private val healthConnectManager: HealthConnectManager): ViewModel() {
@@ -158,7 +148,7 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
             //tryWithPermissionCheck {
                 healthConnectData1 = HashMap()
                 readHealthConnectData()
-                DatabaseConnection().postData(context, healthConnectData)
+                HttpManager().postData(context, healthConnectData)
                 //healthConnectData.forEach { item -> Timber.e("${item.key}, ${item.value}")}
                 //healthConnectData1.forEach { item -> Timber.e("${item.key}, ${item.value}")}
             //}

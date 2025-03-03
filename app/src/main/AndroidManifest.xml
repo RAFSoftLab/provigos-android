@@ -40,7 +40,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
         <activity android:name=".presentation.view.activities.SplashActivity"
-            android:exported="true">
+            android:exported="true" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -53,17 +53,18 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
             </intent-filter>
         </activity>
-        <activity android:name=".presentation.view.activities.MainActivity" android:exported="true"/>
+        <activity android:name=".presentation.view.activities.MainActivity" android:exported="true">
+        </activity>
         <activity android:name=".presentation.view.activities.LoginActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.Input2Activity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.InputActivity" android:exported="true"/>
-        <activity android:name=".presentation.view.activities.OAuthActivity" android:exported="true" tools:node="replace">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="com.provigos.android"/>
-            </intent-filter>
+        <activity android:name=".presentation.view.activities.OAuthActivity" android:exported="true" android:launchMode="singleTask">
+        <intent-filter android:priority="999">
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="com.provigos.android" android:host="callback"/>
+        </intent-filter>
         </activity>
     </application>
     

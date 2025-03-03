@@ -34,13 +34,16 @@ import com.provigos.android.databinding.ActivityPrivacyPolicyBinding
 class HealthConnectPrivacyPolicyActivity: AppCompatActivity(R.layout.activity_privacy_policy) {
 
     private lateinit var binding: ActivityPrivacyPolicyBinding
+    private lateinit var sharedPrefs: SharedPreferenceDataSource
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        sharedPrefs = SharedPreferenceDataSource(this)
+
         binding = ActivityPrivacyPolicyBinding.inflate(layoutInflater)
         val view = binding.root
-        if(SharedPreferenceDataSource(this).isPrivacyPolicy()) {
+        if(sharedPrefs.isPrivacyPolicy()) {
             startHealthConnectIntent()
             finish()
         }
@@ -56,7 +59,7 @@ class HealthConnectPrivacyPolicyActivity: AppCompatActivity(R.layout.activity_pr
 
         binding.ppContinueButton.setOnClickListener {
             if(binding.ppCheckbox.isChecked) {
-                SharedPreferenceDataSource(this).setPrivacyPolicy(true)
+                sharedPrefs.setPrivacyPolicy(true)
                 startHealthConnectIntent()
                 finish()
             } else Toast.makeText(this, "You didn't accept the Privacy Policy",

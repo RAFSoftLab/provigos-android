@@ -26,7 +26,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.facebook.stetho.BuildConfig
 import com.facebook.stetho.okhttp3.StethoInterceptor
-import com.provigos.android.data.remote.RetrofitAPI
+import com.provigos.android.util.RetrofitAPI
 import com.squareup.moshi.Moshi
 import org.koin.android.ext.koin.androidApplication
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter

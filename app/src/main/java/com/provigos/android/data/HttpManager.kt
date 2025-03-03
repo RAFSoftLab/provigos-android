@@ -20,10 +20,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data.remote
+package com.provigos.android.data
 
 import android.content.Context
-import com.provigos.android.data.SharedPreferenceDataSource
+import com.provigos.android.util.RetrofitAPI
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
@@ -36,8 +36,11 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import timber.log.Timber
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.util.concurrent.TimeUnit
 
-class DatabaseConnection {
+class HttpManager {
 
     private val retrofitAPI: RetrofitAPI
     private val moshi: Moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
@@ -48,6 +51,9 @@ class DatabaseConnection {
 
         val mOkHttpClient = OkHttpClient
             .Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(mHttpLoggingInterceptor)
             .build()
 
@@ -61,16 +67,41 @@ class DatabaseConnection {
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun postData(context: Context, healthConnectData:  MutableMap<String, MutableMap<String, String>>) {
-        val jsonAdapter: JsonAdapter<MutableMap<String, MutableMap<String,String>>> = moshi.adapter<MutableMap<String, MutableMap<String, String>>>()
-        val json = jsonAdapter.toJsonValue(healthConnectData)!!
-        Timber.e(json.toString())
-        retrofitAPI.postData(SharedPreferenceDataSource(context).getGoogleToken(), json).enqueue(object: Callback<String> {
-            override fun onResponse(call: Call<String>, response: Response<String>) {
-                Timber.e("POST Success")
-            }
-            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
-        })
-    }
+    fun postData(context: Context, userData:  MutableMap<String, MutableMap<String, String>>) {
+        try {
+            val jsonAdapter: JsonAdapter<MutableMap<String, MutableMap<String,String>>> = moshi.adapter()
+            val json = jsonAdapter.toJsonValue(userData)
 
+            Timber.tag("HttpManager").d("Sending JSON: $json")
+
+            val googleToken = SharedPreferenceDataSource(context).getGoogleToken()
+
+            if(googleToken.isNullOrBlank()) {
+                Timber.tag("HttpManager").e("Google token is missing")
+                throw IllegalArgumentException("Google Token is null or empty")
+            } else {
+                retrofitAPI.postData(SharedPreferenceDataSource(context).getGoogleToken()!!, json)
+                    .enqueue(object : Callback<String> {
+                        override fun onResponse(call: Call<String>, response: Response<String>) {
+                            if (response.isSuccessful) {
+                                Timber.tag("HttpManager").e("POST Success: ${response.body()}")
+                            } else {
+                                Timber.tag("HttpManager").e("POST Error: ${response.code()} - ${response.errorBody()?.string()}")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<String>, t: Throwable) {
+                            when (t) {
+                                is SocketTimeoutException -> Timber.tag("HttpManager").e("Socket Timeout: ${t.message}")
+                                is IOException -> Timber.tag("HttpManager").e("Network Error: ${t.message}")
+                                else -> Timber.tag("HttpManager").e("Unknown Error: ${t.message}")
+                            }
+                            t.printStackTrace()
+                        }
+                    })
+            }
+        } catch (e: Exception) {
+            Timber.tag("HttpManager").e("Exception in postData: ${e.message}")
+        }
+    }
 }
