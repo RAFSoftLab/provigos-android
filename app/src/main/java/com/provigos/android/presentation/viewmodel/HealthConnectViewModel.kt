@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -155,24 +155,27 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
 
     fun init(context: Context) {
         viewModelScope.launch {
-            tryWithPermissionCheck {
+            //tryWithPermissionCheck {
                 healthConnectData1 = HashMap()
-                readStepsFor30Days()
-                readWeightFor30Days()
-                readBodyFatFor30Days()
-                readHeartRateFor30Days()
-                //readLeanBodyMassForToday()
-                readBloodPressureFor30Days()
-                readHeightFor30Days()
-                readBodyTemperatureFor30Days()
-                readBloodGlucoseFor30Days()
-                readOxygenSaturationFor30Days()
-                readRespiratoryRateFor30Days()
+                readHealthConnectData()
+                DatabaseConnection().postData(context, healthConnectData)
                 //healthConnectData.forEach { item -> Timber.e("${item.key}, ${item.value}")}
                 //healthConnectData1.forEach { item -> Timber.e("${item.key}, ${item.value}")}
-                DatabaseConnection().postHealthConnectData(context, healthConnectData)
-            }
+            //}
         }
+    }
+
+    private suspend fun readHealthConnectData() {
+        readStepsFor30Days()
+        readWeightFor30Days()
+        readHeightFor30Days()
+        readHeartRateFor30Days()
+        readBodyFatFor30Days()
+        readBloodPressureFor30Days()
+        readBodyTemperatureFor30Days()
+        readBloodGlucoseFor30Days()
+        readOxygenSaturationFor30Days()
+        readRespiratoryRateFor30Days()
     }
 
     private suspend fun readStepsFor30Days(): Boolean {
@@ -376,22 +379,12 @@ class HealthConnectViewModel(private val healthConnectManager: HealthConnectMana
         return false
     }
 
-    private fun getScreenTime(context: Context) {
-        val localDate = LocalDate.now()
-        val c = Calendar.getInstance()
-        val date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
-        c.time = date
-        val dateEnd = System.currentTimeMillis()
-        val usageStatsManager: UsageStatsManager = context.getSystemService(USAGE_STATS_SERVICE) as UsageStatsManager
-        val events = usageStatsManager.queryEvents(c.timeInMillis, dateEnd)
-    }
-
-    suspend fun writeWeight(date: ZonedDateTime, weight: Double) = healthConnectManager.writeWeight(date, weight)
-    suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) = healthConnectManager.writeBodyFat(date, percentage)
     suspend fun writeSteps(start: ZonedDateTime, count: Long) = healthConnectManager.writeSteps(start, count)
-    suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) = healthConnectManager.writeHeartRate(start, end, count)
-    suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long) = healthConnectManager.writeBloodPressure(date, upper, lower)
+    suspend fun writeWeight(date: ZonedDateTime, weight: Double) = healthConnectManager.writeWeight(date, weight)
     suspend fun writeHeight(date: ZonedDateTime, height: Long) = healthConnectManager.writeHeight(date, height)
+    suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) = healthConnectManager.writeHeartRate(start, end, count)
+    suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) = healthConnectManager.writeBodyFat(date, percentage)
+    suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long) = healthConnectManager.writeBloodPressure(date, upper, lower)
     suspend fun writeBodyTemperature(date: ZonedDateTime, temperature: Double) = healthConnectManager.writeBodyTemperature(date, temperature)
     suspend fun writeBloodGlucose(date: ZonedDateTime, level: Double) = healthConnectManager.writeBloodGlucose(date, level)
     suspend fun writeOxygenSaturation(date: ZonedDateTime, percentage: Double) = healthConnectManager.writeOxygenSaturation(date, percentage)

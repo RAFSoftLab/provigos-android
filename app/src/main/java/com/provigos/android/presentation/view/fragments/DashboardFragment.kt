@@ -119,7 +119,6 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
             refresh()
         }
 
-
         return root
     }
 
@@ -135,10 +134,4 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         super.onAttach(context)
         viewModel.init(context)
     }
-
-    override fun onResume() {
-        super.onResume()
-        //refresh()
-    }
-
 }

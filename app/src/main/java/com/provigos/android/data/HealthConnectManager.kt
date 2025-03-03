@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -130,6 +130,18 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeSteps(start: ZonedDateTime, count: Long) {
+        healthConnectClient.insertRecords(listOf(
+            StepsRecord(
+                startTime = start.toInstant(),
+                startZoneOffset = start.offset,
+                endTime = start.toInstant().plus(5, ChronoUnit.MINUTES),
+                endZoneOffset = start.offset,
+                count = count
+            )
+        ))
+    }
+
     // WEIGHT
     suspend fun readWeightForToday(date: Instant): List<WeightRecord> {
         val request = ReadRecordsRequest(
@@ -149,6 +161,16 @@ class HealthConnectManager(private val context: Context) {
         val response = healthConnectClient.readRecords(request)
         //response.records.forEach { w -> Timber.e(w.toString()) }
         return response.records
+    }
+
+    suspend fun writeWeight(date: ZonedDateTime, weight: Double) {
+        healthConnectClient.insertRecords(listOf(
+            WeightRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                weight = Mass.kilograms(weight)
+            )
+        ))
     }
 
     // BODY FAT
@@ -171,6 +193,16 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) {
+        healthConnectClient.insertRecords(listOf(
+            BodyFatRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                percentage = Percentage(percentage)
+            )
+        ))
+    }
+
     // HEART RATE
     suspend fun readHeartRateFatForToday(date: Instant): List<HeartRateRecord> {
         val request = ReadRecordsRequest(
@@ -191,6 +223,21 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) {
+        healthConnectClient.insertRecords(listOf(
+            HeartRateRecord(
+                startTime = start.toInstant(),
+                startZoneOffset = start.offset,
+                endTime = end.toInstant(),
+                endZoneOffset = end.offset,
+                samples = listOf(HeartRateRecord.Sample(
+                    time = ZonedDateTime.now().toInstant(),
+                    beatsPerMinute = count
+                ))
+        )))
+    }
+
+    // BLOOD PRESSURE
     suspend fun readBloodPressureForToday(date: Instant): List<BloodPressureRecord> {
         val request = ReadRecordsRequest(
             recordType = BloodPressureRecord::class,
@@ -211,6 +258,20 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long) {
+        healthConnectClient.insertRecords(listOf(
+            BloodPressureRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                systolic = Pressure.millimetersOfMercury(upper.toDouble()),
+                diastolic = Pressure.millimetersOfMercury(lower.toDouble()),
+                bodyPosition = BloodPressureRecord.BODY_POSITION_UNKNOWN,
+                measurementLocation = BloodPressureRecord.MEASUREMENT_LOCATION_UNKNOWN,
+            )
+        ))
+    }
+
+    // HEIGHT
     suspend fun readHeightForToday(date: Instant): List<HeightRecord> {
         val request = ReadRecordsRequest(
             recordType = HeightRecord::class,
@@ -231,6 +292,17 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeHeight(date: ZonedDateTime, height: Long) {
+        healthConnectClient.insertRecords(listOf(
+            HeightRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                height = Length.meters(height.toDouble()/100.00),
+            )
+        ))
+    }
+
+    // BLOOD GLUCOSE
     suspend fun readBloodGlucoseForToday(date: Instant): List<BloodGlucoseRecord> {
         val request = ReadRecordsRequest(
             recordType = BloodGlucoseRecord::class,
@@ -251,6 +323,20 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeBloodGlucose(date: ZonedDateTime, level: Double) {
+        healthConnectClient.insertRecords(listOf(
+            BloodGlucoseRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                level = BloodGlucose.millimolesPerLiter(level),
+                specimenSource = BloodGlucoseRecord.SPECIMEN_SOURCE_SERUM,
+                mealType = MealType.MEAL_TYPE_UNKNOWN,
+                relationToMeal = BloodGlucoseRecord.RELATION_TO_MEAL_BEFORE_MEAL,
+            )
+        ))
+    }
+
+    // OXYGEN SATURATION
     suspend fun readOxygenSaturationForToday(date: Instant): List<OxygenSaturationRecord> {
         val request = ReadRecordsRequest(
             recordType = OxygenSaturationRecord::class,
@@ -271,6 +357,17 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeOxygenSaturation(date: ZonedDateTime, percentage: Double) {
+        healthConnectClient.insertRecords(listOf(
+            OxygenSaturationRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                percentage = Percentage(percentage),
+            )
+        ))
+    }
+
+    // BODY TEMPERATURE
     suspend fun readBodyTemperatureForToday(date: Instant): List<BodyTemperatureRecord> {
         val request = ReadRecordsRequest(
             recordType = BodyTemperatureRecord::class,
@@ -291,6 +388,18 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
+    suspend fun writeBodyTemperature(date: ZonedDateTime, temperature: Double) {
+        healthConnectClient.insertRecords(listOf(
+            BodyTemperatureRecord(
+                time = date.toInstant(),
+                zoneOffset = date.offset,
+                temperature = Temperature.celsius(temperature),
+                measurementLocation = BodyTemperatureMeasurementLocation.MEASUREMENT_LOCATION_UNKNOWN,
+            )
+        ))
+    }
+
+    // RESPIRATORY RATE
     suspend fun readRespiratoryRateForToday(date: Instant): List<RespiratoryRateRecord> {
         val request = ReadRecordsRequest(
             recordType = RespiratoryRateRecord::class,
@@ -311,115 +420,12 @@ class HealthConnectManager(private val context: Context) {
         return response.records
     }
 
-    suspend fun writeHeight(date: ZonedDateTime, height: Long) {
-        healthConnectClient.insertRecords(listOf(
-            HeightRecord(
-                time = date.toInstant(),
-                zoneOffset = date.offset,
-                height = Length.meters(height.toDouble()/100.00),
-            )
-        ))
-    }
-
-    suspend fun writeBloodGlucose(date: ZonedDateTime, level: Double) {
-        healthConnectClient.insertRecords(listOf(
-            BloodGlucoseRecord(
-                time = date.toInstant(),
-                zoneOffset = date.offset,
-                level = BloodGlucose.millimolesPerLiter(level),
-                specimenSource = BloodGlucoseRecord.SPECIMEN_SOURCE_SERUM,
-                mealType = MealType.MEAL_TYPE_UNKNOWN,
-                relationToMeal = BloodGlucoseRecord.RELATION_TO_MEAL_BEFORE_MEAL,
-            )
-        ))
-    }
-
-    suspend fun writeOxygenSaturation(date: ZonedDateTime, percentage: Double) {
-        healthConnectClient.insertRecords(listOf(
-            OxygenSaturationRecord(
-                time = date.toInstant(),
-                zoneOffset = date.offset,
-                percentage = Percentage(percentage),
-            )
-        ))
-    }
-
-    suspend fun writeBodyTemperature(date: ZonedDateTime, temperature: Double) {
-        healthConnectClient.insertRecords(listOf(
-            BodyTemperatureRecord(
-                time = date.toInstant(),
-                zoneOffset = date.offset,
-                temperature = Temperature.celsius(temperature),
-                measurementLocation = BodyTemperatureMeasurementLocation.MEASUREMENT_LOCATION_UNKNOWN,
-            )
-        ))
-    }
-
-    suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long) {
-        healthConnectClient.insertRecords(listOf(
-            BloodPressureRecord(
-                time = date.toInstant(),
-                zoneOffset = date.offset,
-                systolic = Pressure.millimetersOfMercury(upper.toDouble()),
-                diastolic = Pressure.millimetersOfMercury(lower.toDouble()),
-                bodyPosition = BloodPressureRecord.BODY_POSITION_UNKNOWN,
-                measurementLocation = BloodPressureRecord.MEASUREMENT_LOCATION_UNKNOWN,
-            )
-        ))
-    }
-
     suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double) {
         healthConnectClient.insertRecords(listOf(
             RespiratoryRateRecord(
                 time = date.toInstant(),
                 zoneOffset = date.offset,
                 rate = rate,
-            )
-        ))
-    }
-
-    suspend fun writeSteps(start: ZonedDateTime, count: Long) {
-        healthConnectClient.insertRecords(listOf(
-            StepsRecord(
-                startTime = start.toInstant(),
-                startZoneOffset = start.offset,
-                endTime = start.toInstant().plus(5, ChronoUnit.MINUTES),
-                endZoneOffset = start.offset,
-                count = count
-            )
-        ))
-    }
-
-    suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) {
-        healthConnectClient.insertRecords(listOf(
-            HeartRateRecord(
-                startTime = start.toInstant(),
-                startZoneOffset = start.offset,
-                endTime = end.toInstant(),
-                endZoneOffset = end.offset,
-                samples = listOf(HeartRateRecord.Sample(
-                    time = ZonedDateTime.now().toInstant(),
-                    beatsPerMinute = count
-                ))
-        )))
-    }
-
-    suspend fun writeWeight(date: ZonedDateTime, weight: Double) {
-        healthConnectClient.insertRecords(listOf(
-            WeightRecord(
-                time = date.toInstant(),
-                zoneOffset = date.offset,
-                weight = Mass.kilograms(weight)
-            )
-        ))
-    }
-
-    suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) {
-        healthConnectClient.insertRecords(listOf(
-            BodyFatRecord(
-                time = date.toInstant(),
-                zoneOffset = date.offset,
-                percentage = Percentage(percentage)
             )
         ))
     }

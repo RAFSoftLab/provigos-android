@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,14 +38,6 @@ interface RetrofitAPI {
 
     @Headers("Accept: */*", "Content-Type: application/json")
     @POST("healthConnectIntegration")
-    fun postHealthConnectData(@Header("Authorization") token: String, @Body json: Any): Call<String>
+    fun postData(@Header("Authorization") token: String, @Body json: Any): Call<String>
 
-    @POST("login")
-    fun postLogin(@Body json: Any): Call<String>
-
-    @POST("login")
-    fun postLogin2(@Header("Authorization") token: String): Call<String>
-
-    @POST("createUser")
-    fun postUser(@Body json: Any): Call<String>
 }

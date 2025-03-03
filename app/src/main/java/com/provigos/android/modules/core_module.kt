@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -44,11 +44,6 @@ val coreModule = module {
     single<SharedPreferences> {
         androidApplication().getSharedPreferences(androidApplication().packageName, Context.MODE_PRIVATE)
     }
-
-//    single { Room.databaseBuilder(androidContext(), Database::class.java, "db")
-//        .fallbackToDestructiveMigration()
-//        .build()
-//    }
 
     fun createMoshi() : Moshi {
         return Moshi.Builder()

@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,10 +36,9 @@ class SharedPreferenceDataSource(context: Context) {
         private const val PRIVATE_POLICY_KEY = "privacy_policy"
         private const val GOOGLE_TOKEN_KEY = "google_token"
         private const val GITHUB_ACCESS_TOKEN_KEY = "github_access_token"
-        private const val GITHUB_REFRESH_TOKEN_KEY = "github_refresh_token"
         private const val SPOTIFY_ACCESS_TOKEN_KEY = "spotify_access_token"
+        private const val SPOTIFY_REFRESH_TOKEN_KEY = "spotify_refresh_token"
     }
-
 
     private var sharedPreferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
     private var editor: SharedPreferences.Editor = sharedPreferences.edit()
@@ -66,5 +65,17 @@ class SharedPreferenceDataSource(context: Context) {
 
     fun setGoogleToken(token: String) { encryptedEditor.putString(GOOGLE_TOKEN_KEY, token).apply() }
 
-    fun getGoogleToken(): String { return encryptedSharedPreferences.getString(GOOGLE_TOKEN_KEY, "empty")!! }
+    fun getGoogleToken(): String { return encryptedSharedPreferences.getString(GOOGLE_TOKEN_KEY, "empty_token")!! }
+
+    fun setGithubAccessToken(token: String) { encryptedEditor.putString(GITHUB_ACCESS_TOKEN_KEY, token).apply() }
+
+    fun getGithubAccessToken(): String { return encryptedSharedPreferences.getString(GITHUB_ACCESS_TOKEN_KEY, "empty_token")!! }
+
+    fun setSpotifyAccessToken(token: String) { encryptedEditor.putString(SPOTIFY_ACCESS_TOKEN_KEY, token).apply() }
+
+    fun getSpotifyAccessToken(): String { return encryptedSharedPreferences.getString(SPOTIFY_ACCESS_TOKEN_KEY, "empty_token")!! }
+
+    fun setSpotifyRefreshToken(token: String) { encryptedEditor.putString(SPOTIFY_REFRESH_TOKEN_KEY, token).apply() }
+
+    fun getSpotifyRefreshToken(): String { return encryptedSharedPreferences.getString(SPOTIFY_REFRESH_TOKEN_KEY, "empty_token")!! }
 }

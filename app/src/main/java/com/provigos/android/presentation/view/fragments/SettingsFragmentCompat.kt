@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,8 @@ import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.presentation.view.activities.LoginActivity
-import com.provigos.android.presentation.view.activities.PrivacyPolicyActivity
+import com.provigos.android.presentation.view.activities.OAuthActivity
+import com.provigos.android.presentation.view.activities.HealthConnectPrivacyPolicyActivity
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
@@ -45,7 +46,9 @@ class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSh
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        findPreference<Preference>(getString(R.string.switch_pref1_key))?.setOnPreferenceClickListener { privacyPolicy() }
+        findPreference<Preference>(getString(R.string.switch_pref1_key))?.setOnPreferenceClickListener { healthConnectIntegration() }
+        findPreference<Preference>("github_integration")?.setOnPreferenceClickListener { githubIntegration() }
+        findPreference<Preference>("spotify_integration")?.setOnPreferenceClickListener { spotifyIntegration() }
         findPreference<Preference>(getString(R.string.switch_pref2_key))?.setOnPreferenceClickListener { signOut() }
         context = view.context
     }
@@ -67,8 +70,18 @@ class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSh
         }*/
     }
 
-    private fun privacyPolicy(): Boolean {
-        startActivity(Intent(activity, PrivacyPolicyActivity::class.java))
+    private fun healthConnectIntegration(): Boolean {
+        startActivity(Intent(activity, HealthConnectPrivacyPolicyActivity::class.java))
+        return true
+    }
+
+    private fun githubIntegration(): Boolean {
+        startActivity(Intent(activity, OAuthActivity::class.java).putExtra("oauth", "github"))
+        return true
+    }
+
+    private fun spotifyIntegration(): Boolean {
+        startActivity(Intent(activity, OAuthActivity::class.java).putExtra("oauth", "spotify"))
         return true
     }
 

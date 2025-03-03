@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -61,48 +61,16 @@ class DatabaseConnection {
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun postHealthConnectData(context: Context, healthConnectData:  MutableMap<String, MutableMap<String, String>>) {
+    fun postData(context: Context, healthConnectData:  MutableMap<String, MutableMap<String, String>>) {
         val jsonAdapter: JsonAdapter<MutableMap<String, MutableMap<String,String>>> = moshi.adapter<MutableMap<String, MutableMap<String, String>>>()
         val json = jsonAdapter.toJsonValue(healthConnectData)!!
         Timber.e(json.toString())
-        retrofitAPI.postHealthConnectData(SharedPreferenceDataSource(context).getGoogleToken(), json).enqueue(object: Callback<String> {
+        retrofitAPI.postData(SharedPreferenceDataSource(context).getGoogleToken(), json).enqueue(object: Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
                 Timber.e("POST Success")
             }
             override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
         })
     }
-    
-    @OptIn(ExperimentalStdlibApi::class)
-    fun postLogin(user: User, context: Context) {
-        val jsonAdapter: JsonAdapter<User> = moshi.adapter<User>()
-        val json = jsonAdapter.toJsonValue(user)!!
-        retrofitAPI.postLogin(json).enqueue(object: Callback<String> {
-            override fun onResponse(call: Call<String>, response: Response<String>) {
-                SharedPreferenceDataSource(context).setGoogleToken(response.body().toString())
-            }
-            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
-        })
-    }
 
-    fun postLogin2(token: String) {
-        retrofitAPI.postLogin2(token).enqueue(object: Callback<String> {
-            override fun onResponse(p0: Call<String>, p1: Response<String>) {
-                TODO("Not yet implemented")
-            }
-            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
-        })
-    }
-
-    @OptIn(ExperimentalStdlibApi::class)
-    fun postUser(user: User) {
-        val jsonAdapter: JsonAdapter<User> = moshi.adapter<User>()
-        val json = jsonAdapter.toJsonValue(user)!!
-        retrofitAPI.postUser(json).enqueue(object: Callback<String> {
-            override fun onResponse(call: Call<String>, response: Response<String>) {
-                TODO("Not yet implemented")
-            }
-            override fun onFailure(call: Call<String>, t: Throwable) = t.printStackTrace()
-        })
-    }
 }

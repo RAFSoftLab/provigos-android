@@ -7,6 +7,16 @@
             android:key="@string/switch_pref1_key"
             android:title="@string/switch_pref1_title"
             android:icon="@drawable/health_connect"/>
+        <Preference
+            android:id="@+id/github_integration"
+            android:key="github_integration"
+            android:title="GitHub"
+            android:icon="@drawable/github"/>
+        <Preference
+            android:id="@+id/spotify_integration"
+            android:key="spotify_integration"
+            android:title="Spotify"
+            android:icon="@drawable/spotify"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="Account">
         <Preference

@@ -17,6 +17,7 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.provigos.android"
     }
 
     testOptions {
@@ -92,9 +93,9 @@ dependencies {
 
     // Stetho
     implementation(libs.stetho)
-    implementation (libs.stetho.okhttp3)
+    implementation(libs.stetho.okhttp3)
     implementation(libs.stetho.urlconnection)
-    implementation (libs.stetho.js.rhino)
+    implementation(libs.stetho.js.rhino)
 
     // Timber
     implementation(libs.timber)
@@ -125,14 +126,11 @@ dependencies {
 
     // Room
     implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.rxjava2)
+    ksp(libs.androidx.room.compiler)
 
     //Health Connect
     implementation(libs.androidx.connect.client)
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.googleid)
 
     //Debug
     debugImplementation(libs.ui.tooling)
@@ -140,7 +138,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     //Security
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
     implementation(libs.androidx.security.crypto)
+    implementation(libs.appauth)
 
 }
 

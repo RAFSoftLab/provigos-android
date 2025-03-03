@@ -46,7 +46,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".presentation.view.activities.PrivacyPolicyActivity" android:exported="true">
+        <activity android:name=".presentation.view.activities.HealthConnectPrivacyPolicyActivity" android:exported="true">
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
                 <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
@@ -57,6 +57,14 @@
         <activity android:name=".presentation.view.activities.LoginActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.Input2Activity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.InputActivity" android:exported="true"/>
+        <activity android:name=".presentation.view.activities.OAuthActivity" android:exported="true" tools:node="replace">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.provigos.android"/>
+            </intent-filter>
+        </activity>
     </application>
     
     <queries>

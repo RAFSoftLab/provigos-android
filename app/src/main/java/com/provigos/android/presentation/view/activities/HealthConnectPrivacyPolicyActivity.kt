@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ import com.provigos.android.R
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.databinding.ActivityPrivacyPolicyBinding
 
-class PrivacyPolicyActivity: AppCompatActivity(R.layout.activity_privacy_policy) {
+class HealthConnectPrivacyPolicyActivity: AppCompatActivity(R.layout.activity_privacy_policy) {
 
     private lateinit var binding: ActivityPrivacyPolicyBinding
 
