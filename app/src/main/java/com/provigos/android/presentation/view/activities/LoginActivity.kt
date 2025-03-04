@@ -49,7 +49,7 @@ import java.security.MessageDigest
 class LoginActivity: AppCompatActivity(R.layout.activity_login) {
 
     companion object {
-        private const val GOOGLE_SERVER_CLIENT_ID = BuildConfig.GOOGLE_CLIENT_ID
+        private const val GOOGLE_CLIENT_ID = BuildConfig.GOOGLE_CLIENT_ID
     }
 
     private lateinit var binding: ActivityLoginBinding
@@ -92,7 +92,7 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
         val md = MessageDigest.getInstance("SHA-256")
         val digest = md.digest(rawNonce.toByteArray())
         val hashedNonce = digest.fold("") { str, it -> str + "%02x".format(it) }
-        return GetSignInWithGoogleOption.Builder(GOOGLE_SERVER_CLIENT_ID)
+        return GetSignInWithGoogleOption.Builder(GOOGLE_CLIENT_ID)
             .setNonce(hashedNonce)
             .build()
     }

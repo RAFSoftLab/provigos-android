@@ -30,7 +30,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.provigos.android.R
 import com.provigos.android.databinding.ActivityInputBinding
-import com.provigos.android.presentation.viewmodel.HealthConnectViewModel
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -50,7 +50,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
     private lateinit var timePicker: TextView
     private var date: LocalDate? = null
     private var time: LocalTime? = null
-    private val viewModel by viewModel<HealthConnectViewModel>()
+    private val viewModel by viewModel<DashboardViewModel>()
 
     @OptIn(DelicateCoroutinesApi::class)
     @SuppressLint("SetTextI18n")
@@ -113,7 +113,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
         val zonedDateTime = ZonedDateTime.of(date, time, ZoneId.systemDefault())
 
         when (type) {
-            "heart_rate" -> {
+            "heartRate" -> {
                 description.text = "Heart Rate"
                 measurement.text = "BPM"
                 numberPicker.minValue = 1
@@ -125,7 +125,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                     }
                 }
             }
-            "body_fat" -> {
+            "bodyFat" -> {
                 description.text = "Body Fat"
                 measurement.text = "%"
                 numberPicker.minValue = 1
@@ -137,7 +137,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                     }
                 }
             }
-            "oxygen_saturation" -> {
+            "oxygenSaturation" -> {
                 description.text = "Oxygen Saturation"
                 measurement.text = "%"
                 numberPicker.minValue = 1
@@ -149,7 +149,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                     }
                 }
             }
-            "blood_glucose" -> {
+            "bloodGlucose" -> {
                 description.text = "Blood Glucose"
                 measurement.text = "mmol/L"
                 numberPicker.minValue = 1
@@ -185,7 +185,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                     }
                 }
             }
-            "respiratory_rate" -> {
+            "respiratoryRate" -> {
                 description.text = "Respiratory Rate"
                 measurement.text = "rpm"
                 numberPicker.minValue = 20

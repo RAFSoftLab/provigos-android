@@ -1,9 +1,17 @@
+import org.jetbrains.kotlin.konan.properties.Properties
+import java.io.FileInputStream
+
+val secretsPropertiesFile = rootProject.file("secrets.properties")
+val secrets = Properties()
+secrets.load(FileInputStream(secretsPropertiesFile))
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
 }
+
 
 android {
     namespace = "com.provigos.android"
@@ -18,11 +26,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         manifestPlaceholders["appAuthRedirectScheme"] = "com.provigos.android"
-        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"225554960679-k9pc7l5e9sicc840k2h877bcbuqns9l0.apps.googleusercontent.com\"")
-        buildConfigField("String", "GITHUB_CLIENT_ID", "\"Ov23linRizSf3bwscUP5\"")
-        buildConfigField("String", "GITHUB_CLIENT_SECRET", "\"4a64adaab35e8191d7dba91e47ad69b8fea3ce12\"")
-        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"69954a882b774dc493e26f4ccbbc35b3\"")
-        buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"6c2b7bb489ae40d79b586a4cda0dd391\"")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${secrets["GOOGLE_CLIENT_ID"]}\"")
+        buildConfigField("String", "GITHUB_CLIENT_ID", "\"${secrets["GITHUB_CLIENT_ID"]}\"")
+        buildConfigField("String", "GITHUB_CLIENT_SECRET", "\"${secrets["GITHUB_CLIENT_SECRET"]}\"")
+        buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"${secrets["SPOTIFY_CLIENT_ID"]}\"")
+        buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"${secrets["SPOTIFY_CLIENT_SECRET"]}\"")
     }
 
     testOptions {

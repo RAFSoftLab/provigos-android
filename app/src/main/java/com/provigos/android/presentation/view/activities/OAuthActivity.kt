@@ -51,21 +51,28 @@ class OAuthActivity: AppCompatActivity() {
         private const val CALLBACK = "com.provigos.android://callback"
 
         private const val GITHUB = "github"
-        private const val GITHUB_CLIENT_ID = BuildConfig.GITHUB_CLIENT_ID
-        private const val GITHUB_CLIENT_SECRET = BuildConfig.GITHUB_CLIENT_SECRET
-        private const val GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
-        private const val GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
-        private const val GITHUB_SCOPES = "repo"
-
         private const val SPOTIFY = "spotify"
-        private const val SPOTIFY_CLIENT_ID = BuildConfig.SPOTIFY_CLIENT_ID
-        private const val SPOTIFY_CLIENT_SECRET = BuildConfig.SPOTIFY_CLIENT_SECRET
-        private const val SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
-        private const val SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
-        private const val SPOTIFY_SCOPES = "user-library-read"
+
+        private val AUTH_CONFIGS = mapOf(
+            GITHUB to OAuthConfig(
+                clientId = BuildConfig.GITHUB_CLIENT_ID,
+                clientSecret = BuildConfig.GITHUB_CLIENT_SECRET,
+                authUrl = "https://github.com/login/oauth/authorize",
+                tokenUrl = "https://github.com/login/oauth/access_token",
+                scopes = "repo"
+            ),
+            SPOTIFY to OAuthConfig(
+                clientId = BuildConfig.SPOTIFY_CLIENT_ID,
+                clientSecret = BuildConfig.SPOTIFY_CLIENT_SECRET,
+                authUrl = "https://accounts.spotify.com/authorize",
+                tokenUrl = "https://accounts.spotify.com/api/token",
+                scopes = "user-library-read"
+            )
+        )
+
+        private const val ERROR_NO_IMPLEMENTATION = "Implementation for the designated OAuth destination is not available"
     }
 
-    private var state: String? = null
     private var authDestination: String? = null
 
     private lateinit var authService: AuthorizationService
@@ -77,16 +84,19 @@ class OAuthActivity: AppCompatActivity() {
         authService = AuthorizationService(this)
         sharedPrefs = SharedPreferenceDataSource(this)
 
-        authDestination = intent.extras?.getString("oauth")
-        if(authDestination.isNullOrEmpty()) {
-            Timber.tag("OAuthActivity").e("No auth destination provided, finishing activity.")
+        authDestination = intent.extras?.getString("oauth") ?: run {
+            Timber.tag("OAuthActivity").e("No auth destination provided, finishing activity")
             finish()
             return
         }
 
         sharedPrefs.setAuthDestination(authDestination!!)
-
         startOAuthFlow()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        authService.dispose()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -95,19 +105,20 @@ class OAuthActivity: AppCompatActivity() {
     }
 
     private fun startOAuthFlow() {
-        if(authDestination.isNullOrEmpty()) {
-            Timber.tag("OAuthActivity").e("authDestination is null or empty")
+        val destination = authDestination ?: run {
+            Timber.tag("OAuthActivity").e("Auth destination is null or empty")
+            finish()
+            return
+        }
+        val authConfig = AUTH_CONFIGS[destination] ?: run {
+            Timber.tag("OAuthActivity").e("Invalid auth destination")
             finish()
             return
         }
         try {
-            Timber.tag("OAuthActivity").d("Starting OAuth flow for $authDestination")
+            Timber.tag("OAuthActivity").d("Starting OAuth flow for $destination")
 
-            val authRequest = when (authDestination) {
-                GITHUB -> buildAuthRequest(GITHUB)
-                SPOTIFY -> buildAuthRequest(SPOTIFY)
-                else -> throw IllegalStateException("Invalid authDestination: $authDestination")
-            }
+            val authRequest = buildAuthRequest(destination, authConfig)
             val authIntent = authService.getAuthorizationRequestIntent(authRequest)
                 .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
@@ -120,8 +131,8 @@ class OAuthActivity: AppCompatActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        authDestination = sharedPrefs.getAuthDestination()
-        if(authDestination.isNullOrEmpty()) {
+        val destination = sharedPrefs.getAuthDestination()
+        if(destination.isNullOrEmpty()) {
             Timber.tag("OAuthActivity").e("authDestination is null or empty")
             finish()
             return
@@ -137,7 +148,7 @@ class OAuthActivity: AppCompatActivity() {
                 val expectedState = sharedPrefs.getState()
                 if(expectedState == actualState) {
                     Timber.tag("OAuthActivity").d("State validation successful")
-                    exchangeCodeForToken(code)
+                    exchangeCodeForToken(destination, code)
                 } else {
                     Timber.tag("OAuthActivity").e("State parameter mismatch: possible CSRF attack")
                 }
@@ -155,38 +166,42 @@ class OAuthActivity: AppCompatActivity() {
         finish()
     }
 
-    private fun exchangeCodeForToken(code: String) {
-        Timber.tag("OAuthActivity").d("Exchanging code for token for $authDestination")
-        try {
+    private fun exchangeCodeForToken(destination: String, code: String) {
+        Timber.tag("OAuthActivity").d("Exchanging code for token for $destination")
 
+        val config = AUTH_CONFIGS[destination] ?: run {
+            Timber.tag("OAuthActivity").d("Invalid destination $destination")
+            return
+        }
+
+        try {
             val codeVerifier = sharedPrefs.getCodeVerifier()
 
-            val serviceConfig = buildServiceConfig(authDestination!!)
-            val clientId = getClientId(authDestination!!)
-            val scopes = getScopes(authDestination!!)
-
             val tokenRequestBuilder = TokenRequest.Builder(
-                serviceConfig,
-                clientId
+                AuthorizationServiceConfiguration(
+                    Uri.parse(config.authUrl),
+                    Uri.parse(config.tokenUrl)
+                ),
+                config.clientId
             )
                 .setGrantType("authorization_code")
                 .setAuthorizationCode(code)
                 .setRedirectUri(Uri.parse(CALLBACK))
-                .setScopes(scopes)
+                .setScopes(config.scopes)
 
-            if(codeVerifier != null) {
-                tokenRequestBuilder.setCodeVerifier(codeVerifier)
-            } else {
+            if(codeVerifier.isNullOrBlank()) {
                 tokenRequestBuilder.setAdditionalParameters(
-                    mapOf("client_secret" to getClientSecret(authDestination!!))
+                    mapOf("client_secret" to config.clientSecret)
                 )
+            } else {
+                tokenRequestBuilder.setCodeVerifier(codeVerifier)
             }
 
             val tokenRequest = tokenRequestBuilder.build()
 
             authService.performTokenRequest(tokenRequest) { resp, exception ->
                 if (resp != null) {
-                    handleTokenResponse(resp)
+                    handleTokenResponse(destination, resp)
                 } else if (exception != null) {
                     Timber.tag("OAuthActivity").e("Token exchange failed: ${exception.errorDescription}")
                 }
@@ -196,37 +211,33 @@ class OAuthActivity: AppCompatActivity() {
         }
     }
 
-    private fun handleTokenResponse(response: TokenResponse) {
+    private fun handleTokenResponse(destination: String, response: TokenResponse) {
         try {
             val accessToken = response.accessToken ?: throw IllegalStateException("Access token is null")
             val refreshToken = response.refreshToken?: ""
-            when(authDestination) {
-                GITHUB -> saveToken(GITHUB, accessToken)
-                SPOTIFY -> saveToken(SPOTIFY, accessToken, refreshToken)
-                else -> Timber.tag("OAuthActivity").e("Unknown auth destination: $authDestination")
-            }
+            saveToken(destination, accessToken, refreshToken)
         } catch (e: Exception) {
             Timber.tag("OAuthActivity").e("Error handling token response")
         }
     }
 
-    private fun buildAuthRequest(destination: String): AuthorizationRequest {
+    private fun buildAuthRequest(destination: String, config: OAuthConfig): AuthorizationRequest {
 
-        val serviceConfig = buildServiceConfig(destination)
-        val clientId = getClientId(destination)
-        val scopes = getScopes(destination)
+        val state = UUID.randomUUID().toString()
+        sharedPrefs.setState(state)
 
-        state = UUID.randomUUID().toString()
-        sharedPrefs.setState(state!!)
         Timber.tag("OAuthActivity").d("Generated and saved state: $state")
 
         val authRequest = AuthorizationRequest.Builder(
-            serviceConfig,
-            clientId,
+            AuthorizationServiceConfiguration(
+                Uri.parse(config.authUrl),
+                Uri.parse(config.tokenUrl)
+            ),
+            config.clientId,
             ResponseTypeValues.CODE,
             Uri.parse(CALLBACK)
         )
-            .setScopes(scopes)
+            .setScopes(config.scopes)
             .setState(state)
 
         if(destination == SPOTIFY) {
@@ -241,78 +252,49 @@ class OAuthActivity: AppCompatActivity() {
     }
 
     private fun refreshToken(destination: String) {
+
+        val authConfig = AUTH_CONFIGS[destination] ?: run {
+            Timber.tag("OAuthActivity").e("Invalid auth destination for refresh token $destination")
+            return
+        }
+
         val refreshToken = when (destination) {
             SPOTIFY -> sharedPrefs.getSpotifyRefreshToken()
             else -> throw IllegalArgumentException("Implementation for the designated OAuth destination is not available")
         }
+
         if(refreshToken.isNullOrEmpty()) {
-            Timber.tag("OAuthActivity").e("No refresh token found. User must re-authenticate")
+            Timber.tag("OAuthActivity").e("No refresh token found, re-authenticate")
             return
         }
 
         try {
 
-            val serviceConfig = buildServiceConfig(destination)
-            val clientId = getClientId(destination)
-            val scopes = getScopes(destination)
-            val clientSecret = getClientSecret(destination)
-
             val tokenRequestBuilder = TokenRequest.Builder(
-                serviceConfig,
-                clientId
+                AuthorizationServiceConfiguration(
+                    Uri.parse(authConfig.authUrl),
+                    Uri.parse(authConfig.tokenUrl)
+                ),
+                authConfig.clientId
             )
                 .setGrantType("refresh_token")
                 .setRefreshToken(refreshToken)
-                .setScopes(scopes)
+                .setScopes(authConfig.scopes)
 
-            tokenRequestBuilder.setAdditionalParameters(mapOf("client_secret" to clientSecret))
+            tokenRequestBuilder.setAdditionalParameters(mapOf("client_secret" to authConfig.clientSecret))
 
             val tokenRequest = tokenRequestBuilder.build()
 
             authService.performTokenRequest(tokenRequest) { response, exception ->
                 if (response != null) {
-                    val newAccessToken = response.accessToken ?: ""
-                    val newRefreshToken = response.refreshToken ?: refreshToken
 
-                    saveToken(destination, newAccessToken, newRefreshToken)
+                    handleTokenResponse(destination, response)
                 } else if (exception != null) {
                     Timber.tag("OAuthActivity").e("Token refresh failed for $destination: ${exception.errorDescription}")
                 }
             }
         } catch (e: Exception) {
             Timber.tag("OAuthActivity").e("Error during $destination token refresh: ${e.message}")
-        }
-    }
-
-    private fun buildServiceConfig(destination: String): AuthorizationServiceConfiguration {
-        return when(destination) {
-            GITHUB -> AuthorizationServiceConfiguration(Uri.parse(GITHUB_AUTH_URL), Uri.parse(GITHUB_TOKEN_URL))
-            SPOTIFY -> AuthorizationServiceConfiguration(Uri.parse(SPOTIFY_AUTH_URL), Uri.parse(SPOTIFY_TOKEN_URL))
-            else -> throw IllegalArgumentException("Implementation for the designated OAuth destination is not available")
-        }
-    }
-
-    private fun getClientId(destination: String): String {
-        return when(destination) {
-            GITHUB -> GITHUB_CLIENT_ID
-            SPOTIFY -> SPOTIFY_CLIENT_ID
-            else -> throw IllegalArgumentException("Implementation for the designated OAuth destination is not available")
-        }
-    }
-
-    private fun getScopes(destination: String): String {
-        return when(destination) {
-            GITHUB -> GITHUB_SCOPES
-            SPOTIFY -> SPOTIFY_SCOPES
-            else -> throw IllegalArgumentException("Implementation for the designated OAuth destination is not available")
-        }
-    }
-
-    private fun getClientSecret(destination: String): String {
-        return when(destination) {
-            GITHUB -> GITHUB_CLIENT_SECRET
-            SPOTIFY -> SPOTIFY_CLIENT_SECRET
-            else -> throw IllegalArgumentException("Implementation for the designated OAuth destination is not available")
         }
     }
 
@@ -329,8 +311,17 @@ class OAuthActivity: AppCompatActivity() {
                     Timber.tag("OAuthActivity").i("Spotify refresh token received: $refreshToken")
                     sharedPrefs.setSpotifyRefreshToken(refreshToken)
                 }
+                sharedPrefs.setCodeVerifier("")
             }
-            else -> throw IllegalArgumentException("Implementation for the designated OAuth destination is not available")
+            else -> throw IllegalArgumentException(ERROR_NO_IMPLEMENTATION)
         }
     }
+
+    private data class OAuthConfig(
+        val clientId: String,
+        val clientSecret: String,
+        val authUrl: String,
+        val tokenUrl: String,
+        val scopes: String
+    )
 }

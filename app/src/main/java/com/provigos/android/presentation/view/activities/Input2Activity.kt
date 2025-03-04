@@ -26,18 +26,15 @@ import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.provigos.android.R
 import com.provigos.android.databinding.ActivityInput2Binding
-import com.provigos.android.presentation.viewmodel.HealthConnectViewModel
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import timber.log.Timber
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -53,7 +50,7 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
     private lateinit var timePicker: TextView
     private var date: LocalDate? = null
     private var time: LocalTime? = null
-    private val viewModel by viewModel<HealthConnectViewModel>()
+    private val viewModel by viewModel<DashboardViewModel>()
 
     @OptIn(DelicateCoroutinesApi::class)
     @SuppressLint("SetTextI18n")
@@ -137,7 +134,7 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                     }
                 }
             }
-            "blood_pressure" -> {
+            "bloodPressure" -> {
                 description.text = "Blood pressure"
                 measurement.text = "mmHg"
                 separator.text = "/"
@@ -152,7 +149,7 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                     finish()
                 }
             }
-            "body_temperature" -> {
+            "bodyTemperature" -> {
                 description.text = "Body Temperature"
                 measurement.text = "℃"
                 separator.text = "."

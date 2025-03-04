@@ -23,13 +23,13 @@
 package com.provigos.android.modules
 
 import com.provigos.android.application.ProvigosApplication
-import com.provigos.android.presentation.viewmodel.HealthConnectViewModel
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val healthConnectModule = module {
 
-    viewModel { HealthConnectViewModel(healthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager) }
+    viewModel { DashboardViewModel(healthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager) }
 
 }

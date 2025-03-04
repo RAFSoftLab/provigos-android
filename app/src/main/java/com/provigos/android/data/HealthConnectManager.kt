@@ -100,16 +100,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // STEPS
-    suspend fun readSteps(start: Instant, end: Instant): List<StepsRecord> {
-        val request = ReadRecordsRequest(
-            recordType = StepsRecord::class,
-            timeRangeFilter =  TimeRangeFilter.between(start, end)
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { record -> Timber.e(record.toString()) }
-        return response.records
-    }
-
     suspend fun aggregateStepsForToday(date: Instant): Long? {
         val request = AggregateRequest(
             metrics = setOf(StepsRecord.COUNT_TOTAL),
@@ -143,16 +133,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // WEIGHT
-    suspend fun readWeightForToday(date: Instant): List<WeightRecord> {
-        val request = ReadRecordsRequest(
-            recordType = WeightRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readWeightForLast30Days(date: Instant): List<WeightRecord> {
         val request = ReadRecordsRequest(
             recordType = WeightRecord::class,
@@ -174,16 +154,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // BODY FAT
-    suspend fun readBodyFatForToday(date: Instant): List<BodyFatRecord> {
-        val request = ReadRecordsRequest(
-            recordType = BodyFatRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readBodyFatForLast30Days(date: Instant): List<BodyFatRecord> {
         val request = ReadRecordsRequest(
             recordType = BodyFatRecord::class,
@@ -204,16 +174,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // HEART RATE
-    suspend fun readHeartRateFatForToday(date: Instant): List<HeartRateRecord> {
-        val request = ReadRecordsRequest(
-            recordType = HeartRateRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readHeartRateForLast30Days(date: Instant): List<HeartRateRecord> {
         val request = ReadRecordsRequest(
             recordType = HeartRateRecord::class,
@@ -238,16 +198,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // BLOOD PRESSURE
-    suspend fun readBloodPressureForToday(date: Instant): List<BloodPressureRecord> {
-        val request = ReadRecordsRequest(
-            recordType = BloodPressureRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readBloodPressureForLast30Days(date: Instant): List<BloodPressureRecord> {
         val request = ReadRecordsRequest(
             recordType = BloodPressureRecord::class,
@@ -272,16 +222,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // HEIGHT
-    suspend fun readHeightForToday(date: Instant): List<HeightRecord> {
-        val request = ReadRecordsRequest(
-            recordType = HeightRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readHeightForLast30Days(date: Instant): List<HeightRecord> {
         val request = ReadRecordsRequest(
             recordType = HeightRecord::class,
@@ -303,16 +243,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // BLOOD GLUCOSE
-    suspend fun readBloodGlucoseForToday(date: Instant): List<BloodGlucoseRecord> {
-        val request = ReadRecordsRequest(
-            recordType = BloodGlucoseRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readBloodGlucoseForLast30Days(date: Instant): List<BloodGlucoseRecord> {
         val request = ReadRecordsRequest(
             recordType = BloodGlucoseRecord::class,
@@ -337,16 +267,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // OXYGEN SATURATION
-    suspend fun readOxygenSaturationForToday(date: Instant): List<OxygenSaturationRecord> {
-        val request = ReadRecordsRequest(
-            recordType = OxygenSaturationRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readOxygenSaturationForLast30Days(date: Instant): List<OxygenSaturationRecord> {
         val request = ReadRecordsRequest(
             recordType = OxygenSaturationRecord::class,
@@ -368,16 +288,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // BODY TEMPERATURE
-    suspend fun readBodyTemperatureForToday(date: Instant): List<BodyTemperatureRecord> {
-        val request = ReadRecordsRequest(
-            recordType = BodyTemperatureRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readBodyTemperatureForLast30Days(date: Instant): List<BodyTemperatureRecord> {
         val request = ReadRecordsRequest(
             recordType = BodyTemperatureRecord::class,
@@ -400,16 +310,6 @@ class HealthConnectManager(private val context: Context) {
     }
 
     // RESPIRATORY RATE
-    suspend fun readRespiratoryRateForToday(date: Instant): List<RespiratoryRateRecord> {
-        val request = ReadRecordsRequest(
-            recordType = RespiratoryRateRecord::class,
-            timeRangeFilter = TimeRangeFilter.between(date, date.plus(1, ChronoUnit.DAYS))
-        )
-        val response = healthConnectClient.readRecords(request)
-        //response.records.forEach { w -> Timber.e(w.toString()) }
-        return response.records
-    }
-
     suspend fun readRespiratoryRateForLast30Days(date: Instant): List<RespiratoryRateRecord> {
         val request = ReadRecordsRequest(
             recordType = RespiratoryRateRecord::class,

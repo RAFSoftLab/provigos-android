@@ -47,73 +47,30 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
 
     @SuppressLint("SetTextI18n", "DefaultLocale")
     override fun onBindViewHolder(holder: DashboardRecyclerViewHolder, position: Int) {
-        var k = 0
-        var measurementType: String = ""
-        var measurementValue: String = ""
-        for(item in hashMap) {
-            if(k == position) {
-                measurementType = item.key
-                measurementValue = item.value
-                break
-            }
-            k++
+
+        val (measurementType, measurementValue) = hashMap.entries.elementAt(position)
+
+        val context = holder.context
+
+        val (label, value) = when (measurementType) {
+            "steps" -> R.string.steps_today to measurementValue
+            "weight" -> R.string.recent_weight to context.getString(R.string.num_of_weight, measurementValue.toDouble().roundToLong().toString(), "kg")
+            "heartRate" -> R.string.heart_rate to context.getString(R.string.heart_bpm, measurementValue.toDouble().roundToLong().toString())
+            "bodyFat" -> R.string.body_fat to context.getString(R.string.body_fat_val, measurementValue, "%")
+            "leanBodyMass" -> R.string.lean_body_mass to context.getString(R.string.num_of_weight, measurementValue.toDouble().roundToLong().toString(), "kg")
+            "bloodPressure" -> R.string.blood_pressure to "$measurementValue mmHg"
+            "height" -> R.string.height to "$measurementValue cm"
+            "bodyTemperature" -> R.string.body_temperature to String.format("%.1f ℃", measurementValue.toDouble())
+            "oxygenSaturation" -> R.string.oxygen_saturation to "$measurementValue %"
+            "bloodGlucose" -> R.string.blood_glucose to "$measurementValue mmol/L"
+            "respiratoryRate" -> R.string.respiratory_rate to "${measurementValue.toDouble().roundToLong()} rpm"
+            else -> null to null
         }
-        when (measurementType) {
-            "steps" -> {
-                holder.measurementType.setText(R.string.steps_today)
-                holder.measurementNumber.text = measurementValue
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("steps") }
-            }
-            "weight" -> {
-                holder.measurementType.setText(R.string.recent_weight)
-                holder.measurementNumber.text = holder.context.getString(R.string.num_of_weight, measurementValue.toDouble().roundToLong().toString(), "kg")
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("weight") }
-            }
-            "heart_rate" -> {
-                holder.measurementType.setText(R.string.heart_rate)
-                holder.measurementNumber.text = holder.context.getString(R.string.heart_bpm, measurementValue.toDouble().roundToLong().toString())
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("heart_rate") }
-            }
-            "body_fat" -> {
-                holder.measurementType.setText(R.string.body_fat)
-                holder.measurementNumber.text = holder.context.getString(R.string.body_fat_val, measurementValue, "%")
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("body_fat") }
-            }
-            "lean_body_mass" -> {
-                holder.measurementType.setText(R.string.lean_body_mass)
-                holder.measurementNumber.text = holder.context.getString(R.string.num_of_weight, measurementValue.toDouble().roundToLong().toString(), "kg")
-            }
-            "blood_pressure" -> {
-                holder.measurementType.text = "Blood pressure"
-                holder.measurementNumber.text = "$measurementValue mmHg"
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("blood_pressure") }
-            }
-            "height" -> {
-                holder.measurementType.text = "Height"
-                holder.measurementNumber.text = "$measurementValue cm"
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("height") }
-            }
-            "body_temperature" -> {
-                holder.measurementType.text = "Body temperature"
-                holder.measurementNumber.text = String.format("%.1f ℃", measurementValue.toDouble())
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("body_temperature") }
-            }
-            "oxygen_saturation" -> {
-                holder.measurementType.text = "Oxygen saturation"
-                holder.measurementNumber.text = "$measurementValue %"
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("oxygen_saturation") }
-            }
-            "blood_glucose" -> {
-                holder.measurementType.text = "Blood glucose"
-                holder.measurementNumber.text = "$measurementValue mmol/L"
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("blood_glucose") }
-            }
-            "respiratory_rate" -> {
-                holder.measurementType.text = "Respiratory rate"
-                holder.measurementNumber.text = "${measurementValue.toDouble().roundToLong()} rpm"
-                holder.itemView.setOnClickListener { onItemClicked?.invoke("respiratory_rate") }
-            }
-        }
+
+        label?.let { holder.measurementType.setText(it) }
+        value?.let { holder.measurementNumber.text = it }
+
+        holder.itemView.setOnClickListener { onItemClicked?.invoke(measurementType) }
     }
 
     inner class DashboardRecyclerViewHolder(itemView: View): RecyclerView.ViewHolder(itemView)  {
