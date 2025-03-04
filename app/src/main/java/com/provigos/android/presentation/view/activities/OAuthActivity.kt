@@ -59,14 +59,16 @@ class OAuthActivity: AppCompatActivity() {
                 clientSecret = BuildConfig.GITHUB_CLIENT_SECRET,
                 authUrl = "https://github.com/login/oauth/authorize",
                 tokenUrl = "https://github.com/login/oauth/access_token",
-                scopes = "repo"
+                scopes = "repo",
+                pkce = false
             ),
             SPOTIFY to OAuthConfig(
                 clientId = BuildConfig.SPOTIFY_CLIENT_ID,
                 clientSecret = BuildConfig.SPOTIFY_CLIENT_SECRET,
                 authUrl = "https://accounts.spotify.com/authorize",
                 tokenUrl = "https://accounts.spotify.com/api/token",
-                scopes = "user-library-read"
+                scopes = "user-library-read",
+                pkce = true
             )
         )
 
@@ -118,7 +120,7 @@ class OAuthActivity: AppCompatActivity() {
         try {
             Timber.tag("OAuthActivity").d("Starting OAuth flow for $destination")
 
-            val authRequest = buildAuthRequest(destination, authConfig)
+            val authRequest = buildAuthRequest(authConfig)
             val authIntent = authService.getAuthorizationRequestIntent(authRequest)
                 .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
@@ -175,8 +177,6 @@ class OAuthActivity: AppCompatActivity() {
         }
 
         try {
-            val codeVerifier = sharedPrefs.getCodeVerifier()
-
             val tokenRequestBuilder = TokenRequest.Builder(
                 AuthorizationServiceConfiguration(
                     Uri.parse(config.authUrl),
@@ -189,12 +189,13 @@ class OAuthActivity: AppCompatActivity() {
                 .setRedirectUri(Uri.parse(CALLBACK))
                 .setScopes(config.scopes)
 
-            if(codeVerifier.isNullOrBlank()) {
+            if(config.pkce) {
+                val codeVerifier = sharedPrefs.getCodeVerifier()
+                tokenRequestBuilder.setCodeVerifier(codeVerifier)
+            } else {
                 tokenRequestBuilder.setAdditionalParameters(
                     mapOf("client_secret" to config.clientSecret)
                 )
-            } else {
-                tokenRequestBuilder.setCodeVerifier(codeVerifier)
             }
 
             val tokenRequest = tokenRequestBuilder.build()
@@ -221,7 +222,7 @@ class OAuthActivity: AppCompatActivity() {
         }
     }
 
-    private fun buildAuthRequest(destination: String, config: OAuthConfig): AuthorizationRequest {
+    private fun buildAuthRequest(config: OAuthConfig): AuthorizationRequest {
 
         val state = UUID.randomUUID().toString()
         sharedPrefs.setState(state)
@@ -240,7 +241,7 @@ class OAuthActivity: AppCompatActivity() {
             .setScopes(config.scopes)
             .setState(state)
 
-        if(destination == SPOTIFY) {
+        if(config.pkce) {
             val codeVerifier = PkceHelper.generateCodeVerifier()
             val codeChallenge = PkceHelper.generateCodeChallenge(codeVerifier)
             sharedPrefs.setCodeVerifier(codeVerifier)
@@ -322,6 +323,7 @@ class OAuthActivity: AppCompatActivity() {
         val clientSecret: String,
         val authUrl: String,
         val tokenUrl: String,
-        val scopes: String
+        val scopes: String,
+        val pkce: Boolean
     )
 }
