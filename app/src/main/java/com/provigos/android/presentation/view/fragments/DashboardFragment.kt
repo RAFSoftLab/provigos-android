@@ -45,6 +45,12 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
 
+    companion object {
+        private val INPUT_ACTIVITY = InputActivity::class.java
+        private val INPUT2_ACTIVITY = Input2Activity::class.java
+    }
+
+
     private val viewModel by viewModel<DashboardViewModel>()
     private lateinit var adapter: DashboardRecyclerViewAdapter
     private lateinit var recyclerView: RecyclerView
@@ -78,19 +84,20 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     private fun setupItemClickListener() {
         val activity = mapOf(
-            "weight" to Input2Activity::class.java,
-            "bloodPressure" to Input2Activity::class.java,
-            "bodyTemperature" to Input2Activity::class.java,
-            "steps" to InputActivity::class.java,
-            "heartRate" to InputActivity::class.java,
-            "bodyFat" to InputActivity::class.java,
-            "height" to InputActivity::class.java,
-            "bloodGlucose" to InputActivity::class.java,
-            "oxygenSaturation" to InputActivity::class.java,
-            "respiratoryRate" to InputActivity::class.java
+            "weight" to INPUT2_ACTIVITY,
+            "bloodPressure" to INPUT2_ACTIVITY,
+            "bodyTemperature" to INPUT2_ACTIVITY,
+            "steps" to INPUT_ACTIVITY,
+            "heartRate" to INPUT_ACTIVITY,
+            "bodyFat" to INPUT_ACTIVITY,
+            "height" to INPUT_ACTIVITY,
+            "bloodGlucose" to INPUT_ACTIVITY,
+            "oxygenSaturation" to INPUT_ACTIVITY,
+            "respiratoryRate" to INPUT_ACTIVITY,
         )
 
         adapter.onItemClicked = { type ->
+            if(type != "totalGithubCommits" && type != "dailyGithubCommits")
             activity[type].let {
                 target -> val intent = Intent(context, target).apply {
                     putExtra("key", type)

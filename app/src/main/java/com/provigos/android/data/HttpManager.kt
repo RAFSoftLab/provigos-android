@@ -42,8 +42,9 @@ import java.util.concurrent.TimeUnit
 
 class HttpManager {
 
-    private val retrofitAPI: RetrofitAPI
+    private lateinit var retrofitAPI: RetrofitAPI
     private val moshi: Moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+    private var retrofitBuilder: Retrofit.Builder
 
     init {
         val mHttpLoggingInterceptor = HttpLoggingInterceptor()
@@ -54,21 +55,21 @@ class HttpManager {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(mHttpLoggingInterceptor)
+            //.addInterceptor(mHttpLoggingInterceptor)
             .build()
 
-        val retrofit: Retrofit = Retrofit.Builder()
-            .baseUrl(RetrofitAPI.URL)
+        retrofitBuilder = Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(mOkHttpClient)
-            .build()
-
-        retrofitAPI = retrofit.create(RetrofitAPI::class.java)
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     fun postData(context: Context, userData:  MutableMap<String, MutableMap<String, String>>) {
         try {
+
+            retrofitBuilder.baseUrl(RetrofitAPI.PROVIGOS_API)
+            retrofitAPI = retrofitBuilder.build().create(RetrofitAPI::class.java)
+
             val jsonAdapter: JsonAdapter<MutableMap<String, MutableMap<String,String>>> = moshi.adapter()
             val json = jsonAdapter.toJsonValue(userData)
 
@@ -80,7 +81,7 @@ class HttpManager {
                 Timber.tag("HttpManager").e("Google token is missing")
                 throw IllegalArgumentException("Google Token is null or empty")
             } else {
-                retrofitAPI.postData(SharedPreferenceDataSource(context).getGoogleToken()!!, json)
+                retrofitAPI.postProvigosData(SharedPreferenceDataSource(context).getGoogleToken()!!, json)
                     .enqueue(object : Callback<String> {
                         override fun onResponse(call: Call<String>, response: Response<String>) {
                             if (response.isSuccessful) {
@@ -103,5 +104,72 @@ class HttpManager {
         } catch (e: Exception) {
             Timber.tag("HttpManager").e("Exception in postData: ${e.message}")
         }
+    }
+
+    suspend fun getGithubCommits(context: Context): HashMap<String, String> {
+
+        val githubCommits: HashMap<String, String> = HashMap()
+
+        retrofitBuilder.baseUrl(RetrofitAPI.GITHUB_API)
+        retrofitAPI = retrofitBuilder.build().create(RetrofitAPI::class.java)
+
+        val githubToken = SharedPreferenceDataSource(context).getGithubAccessToken()
+            ?: throw IllegalArgumentException("GitHub token doesn't exist. Re-authorize")
+
+        try {
+            val user = retrofitAPI.getGithubUserData("Bearer $githubToken")
+            val userLogin = user.login
+            val userName = user.name
+
+            val repos = retrofitAPI.getGithubUserRepos("Bearer $githubToken")
+
+            for(repo in repos) {
+                val repoName = repo.name
+
+                val commits = retrofitAPI.getGithubUserCommits(
+                    "Bearer $githubToken",
+                    userLogin,
+                    repoName,
+                    userLogin
+                )
+
+                for (commit in commits) {
+                    val date = commit.commit.author.date.substring(0, 10)
+                    githubCommits[date] = (githubCommits[date]?.toLong()?.plus(1) ?: 1).toString()
+                }
+            }
+
+            /*
+            val orgs = retrofitAPI.getGithubUserOrgs("Bearer $githubToken", userLogin)
+            for(org in orgs) {
+                Timber.tag("HttpManager").d("$org")
+                repos = retrofitAPI.getGithubUserOrgsRepos("Bearer $githubToken", org.login)
+
+                for(repo in repos) {
+                    val repoName = repo.name
+
+                    val commits = retrofitAPI.getGithubUserCommits(
+                        "Bearer $githubToken",
+                        org.login,
+                        repoName,
+                        userLogin
+                    )
+
+                    for(commit in commits) {
+                        if(userName == commit.commit.author.name) {
+                            val date = commit.commit.author.date.substring(0, 10)
+                            githubCommits[date] = (githubCommits[date]?.toLong()?.plus(1) ?: 1).toString()
+                        }
+                    }
+                }
+            }
+            */
+
+
+        } catch (e: Exception) {
+            Timber.e("Error fetching GitHub commits: ${e.message}")
+        }
+
+        return githubCommits
     }
 }

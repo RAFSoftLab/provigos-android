@@ -44,6 +44,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.HealthConnectManager
 import com.provigos.android.data.HttpManager
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import okio.IOException
 import timber.log.Timber
@@ -131,6 +132,7 @@ class DashboardViewModel(private val healthConnectManager: HealthConnectManager)
             //tryWithPermissionCheck {
                 dataToView = HashMap()
                 readHealthConnectData()
+                readGithubData(context)
                 //HttpManager().postData(context, dataToSend)
                 //healthConnectData.forEach { item -> Timber.e("${item.key}, ${item.value}")}
                 //dataToView.forEach { item -> Timber.e("${item.key}, ${item.value}") }
@@ -260,6 +262,18 @@ class DashboardViewModel(private val healthConnectManager: HealthConnectManager)
     suspend fun writeBloodGlucose(date: ZonedDateTime, level: Double) = healthConnectManager.writeBloodGlucose(date, level)
     suspend fun writeOxygenSaturation(date: ZonedDateTime, percentage: Double) = healthConnectManager.writeOxygenSaturation(date, percentage)
     suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double) = healthConnectManager.writeRespiratoryRate(date, rate)
+
+    private suspend fun readGithubData(context: Context) {
+        val githubCommits = HttpManager().getGithubCommits(context)
+        githubCommits.forEach { item -> Timber.e("${item.key}, ${item.value}") }
+        var count: Long = 0
+        for (entry in githubCommits.entries) {
+            count += entry.value.toLong()
+        }
+        dataToView["totalGithubCommits"] = count.toString()
+        dataToView["dailyGithubCommits"] = githubCommits[pureZdt] ?: "0"
+        dataToSend["github"] = githubCommits
+    }
 
     sealed class UiState {
         data object Uninitialized: UiState()

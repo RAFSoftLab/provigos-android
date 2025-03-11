@@ -64,6 +64,8 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
             "oxygenSaturation" -> R.string.oxygen_saturation to "$measurementValue %"
             "bloodGlucose" -> R.string.blood_glucose to "$measurementValue mmol/L"
             "respiratoryRate" -> R.string.respiratory_rate to "${measurementValue.toDouble().roundToLong()} rpm"
+            "totalGithubCommits" -> R.string.total_github_commits to measurementValue
+            "dailyGithubCommits" -> R.string.daily_github_commits to measurementValue
             else -> null to null
         }
 

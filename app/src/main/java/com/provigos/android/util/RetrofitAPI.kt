@@ -22,20 +22,52 @@
  */
 package com.provigos.android.util
 
+import com.provigos.android.data.model.GithubRepoModel
+import com.provigos.android.data.model.GithubRepoCommitModel
+import com.provigos.android.data.model.GithubUserModel
+import com.provigos.android.data.model.GithubUserOrgs
 import retrofit2.Call
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface RetrofitAPI {
 
     companion object {
-        const val URL = "https://provigos-prod-api.azurewebsites.net/api/"
+        const val PROVIGOS_API = "https://provigos-prod-api.azurewebsites.net/api/"
+        const val GITHUB_API = "https://api.github.com/"
     }
 
     @Headers("Accept: */*", "Content-Type: application/json")
     @POST("healthConnectIntegration")
-    fun postData(@Header("Authorization") token: String, @Body json: Any?): Call<String>
+    fun postProvigosData(@Header("Authorization") token: String, @Body json: Any?): Call<String>
+
+    @Headers("Accept: */*", "Content-Type: application/vnd.github+json")
+    @GET("user")
+    suspend fun getGithubUserData(@Header("Authorization") token: String): GithubUserModel
+
+    @GET("user/repos")
+    suspend fun getGithubUserRepos
+                (@Header("Authorization") token: String, ): List<GithubRepoModel>
+
+    @GET("repos/{owner}/{repo}/commits")
+    suspend fun getGithubUserCommits(@Header("Authorization") token: String,
+                       @Path("owner") owner: String,
+                       @Path("repo") repo: String,
+                       @Query("author") author: String): List<GithubRepoCommitModel>
+
+    @Headers("Accept: */*", "Content-Type: application/vnd.github+json")
+    @GET("users/{username}/orgs")
+    suspend fun getGithubUserOrgs(@Header("Authorization") token: String,
+                                  @Path("username") username: String): List<GithubUserModel>
+
+    @Headers("Accept: */*", "Content-Type: application/vnd.github+json")
+    @GET("orgs/{owner}/repos")
+    suspend fun getGithubUserOrgsRepos(@Header("Authorization") token: String,
+                        @Path("owner") owner: String): List<GithubRepoModel>
 
 }

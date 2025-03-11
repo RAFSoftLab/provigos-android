@@ -53,7 +53,7 @@ val coreModule = module {
 
     fun createRetrofit(moshi: Moshi, httpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl(RetrofitAPI.URL)
+            .baseUrl(RetrofitAPI.PROVIGOS_API)
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(MoshiConverterFactory.create(moshi).asLenient())
             .client(httpClient)

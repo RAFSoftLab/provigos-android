@@ -59,7 +59,7 @@ class OAuthActivity: AppCompatActivity() {
                 clientSecret = BuildConfig.GITHUB_CLIENT_SECRET,
                 authUrl = "https://github.com/login/oauth/authorize",
                 tokenUrl = "https://github.com/login/oauth/access_token",
-                scopes = "repo",
+                scopes = "repo read:org",
                 pkce = false
             ),
             SPOTIFY to OAuthConfig(
@@ -163,6 +163,7 @@ class OAuthActivity: AppCompatActivity() {
             Timber.tag("OAuthActivity").e("OAuth response is null: User canceled auth or an error occurred")
         }
 
+        sharedPrefs.setCodeVerifier("")
         sharedPrefs.setState("")
         sharedPrefs.setAuthDestination("")
         finish()
@@ -312,7 +313,6 @@ class OAuthActivity: AppCompatActivity() {
                     Timber.tag("OAuthActivity").i("Spotify refresh token received: $refreshToken")
                     sharedPrefs.setSpotifyRefreshToken(refreshToken)
                 }
-                sharedPrefs.setCodeVerifier("")
             }
             else -> throw IllegalArgumentException(ERROR_NO_IMPLEMENTATION)
         }
