@@ -22,7 +22,6 @@
  */
 package com.provigos.android.presentation.view.fragments
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -32,15 +31,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.provigos.android.R
+import com.provigos.android.databinding.FragmentDashboardBinding
 import com.provigos.android.presentation.view.activities.InputActivity
 import com.provigos.android.presentation.view.activities.Input2Activity
 import com.provigos.android.presentation.view.adapters.DashboardRecyclerViewAdapter
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 
 class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
@@ -51,9 +57,11 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
     }
 
 
+    private lateinit var binding: FragmentDashboardBinding
     private val viewModel by viewModel<DashboardViewModel>()
     private lateinit var adapter: DashboardRecyclerViewAdapter
-    private lateinit var recyclerView: RecyclerView
+
+    private var loadingState = 1
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -66,20 +74,23 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         savedInstanceState: Bundle?
     ): View {
 
-        val root: View = inflater.inflate(R.layout.fragment_dashboard, container, false)
+        binding = FragmentDashboardBinding.inflate(inflater, container, false)
 
-        recyclerView = root.findViewById(R.id.dashboard_recycler_view)
-        recyclerView.postDelayed({
-            recyclerView.layoutManager = LinearLayoutManager(context)
-        }, 1200)
-        adapter = DashboardRecyclerViewAdapter(viewModel.dataToView)
-        recyclerView.adapter = adapter
-        recyclerView.setHasFixedSize(true)
+        adapter = DashboardRecyclerViewAdapter(emptyMap())
+        binding.dashboardRecyclerView.layoutManager = GridLayoutManager(context, 2)
+        binding.dashboardRecyclerView.adapter = adapter
 
         setupItemClickListener()
-        setupSwipeToRefresh(root)
+        setupSwipeToRefresh()
 
-        return root
+        observeData()
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.init(requireContext())
     }
 
     private fun setupItemClickListener() {
@@ -107,20 +118,64 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private fun setupSwipeToRefresh(root: View) {
-        val swipeRefresh = root.findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
-        swipeRefresh.setOnRefreshListener {
-            swipeRefresh.isRefreshing = false
-            refresh()
+    private fun observeData() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { uiState ->
+                    when (uiState) {
+                        is DashboardViewModel.UiState.Uninitialized -> showLoading(true)
+                        is DashboardViewModel.UiState.Loading -> showLoading(true)
+                        is DashboardViewModel.UiState.Refreshing -> showLoading(false)
+                        is DashboardViewModel.UiState.Done -> {
+                            showLoading(false)
+                            adapter.updateData(viewModel.dataToView.value)
+                        }
+                        is DashboardViewModel.UiState.Error -> {
+                            showLoading(false)
+                        }
+                    }
+                }
+            }
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.dataToView.collect { data ->
+                    adapter.updateData(data)
+                }
+            }
         }
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    fun refresh() {
-        Handler(Looper.getMainLooper()).postDelayed({
-            adapter.notifyDataSetChanged()
-            recyclerView.scrollBy(0, 0)
-        }, 0)
+    private fun showLoading(isVisible: Boolean) {
+        val visibility = if (isVisible) View.VISIBLE else View.GONE
+        binding.loadingOverlay.visibility = visibility
+        binding.loadingMessage.visibility = visibility
+        if(isVisible) animateLoadingText()
+    }
+
+    private fun animateLoadingText() {
+        lifecycleScope.launch {
+            var loadingText = "Loading"
+            while(binding.loadingMessage.visibility == View.VISIBLE) {
+                binding.loadingMessage.text = loadingText
+                loadingText = when (loadingText) {
+                    "Loading." -> "Loading.."
+                    "Loading.." -> "Loading..."
+                    else -> "Loading."
+                }
+                delay(200)
+            }
+        }
+    }
+
+    private fun setupSwipeToRefresh() {
+        val swipeRefresh = binding.swipeRefresh
+        swipeRefresh.setOnRefreshListener {
+            refreshData()
+            swipeRefresh.isRefreshing = false
+        }
+    }
+
+    private fun refreshData() {
+        viewModel.refreshData(requireContext())
     }
 
 }

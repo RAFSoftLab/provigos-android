@@ -56,6 +56,6 @@ Mauris at nibh libero. Aliquam scelerisque enim sit amet cursus semper. Pellente
 Nullam placerat at justo sed scelerisque. Aliquam aliquam ornare mi ut fringilla. Aenean sollicitudin neque ante, eget cursus ante tempus sit amet. Proin vehicula in dui vitae gravida. Aenean venenatis enim pulvinar, fringilla mauris nec, fringilla urna. Vestibulum tincidunt mi sed egestas egestas. Duis gravida risus non nisi venenatis tincidunt.</string>
     <string name="pictures">pictures</string>
     <string name="contdesc">contdesc</string>
-    <string name="total_github_commits">Total github commits</string>
+    <string name="total_github_commits">Total commits</string>
     <string name="daily_github_commits">Commits today</string>
 </resources>

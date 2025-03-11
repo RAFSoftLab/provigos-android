@@ -34,6 +34,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
+import retrofit2.await
 import retrofit2.converter.moshi.MoshiConverterFactory
 import timber.log.Timber
 import java.io.IOException
@@ -64,45 +65,35 @@ class HttpManager {
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun postData(context: Context, userData:  MutableMap<String, MutableMap<String, String>>) {
-        try {
+    suspend fun postData(context: Context, userData:  Map<String, Map<String, String>>): Result<String> {
+        return try {
 
-            retrofitBuilder.baseUrl(RetrofitAPI.PROVIGOS_API)
-            retrofitAPI = retrofitBuilder.build().create(RetrofitAPI::class.java)
+            val sharedPreferenceDataSource = SharedPreferenceDataSource(context)
 
-            val jsonAdapter: JsonAdapter<MutableMap<String, MutableMap<String,String>>> = moshi.adapter()
-            val json = jsonAdapter.toJsonValue(userData)
-
-            Timber.tag("HttpManager").d("Sending JSON: $json")
-
-            val googleToken = SharedPreferenceDataSource(context).getGoogleToken()
-
+            val googleToken = sharedPreferenceDataSource.getGoogleToken()
             if(googleToken.isNullOrBlank()) {
                 Timber.tag("HttpManager").e("Google token is missing")
-                throw IllegalArgumentException("Google Token is null or empty")
-            } else {
-                retrofitAPI.postProvigosData(SharedPreferenceDataSource(context).getGoogleToken()!!, json)
-                    .enqueue(object : Callback<String> {
-                        override fun onResponse(call: Call<String>, response: Response<String>) {
-                            if (response.isSuccessful) {
-                                Timber.tag("HttpManager").e("POST Success: ${response.body()}")
-                            } else {
-                                Timber.tag("HttpManager").e("POST Error: ${response.code()} - ${response.errorBody()?.string()}")
-                            }
-                        }
+                return Result.failure(IllegalArgumentException("Google token is null or empty"))
+            }
+            val jsonAdapter: JsonAdapter<Map<String, Map<String, String>>> = moshi.adapter()
+            val json = jsonAdapter.toJsonValue(userData)
 
-                        override fun onFailure(call: Call<String>, t: Throwable) {
-                            when (t) {
-                                is SocketTimeoutException -> Timber.tag("HttpManager").e("Socket Timeout: ${t.message}")
-                                is IOException -> Timber.tag("HttpManager").e("Network Error: ${t.message}")
-                                else -> Timber.tag("HttpManager").e("Unknown Error: ${t.message}")
-                            }
-                            t.printStackTrace()
-                        }
-                    })
+            retrofitAPI = retrofitBuilder.baseUrl(RetrofitAPI.PROVIGOS_API)
+                .build()
+                .create(RetrofitAPI::class.java)
+
+            val response = retrofitAPI.postProvigosData(googleToken, json)
+
+            return if(response.isSuccessful) {
+                Timber.tag("HttpManager").d("POST Success: ${response.body()}")
+                Result.success("Data posted successfully")
+            } else {
+                Timber.tag("HttpManager").e("POST Error: ${response.code()} - ${response.errorBody()?.string()}")
+                Result.failure(Exception("POST failed: ${response.code()} - ${response.errorBody()?.string()}"))
             }
         } catch (e: Exception) {
             Timber.tag("HttpManager").e("Exception in postData: ${e.message}")
+            Result.failure(e)
         }
     }
 

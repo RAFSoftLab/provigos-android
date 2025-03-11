@@ -26,12 +26,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.facebook.stetho.BuildConfig
 import com.facebook.stetho.okhttp3.StethoInterceptor
+import com.provigos.android.application.ProvigosApplication
+import com.provigos.android.data.HttpManager
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import com.provigos.android.util.RetrofitAPI
 import com.squareup.moshi.Moshi
 import org.koin.android.ext.koin.androidApplication
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
@@ -76,9 +80,14 @@ val coreModule = module {
 
         return httpClient.build()
     }
+
     single { createRetrofit(get(), get()) }
     single { createMoshi() }
     single { createOkHttpClient() }
+    single { HttpManager() }
+
+    viewModel { DashboardViewModel(healthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager,
+        httpManager = HttpManager()) }
 
 }
 

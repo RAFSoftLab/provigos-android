@@ -27,6 +27,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
@@ -35,6 +38,7 @@ import com.provigos.android.presentation.view.activities.LoginActivity
 import com.provigos.android.presentation.view.activities.OAuthActivity
 import com.provigos.android.presentation.view.activities.HealthConnectPrivacyPolicyActivity
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.launch
 
 class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -89,11 +93,11 @@ class SettingsFragmentCompat: PreferenceFragmentCompat(), SharedPreferences.OnSh
         return true
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private fun signOut(): Boolean {
-        SharedPreferenceDataSource(context).setRememberMe(false)
         SharedPreferenceDataSource(context).setGoogleToken("")
-        LoginActivity().signout()
+        lifecycleScope.launch {
+            CredentialManager.create(context).clearCredentialState(ClearCredentialStateRequest())
+        }
         return true
     }
 

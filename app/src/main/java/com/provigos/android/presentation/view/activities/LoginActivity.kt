@@ -25,6 +25,7 @@ package com.provigos.android.presentation.view.activities
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
@@ -33,6 +34,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
+import com.auth0.jwt.JWT
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
@@ -40,11 +42,10 @@ import com.provigos.android.BuildConfig
 import com.provigos.android.R
 import com.provigos.android.data.SharedPreferenceDataSource
 import com.provigos.android.databinding.ActivityLoginBinding
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.security.MessageDigest
+import java.util.Date
 
 class LoginActivity: AppCompatActivity(R.layout.activity_login) {
 
@@ -53,27 +54,51 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
     }
 
     private lateinit var binding: ActivityLoginBinding
-    private lateinit var request: GetCredentialRequest
     private lateinit var sharedPrefs: SharedPreferenceDataSource
+    private lateinit var credentialManager: CredentialManager
+    private lateinit var request: GetCredentialRequest
 
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         sharedPrefs = SharedPreferenceDataSource(this)
+        credentialManager = CredentialManager.create(this)
 
         binding = ActivityLoginBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
-
-
+        setContentView(binding.root)
 
         request = GetCredentialRequest.Builder()
             .addCredentialOption(getSignInWithGoogleOption())
             .build()
 
-        val credentialManager = CredentialManager.create(this@LoginActivity)
+        if (hasValidStoredToken()) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        } else {
+            requestSignIn()
+        }
+    }
 
+    private fun hasValidStoredToken(): Boolean {
+        val googleToken = sharedPrefs.getGoogleToken()
+        if(googleToken.isNullOrBlank()) {
+            return false
+        } else {
+            try {
+                val decodedJWT = JWT.decode(googleToken)
+                val expiration = decodedJWT.expiresAt
+                val currentTime = Date()
+                return expiration.after(currentTime)
+            } catch (e: Exception) {
+                Timber.tag("LoginActivity").e("Failed to decode token")
+                sharedPrefs.setGoogleToken("")
+                return false
+            }
+        }
+    }
+
+    private fun requestSignIn() {
         lifecycleScope.launch {
             try {
                 val result = credentialManager.getCredential(
@@ -82,7 +107,34 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
                 )
                 handleSignIn(result)
             } catch (e: GetCredentialException) {
-                handleFailure(e)
+                Timber.tag("LoginActivity").e("Failed to sign-in ${e.message}")
+            }
+        }
+    }
+
+    private fun handleSignIn(result: GetCredentialResponse) {
+        when(val credential = result.credential) {
+            is CustomCredential -> {
+                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    try {
+                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                        val googleIdToken = googleIdTokenCredential.idToken
+                        sharedPrefs.setGoogleToken(googleIdToken)
+                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                        finish()
+                    } catch (e: GoogleIdTokenParsingException) {
+                        Timber.tag("LoginActivity").e(e, "Received an invalid google id token response")
+                        showToast("Sign-in failed: Invalid token")
+                    }
+                }
+                else {
+                    Timber.tag("LoginActivity").e("Unexpected type of credential")
+                    showToast("Sign-in failed: unexpected credential type")
+                }
+            }
+            else -> {
+                Timber.tag("LoginActivity").e("Unexpected type of credential")
+                showToast("Sign-in failed: unexpected credential type")
             }
         }
     }
@@ -97,40 +149,7 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
             .build()
     }
 
-    private fun handleSignIn(result: GetCredentialResponse) {
-        when(val credential = result.credential) {
-            is CustomCredential -> {
-                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    try {
-                        val googleIdTokenCredential = GoogleIdTokenCredential
-                            .createFrom(credential.data)
-                        val googleIdToken = googleIdTokenCredential.idToken
-                        sharedPrefs.setGoogleToken(googleIdToken)
-                        sharedPrefs.setRememberMe(true)
-                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                        finish()
-                    } catch (e: GoogleIdTokenParsingException) {
-                        Timber.tag("GITPE").e(e, "Received an invalid google id token response")
-                    }
-                }
-                else {
-                    Timber.tag("badcred").e("Unexpected type of credential")
-                }
-            }
-            else -> {
-                Timber.tag("badcred").e("Unexpected type of credential")
-            }
-        }
-    }
-
-    private fun handleFailure(e: GetCredentialException) {
-        Timber.e(e.toString())
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    fun signout() {
-        GlobalScope.launch {
-            CredentialManager.create(this@LoginActivity).clearCredentialState(ClearCredentialStateRequest())
-        }
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }

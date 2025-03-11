@@ -62,10 +62,6 @@ class SharedPreferenceDataSource(context: Context) {
 
     fun isPrivacyPolicy(): Boolean { return sharedPreferences.getBoolean(PRIVATE_POLICY_KEY, false) }
 
-    fun setRememberMe(boolean: Boolean) { editor.putBoolean(REMEMBER_ME, boolean).apply() }
-
-    fun isRememberMe(): Boolean { return sharedPreferences.getBoolean(REMEMBER_ME, false) }
-
     fun setState(token: String) { encryptedEditor.putString(STATE, token).apply() }
 
     fun getState(): String? { return encryptedSharedPreferences.getString(STATE, null) }

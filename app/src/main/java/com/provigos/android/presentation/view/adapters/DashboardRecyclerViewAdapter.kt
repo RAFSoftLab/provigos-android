@@ -22,24 +22,27 @@
  */
 package com.provigos.android.presentation.view.adapters
 
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.provigos.android.R
 import kotlin.math.roundToLong
 
-class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, String>):
+class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
     RecyclerView.Adapter<DashboardRecyclerViewAdapter.DashboardRecyclerViewHolder>() {
 
     var onItemClicked: ((String) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DashboardRecyclerViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
-        val view = layoutInflater.inflate(R.layout.layout_item_recycler, parent, false)
+        val view = layoutInflater.inflate(R.layout.layout_item_card, parent, false)
         return DashboardRecyclerViewHolder(view)
     }
 
@@ -75,10 +78,35 @@ class DashboardRecyclerViewAdapter(private val hashMap: MutableMap<String, Strin
         holder.itemView.setOnClickListener { onItemClicked?.invoke(measurementType) }
     }
 
+    fun updateData(newData: Map<String, String>) {
+        val diffCallback = DashboardDiffCallback(hashMap, newData)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        hashMap = newData
+        diffResult.dispatchUpdatesTo(this)
+    }
+
     inner class DashboardRecyclerViewHolder(itemView: View): RecyclerView.ViewHolder(itemView)  {
         val measurementNumber: TextView = itemView.findViewById(R.id.measurement_number)
         val measurementType: TextView = itemView.findViewById(R.id.measurement_type)
         val context: Context = itemView.context
+    }
+
+    inner class DashboardDiffCallback(
+        private val oldData: Map<String, String>,
+        private val newData: Map<String, String>
+    ): DiffUtil.Callback() {
+        override fun getOldListSize(): Int = oldData.size
+
+        override fun getNewListSize(): Int = newData.size
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldData.keys.elementAt(oldItemPosition) == newData.keys.elementAt(newItemPosition)
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldData.values.elementAt(oldItemPosition) == newData.values.elementAt(newItemPosition)
+        }
+
     }
 
 }

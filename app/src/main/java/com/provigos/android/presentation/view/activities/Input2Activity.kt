@@ -66,10 +66,10 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
         val description = binding.desc
         val measurement = binding.`val`
         val separator = binding.extraSep
-        datePicker = binding.weightDate
-        timePicker = binding.weightTime
-        val numberPicker = binding.weightNumberPicker
-        val numberPicker2 = binding.weightNumberPicker2
+        datePicker = binding.input2Date
+        timePicker = binding.input2Time
+        val numberPicker = binding.input2NumberPicker
+        val numberPicker2 = binding.input2NumberPicker2
 
         numberPicker.wrapSelectorWheel = true
         numberPicker2.wrapSelectorWheel = true

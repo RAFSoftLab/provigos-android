@@ -157,6 +157,7 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.androidx.security.crypto)
     implementation(libs.appauth)
+    implementation(libs.java.jwt)
 
 }
 

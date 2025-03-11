@@ -27,6 +27,7 @@ import com.provigos.android.data.model.GithubRepoCommitModel
 import com.provigos.android.data.model.GithubUserModel
 import com.provigos.android.data.model.GithubUserOrgs
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
@@ -40,11 +41,12 @@ interface RetrofitAPI {
     companion object {
         const val PROVIGOS_API = "https://provigos-prod-api.azurewebsites.net/api/"
         const val GITHUB_API = "https://api.github.com/"
+        const val SPOTIFY_API = "https://api.spotify.com/"
     }
 
     @Headers("Accept: */*", "Content-Type: application/json")
     @POST("healthConnectIntegration")
-    fun postProvigosData(@Header("Authorization") token: String, @Body json: Any?): Call<String>
+    suspend fun postProvigosData(@Header("Authorization") token: String, @Body json: Any?): Response<String>
 
     @Headers("Accept: */*", "Content-Type: application/vnd.github+json")
     @GET("user")

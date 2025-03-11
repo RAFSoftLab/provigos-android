@@ -7,112 +7,113 @@
     tools:viewBindingIgnore="false">
 
     <TextView
-        android:layout_marginStart="10dp"
+        android:layout_marginStart="16dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/datetime"
-        android:id="@+id/datetime"
+        android:id="@+id/datetime2"
         android:layout_marginTop="50dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/input2_date"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:id="@+id/weight_date"
         android:text="@string/today"
-        app:layout_constraintStart_toEndOf="@id/datetime"
-        android:layout_marginTop="50dp"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginStart="170dp"/>
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toStartOf="@id/input2_time"
+        app:layout_constraintTop_toTopOf="@id/datetime2"/>
+
     <TextView
+        android:id="@+id/input2_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/weight_time"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="50dp"
-        app:layout_constraintStart_toEndOf="@id/weight_date"
+        android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="10dp"/>
+        app:layout_constraintTop_toTopOf="@id/datetime2"/>
 
     <View
-        android:layout_marginTop="20dp"
-        android:id="@+id/weight_separator"
-        android:layout_width="match_parent"
+        android:id="@+id/separator"
+        android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/datetime"/>
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/datetime2"/>
 
     <TextView
         android:id="@+id/desc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/weight_separator"
-        android:layout_marginTop="20dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginBottom="15dp"/>
+        app:layout_constraintTop_toBottomOf="@id/separator"/>
 
     <TextView
         android:id="@+id/val"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/weight_separator"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginBottom="15dp"/>
+        app:layout_constraintTop_toBottomOf="@id/separator"/>
 
     <NumberPicker
-        android:layout_marginStart="65dp"
-        android:id="@+id/weight_number_picker"
+        android:id="@+id/input2_number_picker"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/weight_separator"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/separator"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/weight_number_picker2"
-        app:layout_constraintHorizontal_chainStyle="spread"
-        android:layout_marginTop="10dp"/>
+        app:layout_constraintEnd_toStartOf="@id/extra_sep"
+        app:layout_constraintHorizontal_chainStyle="spread"/>
+
     <TextView
         android:id="@+id/extra_sep"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toEndOf="@id/weight_number_picker"
-        app:layout_constraintEnd_toStartOf="@id/weight_number_picker2"
-        app:layout_constraintTop_toBottomOf="@id/weight_separator"
-        app:layout_constraintBottom_toTopOf="@id/weight_separator1"
-        tools:ignore="HardcodedText"
-        android:layout_marginTop="10dp"/>
+        android:layout_marginTop="10dp"
+        app:layout_constraintStart_toEndOf="@id/input2_number_picker"
+        app:layout_constraintEnd_toStartOf="@id/input2_number_picker2"
+        app:layout_constraintTop_toBottomOf="@id/separator"
+        app:layout_constraintBottom_toTopOf="@id/separator1"
+        tools:ignore="HardcodedText"/>
+
     <NumberPicker
-        android:layout_marginEnd="65dp"
-        android:id="@+id/weight_number_picker2"
+        android:id="@+id/input2_number_picker2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/weight_separator"
-        app:layout_constraintStart_toEndOf="@id/weight_number_picker"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"/>
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toBottomOf="@id/separator"
+        app:layout_constraintStart_toEndOf="@id/extra_sep"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <View
-        android:id="@+id/weight_separator1"
-        android:layout_width="match_parent"
+        android:id="@+id/separator1"
+        android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="@color/white"
-        app:layout_constraintTop_toBottomOf="@id/weight_number_picker"/>
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/input2_number_picker"/>
 
     <TextView
         android:id="@+id/save_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/save"
-        app:layout_constraintTop_toBottomOf="@id/weight_separator1"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="30dp"
         android:textSize="24sp"
         android:textColor="@color/teal1"
-        />
+        android:layout_marginTop="30dp"
+        app:layout_constraintTop_toBottomOf="@id/separator1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
 
 

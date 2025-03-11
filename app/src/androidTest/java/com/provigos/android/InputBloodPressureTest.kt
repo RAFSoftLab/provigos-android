@@ -60,10 +60,10 @@ class InputBloodPressureTest {
 
     @Test
     fun inputBloodPressureTest() {
-        setDate(R.id.weight_date, 2020, 1, 1)
-        setTime(R.id.weight_time, 12, 0)
-        setNumberPickerValue(onView(withId(R.id.weight_number_picker)), 50)
-        setNumberPickerValue(onView(withId(R.id.weight_number_picker2)), 50)
+        setDate(R.id.input2_date, 2020, 1, 1)
+        setTime(R.id.input2_time, 12, 0)
+        setNumberPickerValue(onView(withId(R.id.input2_number_picker)), 50)
+        setNumberPickerValue(onView(withId(R.id.input2_number_picker2)), 50)
         onView(withId(R.id.save_text)).perform(click())
     }
 

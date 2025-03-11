@@ -60,10 +60,10 @@ class InputWeightTest {
 
     @Test
     fun inputWeightTest() {
-        setDate(R.id.weight_date, 2020, 1, 1)
-        setTime(R.id.weight_time, 12, 0)
-        setNumberPickerValue(onView(withId(R.id.weight_number_picker)), 13)
-        setNumberPickerValue(onView(withId(R.id.weight_number_picker2)), 0)
+        setDate(R.id.input2_date, 2020, 1, 1)
+        setTime(R.id.input2_time, 12, 0)
+        setNumberPickerValue(onView(withId(R.id.input2_number_picker)), 13)
+        setNumberPickerValue(onView(withId(R.id.input2_number_picker2)), 0)
         onView(withId(R.id.save_text)).perform(click())
     }
 

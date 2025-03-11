@@ -26,7 +26,6 @@ import android.app.Application
 import com.facebook.stetho.Stetho
 import com.provigos.android.data.HealthConnectManager
 import com.provigos.android.modules.coreModule
-import com.provigos.android.modules.healthConnectModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidFileProperties
 import org.koin.android.ext.koin.androidLogger
@@ -57,7 +56,6 @@ class ProvigosApplication : Application() {
     private fun initKoin() {
         val modules = listOf(
             coreModule,
-            healthConnectModule
         )
         startKoin {
             androidLogger(Level.DEBUG)

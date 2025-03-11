@@ -44,7 +44,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.HealthConnectManager
 import com.provigos.android.data.HttpManager
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import okio.IOException
 import timber.log.Timber
@@ -54,18 +57,25 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-class DashboardViewModel(private val healthConnectManager: HealthConnectManager): ViewModel() {
+class DashboardViewModel(private val healthConnectManager: HealthConnectManager, private val httpManager: HttpManager): ViewModel() {
 
-    var dataToSend:  MutableMap<String, MutableMap<String, String>> = HashMap()
-    var dataToView: MutableMap<String, String> =  HashMap()
+    private val _dataToView = MutableStateFlow<Map<String, String>>(emptyMap())
+    val dataToView: StateFlow<Map<String, String>> get() = _dataToView
+
+    private val _dataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+    val dataToSend: StateFlow<Map<String, Map<String, String>>> get() = _dataToSend
 
     private var zdt = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
-
     private var pureZdt = pureDate(zdt)
 
     private fun pureDate(zdt: ZonedDateTime): String { return "" + zdt.year + "-" + zdt.month.value + "-" + zdt.dayOfMonth }
 
-    val PERMISSIONS = setOf(
+    private val _uiState = MutableStateFlow<UiState>(UiState.Uninitialized)
+    val uiState: StateFlow<UiState> get() = _uiState
+
+    val permissionsLauncher = healthConnectManager.requestPermissionsActivityContract()
+
+    private val permissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
         HealthPermission.getReadPermission(WeightRecord::class),
         HealthPermission.getReadPermission(HeartRateRecord::class),
@@ -78,65 +88,51 @@ class DashboardViewModel(private val healthConnectManager: HealthConnectManager)
         HealthPermission.getReadPermission(RespiratoryRateRecord::class)
     )
 
-    var uiState: UiState by mutableStateOf(UiState.Uninitialized)
-        private set
-
     var permissionsGranted = mutableStateOf(false)
         private set
-
-    val permissionsLauncher = healthConnectManager.requestPermissionsActivityContract()
 
     var stepsList: MutableState<List<StepsRecord>> = mutableStateOf(listOf())
         private set
     var stepsFor30Days: MutableMap<String, String> = HashMap()
         private set
-    var weightFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var bodyFatFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var heartRateFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var bloodPressureFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var bodyTemperatureFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var heightFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var bloodGlucoseFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var oxygenSaturationFor30Days: MutableMap<String, String> = HashMap()
-        private set
-    var respiratoryRateFor30Days: MutableMap<String, String> = HashMap()
-        private set
 
     private suspend fun tryWithPermissionCheck(block: suspend () -> Unit) {
-        permissionsGranted.value = healthConnectManager.hasAllPermissions(PERMISSIONS)
-        uiState = try {
+        permissionsGranted.value = healthConnectManager.hasAllPermissions(permissions)
+
+        _uiState.value = UiState.Loading
+
+        try {
             if(permissionsGranted.value) {
                 block()
+                _uiState.value = UiState.Done
+            } else {
+                _uiState.value = UiState.Error(Exception("Permissions not granted"))
             }
-            UiState.Done
-        } catch (remoteException: RemoteException) {
-            UiState.Error(remoteException)
-        } catch (securityException: SecurityException) {
-            UiState.Error(securityException)
-        } catch (ioException: IOException) {
-            UiState.Error(ioException)
-        } catch (illegalStateException: IllegalStateException) {
-            UiState.Error(illegalStateException)
+        } catch (e: Exception) {
+            _uiState.value = UiState.Error(e)
         }
     }
 
     fun init(context: Context) {
         viewModelScope.launch {
-            //tryWithPermissionCheck {
-                dataToView = HashMap()
-                readHealthConnectData()
-                readGithubData(context)
-                //HttpManager().postData(context, dataToSend)
-                //healthConnectData.forEach { item -> Timber.e("${item.key}, ${item.value}")}
-                //dataToView.forEach { item -> Timber.e("${item.key}, ${item.value}") }
-            //}
+            tryWithPermissionCheck {
+                _uiState.value = UiState.Loading
+
+                _dataToView.value = emptyMap()
+                _dataToSend.value = emptyMap()
+
+                coroutineScope {
+                    val healthDataJob = async { readHealthConnectData() }
+                    val githubDataJob = async { readGithubData(context) }
+
+                    healthDataJob.await()
+                    githubDataJob.await()
+                }
+
+                sendData(context, _dataToSend.value)
+
+                _uiState.value = UiState.Done
+            }
         }
     }
 
@@ -145,35 +141,30 @@ class DashboardViewModel(private val healthConnectManager: HealthConnectManager)
 
         readHealthData(
             healthConnectManager::readWeightForLast30Days,
-            weightFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to record.weight.inKilograms.toString() },
             "weight"
         )
 
         readHealthData(
             healthConnectManager::readHeightForLast30Days,
-            heightFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to (record.height.inMeters * 100).toLong().toString() },
             "height"
         )
 
         readHealthData(
             healthConnectManager::readHeartRateForLast30Days,
-            heartRateFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.startTime, ZoneId.systemDefault())) to record.samples.last().beatsPerMinute.toString() },
             "heartRate"
         )
 
         readHealthData(
             healthConnectManager::readBodyFatForLast30Days,
-            bodyFatFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to record.percentage.value.toString() },
             "bodyFat"
         )
 
         readHealthData(
             healthConnectManager::readBloodPressureForLast30Days,
-            bloodPressureFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to
                     "${record.systolic.inMillimetersOfMercury.toLong()}/${record.diastolic.inMillimetersOfMercury.toLong()}" },
             "bloodPressure"
@@ -181,75 +172,66 @@ class DashboardViewModel(private val healthConnectManager: HealthConnectManager)
 
         readHealthData(
             healthConnectManager::readBodyTemperatureForLast30Days,
-            bodyTemperatureFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to record.temperature.inCelsius.toString() },
             "bodyTemperature"
         )
 
         readHealthData(
             healthConnectManager::readBloodGlucoseForLast30Days,
-            bloodGlucoseFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to record.level.inMillimolesPerLiter.toString() },
             "bloodGlucose"
         )
 
         readHealthData(
             healthConnectManager::readOxygenSaturationForLast30Days,
-            oxygenSaturationFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to record.percentage.value.toString() },
             "oxygenSaturation"
         )
 
         readHealthData(
             healthConnectManager::readRespiratoryRateForLast30Days,
-            respiratoryRateFor30Days,
             { record -> pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to record.rate.toString() },
             "respiratoryRate"
         )
     }
 
     private suspend fun <T> readHealthData(readFunction: suspend (java.time.Instant) -> List<T>,
-                                           map: MutableMap<String, String>,
                                            extractor: (T) -> Pair<String, String>,
-                                           key: String): Boolean {
-        return try {
+                                           key: String) {
+        val map = mutableMapOf<String, String>()
+        try {
             val dataList = readFunction(zdt.toInstant())
             if(dataList.isNotEmpty()) {
                 dataList.forEach { record ->
                     val (date, value) = extractor(record)
                     map[date] = value
                 }
-                dataToSend[key] = map
-                dataToView[key] = map.values.last()
-                true
-            } else {
-                false
+                _dataToSend.value += (key to map)
+                _dataToView.value += (key to map.values.last())
             }
-        } catch (_: NullPointerException) {
-            false
+        } catch (_: Exception) {
+            Timber.tag("DashboardViewModel").d("Error reading health data for $key")
         }
     }
 
-    private suspend fun readStepsFor30Days(): Boolean {
+    private suspend fun readStepsFor30Days() {
         try {
             stepsList.value = healthConnectManager.readStepsForLast30Days(zdt.toInstant())
+            val stepsMap = mutableMapOf<String, String>()
             if(stepsList.value.isNotEmpty()) {
                 stepsList.value.forEach { stepsRecord: StepsRecord ->
-                    val zdt = ZonedDateTime.ofInstant(stepsRecord.startTime, ZoneId.systemDefault())
-                    if(stepsFor30Days.containsKey(pureDate(zdt))) {
-                        stepsFor30Days[pureDate(zdt)] = (stepsFor30Days[pureDate(zdt)]!!.toLong() + stepsRecord.count).toString()
-                    } else {
-                        stepsFor30Days[pureDate(zdt)] = stepsRecord.count.toString()
+                    val date = pureDate(ZonedDateTime.ofInstant(stepsRecord.startTime, ZoneId.systemDefault()))
+                    stepsMap[date] = stepsRecord.count.toString()
                     }
                 }
-                dataToSend["steps"] = stepsFor30Days
-                dataToView["steps"] = healthConnectManager.aggregateStepsForToday(zdt.toInstant())!!.toString()
-                return true
-            } else {
-                return false
-            }
-        } catch (_: NullPointerException) {}
-        return false
+                stepsMap.forEach { (date, count) ->
+                    stepsFor30Days[date] = (stepsFor30Days[date]?.toLong()?.plus(count.toLong()) ?: count.toLong()).toString()
+                }
+            _dataToSend.value += ("steps" to stepsFor30Days)
+            _dataToView.value += ("steps" to stepsFor30Days.values.last())
+        } catch (_: Exception) {
+            Timber.tag("DashboardViewModel").d("Error reading steps data")
+        }
     }
 
     suspend fun writeSteps(start: ZonedDateTime, count: Long) = healthConnectManager.writeSteps(start, count)
@@ -264,20 +246,56 @@ class DashboardViewModel(private val healthConnectManager: HealthConnectManager)
     suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double) = healthConnectManager.writeRespiratoryRate(date, rate)
 
     private suspend fun readGithubData(context: Context) {
-        val githubCommits = HttpManager().getGithubCommits(context)
-        githubCommits.forEach { item -> Timber.e("${item.key}, ${item.value}") }
+        val githubCommits = httpManager.getGithubCommits(context)
+        val commitMap = mutableMapOf<String, String>()
         var count: Long = 0
         for (entry in githubCommits.entries) {
             count += entry.value.toLong()
+            commitMap[entry.key] = entry.value
         }
-        dataToView["totalGithubCommits"] = count.toString()
-        dataToView["dailyGithubCommits"] = githubCommits[pureZdt] ?: "0"
-        dataToSend["github"] = githubCommits
+        //_dataToSend.value += ("github" to commitMap)
+        _dataToView.value += ("totalGithubCommits" to count.toString())
+        val dailyCommits = commitMap[pureZdt] ?: "0"
+        _dataToView.value += ("dailyGithubCommits" to dailyCommits)
+    }
+
+    private fun sendData(context: Context, dataToSend: Map<String, Map<String, String>>) {
+        viewModelScope.launch {
+            val result = httpManager.postData(context, dataToSend)
+            result.onSuccess {
+                Timber.tag("DashboardViewModel").d("Data sent: $it")
+            }.onFailure { exception ->
+                Timber.e("Error sending data: ${exception.message}")
+            }
+        }
+    }
+
+    fun refreshData(context: Context) {
+        viewModelScope.launch {
+            _uiState.value = UiState.Refreshing
+
+            _dataToView.value = emptyMap()
+            _dataToSend.value = emptyMap()
+
+            coroutineScope {
+                val healthDataJob = async { readHealthConnectData() }
+                val githubDataJob = async { readGithubData(context) }
+
+                healthDataJob.await()
+                githubDataJob.await()
+            }
+
+            sendData(context, _dataToSend.value)
+
+            _uiState.value = UiState.Done
+        }
     }
 
     sealed class UiState {
         data object Uninitialized: UiState()
         data object Done: UiState()
+        data object Loading: UiState()
+        data object Refreshing: UiState()
         data class Error(val exception: Throwable, val uuid: UUID = UUID.randomUUID()) : UiState()
     }
 }
