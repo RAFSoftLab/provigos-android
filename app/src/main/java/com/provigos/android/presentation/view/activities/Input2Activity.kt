@@ -27,6 +27,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Bundle
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.provigos.android.R
 import com.provigos.android.databinding.ActivityInput2Binding
@@ -34,7 +35,6 @@ import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -42,6 +42,7 @@ import java.time.ZonedDateTime
 import java.time.format.TextStyle
 import java.util.Calendar
 import java.util.Locale
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
 
@@ -115,6 +116,8 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
 
         val zonedDateTime = ZonedDateTime.of(date, time, ZoneId.systemDefault())
 
+        val permission = viewModel.writePermissionMap[type]
+
         when(type) {
             "weight" -> {
                 description.text = "Weight"
@@ -126,11 +129,15 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                 numberPicker2.maxValue = 9
                 binding.saveText.setOnClickListener {
                     GlobalScope.launch {
-                        viewModel.writeWeight(
-                            zonedDateTime,
-                            "${numberPicker.value}.${numberPicker2.value}".toDouble()
-                        )
-                        finish()
+                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
+                            viewModel.writeWeight(
+                                zonedDateTime,
+                                "${numberPicker.value}.${numberPicker2.value}".toDouble()
+                            )
+                            finish()
+                        } else {
+                            toast()
+                        }
                     }
                 }
             }
@@ -144,9 +151,13 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                 numberPicker2.maxValue = 200
                 binding.saveText.setOnClickListener {
                     GlobalScope.launch {
-                        viewModel.writeBloodPressure(zonedDateTime, numberPicker.value.toLong(), numberPicker2.value.toLong())
+                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
+                            viewModel.writeBloodPressure(zonedDateTime, numberPicker.value.toLong(), numberPicker2.value.toLong())
+                            finish()
+                        } else {
+                            toast()
+                        }
                     }
-                    finish()
                 }
             }
             "bodyTemperature" -> {
@@ -159,10 +170,16 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                 numberPicker2.maxValue = 9
                 binding.saveText.setOnClickListener {
                     GlobalScope.launch {
-                        viewModel.writeBodyTemperature(zonedDateTime,
-                            "${numberPicker.value}.${numberPicker2.value}".toDouble())
+                        if (viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
+                            viewModel.writeBodyTemperature(
+                                zonedDateTime,
+                                "${numberPicker.value}.${numberPicker2.value}".toDouble()
+                            )
+                            finish()
+                        } else {
+                            toast()
+                        }
                     }
-                    finish()
                 }
             }
         }
@@ -197,5 +214,9 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                 timePicker.text = "${hour}:${minute}"
             }
         }
+
+    private fun toast() {
+        Toast.makeText(this@Input2Activity, "no permission", Toast.LENGTH_LONG).show()
+    }
 
 }

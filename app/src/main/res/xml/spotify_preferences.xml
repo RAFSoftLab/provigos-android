@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Tracked items">
+
+        <CheckBoxPreference
+            android:title="Track your top artists' genres"
+            android:key="@string/spotify_genre"
+            android:summary="Tracks your top artists' genres and singles out the one that occurs the most"
+            />
+        <CheckBoxPreference
+            android:title="Track your top artists' popularity"
+            android:key="@string/spotify_popularity"
+            android:summary="Tracks your top artists' popularity and averages them out. Spotify uses a scale from 0.0 to 100.0 when giving a popularity rating to an artist"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Integration settings">
+        <Preference
+            android:title="Clear cache"
+            android:key="invalidate_spotify_cache"
+            android:summary="Manually invalidate your Provigos' Spotify data cache"
+            />
+        <Preference
+            android:title="Disable Spotify integration"
+            android:key="disable_spotify_integration"
+            android:summary="Stop Provigos from gathering your Spotify data"
+            />
+
+    </PreferenceCategory>
+</androidx.preference.PreferenceScreen>

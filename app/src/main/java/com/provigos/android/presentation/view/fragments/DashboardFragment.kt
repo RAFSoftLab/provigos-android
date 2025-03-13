@@ -22,14 +22,12 @@
  */
 package com.provigos.android.presentation.view.fragments
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -42,11 +40,9 @@ import com.provigos.android.presentation.view.activities.InputActivity
 import com.provigos.android.presentation.view.activities.Input2Activity
 import com.provigos.android.presentation.view.adapters.DashboardRecyclerViewAdapter
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
-import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import timber.log.Timber
 
 class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
@@ -56,17 +52,12 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         private val INPUT2_ACTIVITY = Input2Activity::class.java
     }
 
+    private val viewModel by viewModel<DashboardViewModel>()
 
     private lateinit var binding: FragmentDashboardBinding
-    private val viewModel by viewModel<DashboardViewModel>()
     private lateinit var adapter: DashboardRecyclerViewAdapter
 
     private var loadingState = 1
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        viewModel.init(context)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -90,7 +81,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.init(requireContext())
+        viewModel.fetchAllData()
     }
 
     private fun setupItemClickListener() {
@@ -108,12 +99,14 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         )
 
         adapter.onItemClicked = { type ->
-            if(type != "totalGithubCommits" && type != "dailyGithubCommits")
-            activity[type].let {
-                target -> val intent = Intent(context, target).apply {
-                    putExtra("key", type)
-            }
-                startActivity(intent)
+            if (type != "githubTotal" && type != "githubDaily" && type != "spotifyGenre" && type != "spotifyPopularity") {
+                var permission = false
+                activity[type]?.let { target ->
+                        val intent = Intent(context, target).apply {
+                            putExtra("key", type)
+                        }
+                        startActivity(intent)
+                }
             }
         }
     }
@@ -125,7 +118,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
                     when (uiState) {
                         is DashboardViewModel.UiState.Uninitialized -> showLoading(true)
                         is DashboardViewModel.UiState.Loading -> showLoading(true)
-                        is DashboardViewModel.UiState.Refreshing -> showLoading(false)
+                        is DashboardViewModel.UiState.Refreshing -> showLoading(true)
                         is DashboardViewModel.UiState.Done -> {
                             showLoading(false)
                             adapter.updateData(viewModel.dataToView.value)
@@ -169,13 +162,8 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
     private fun setupSwipeToRefresh() {
         val swipeRefresh = binding.swipeRefresh
         swipeRefresh.setOnRefreshListener {
-            refreshData()
+            viewModel.refreshData()
             swipeRefresh.isRefreshing = false
         }
     }
-
-    private fun refreshData() {
-        viewModel.refreshData(requireContext())
-    }
-
 }

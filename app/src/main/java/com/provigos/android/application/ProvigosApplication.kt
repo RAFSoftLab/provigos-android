@@ -24,8 +24,10 @@ package com.provigos.android.application
 
 import android.app.Application
 import com.facebook.stetho.Stetho
-import com.provigos.android.data.HealthConnectManager
+import com.provigos.android.data.api.HealthConnectManager
+import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.modules.coreModule
+import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidFileProperties
 import org.koin.android.ext.koin.androidLogger
@@ -47,6 +49,7 @@ class ProvigosApplication : Application() {
         initTimber()
         initKoin()
         initStetho()
+        initSharedPreferences()
     }
 
     private fun initTimber() {
@@ -68,6 +71,10 @@ class ProvigosApplication : Application() {
 
     private fun initStetho() {
         Stetho.initializeWithDefaults(this)
+    }
+
+    private fun initSharedPreferences() {
+        SharedPreferenceManager.init(getKoin().get())
     }
 
 }

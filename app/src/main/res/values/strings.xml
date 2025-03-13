@@ -3,8 +3,14 @@
     <string name="privacy_policy">Politika privatnosti…</string>
     <string name="switch_pref1_key">health_connect_integration</string>
     <string name="switch_pref1_title">Health Connect</string>
-    <string name="switch_pref2_key">sign_out_account</string>
-    <string name="switch_pref2_title">Sign out</string>
+    <string name="switch_pref2_key">github_integration</string>
+    <string name="switch_pref2_title">GitHub</string>
+    <string name="switch_pref3_key">spotify_integration</string>
+    <string name="switch_pref3_title">Spotify</string>
+    <string name="switch_pref4_key">custom_items</string>
+    <string name="switch_pref4_title">Custom items</string>
+    <string name="switch_pref5_key">sign_out</string>
+    <string name="switch_pref5_title">Sign Out</string>
     <string name="pp_checkbox">I understand and accept Provigos data usage</string>
     <string name="cancel">Cancel</string>
     <string name="continyu">Continue</string>
@@ -37,6 +43,15 @@
     <string name="weight">Weight</string>
     <string name="kg">kg</string>
     <string name="save">Save</string>
+    <string name="pictures">pictures</string>
+    <string name="contdesc">contdesc</string>
+    <string name="total_github_commits">Total commits</string>
+    <string name="daily_github_commits">Commits today</string>
+    <string name="spotify_genre">Most popular genre</string>
+    <string name="spotify_popularity">Average artist popularity</string>
+    <string name="tracked_items_through_github_integration">Tracked items through Github integration</string>
+    <string name="tracked_items_through_spotify_integration">Tracked items through Spotify integration</string>
+    <string name="tracked_items_hint">You can always manage your integrations by going to settings!</string>
     <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque odio lorem, lobortis et elit at, volutpat interdum ante. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec porta molestie justo nec venenatis. Donec pretium orci ac mollis pulvinar. Curabitur iaculis tincidunt neque, sit amet interdum turpis sodales feugiat. Fusce non turpis sit amet eros interdum congue eu vel diam. Fusce efficitur vitae sem quis imperdiet. Aliquam et feugiat nisi.
 
 Duis sagittis consequat est, sed luctus mauris. Vivamus velit felis, scelerisque sit amet nibh quis, viverra feugiat neque. Praesent varius lacus id rhoncus volutpat. Ut at elit eget risus ultricies malesuada. Nam sit amet nunc suscipit, convallis lorem quis, pharetra tellus. Ut mattis dapibus justo at euismod. Praesent vitae lacus at neque pulvinar sollicitudin. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Praesent a tellus magna.
@@ -54,8 +69,5 @@ Sed in ex quis elit bibendum vestibulum. Phasellus ante nulla, tempor at lorem i
 Mauris at nibh libero. Aliquam scelerisque enim sit amet cursus semper. Pellentesque turpis ipsum, tincidunt ut nunc vitae, bibendum dictum nisi. Donec quis accumsan mauris. Nam porta augue quis magna commodo, in consequat nunc rutrum. Praesent eleifend erat nisi, eget volutpat mauris fermentum et. Maecenas et ultricies lectus, molestie molestie est. Quisque ut purus urna.
 
 Nullam placerat at justo sed scelerisque. Aliquam aliquam ornare mi ut fringilla. Aenean sollicitudin neque ante, eget cursus ante tempus sit amet. Proin vehicula in dui vitae gravida. Aenean venenatis enim pulvinar, fringilla mauris nec, fringilla urna. Vestibulum tincidunt mi sed egestas egestas. Duis gravida risus non nisi venenatis tincidunt.</string>
-    <string name="pictures">pictures</string>
-    <string name="contdesc">contdesc</string>
-    <string name="total_github_commits">Total commits</string>
-    <string name="daily_github_commits">Commits today</string>
+    <string name="privacy_policy_heading">Privacy Policy</string>
 </resources>

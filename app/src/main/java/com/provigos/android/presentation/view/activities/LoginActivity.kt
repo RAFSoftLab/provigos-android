@@ -27,7 +27,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -40,7 +39,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.provigos.android.BuildConfig
 import com.provigos.android.R
-import com.provigos.android.data.SharedPreferenceDataSource
+import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.databinding.ActivityLoginBinding
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -54,15 +53,14 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
     }
 
     private lateinit var binding: ActivityLoginBinding
-    private lateinit var sharedPrefs: SharedPreferenceDataSource
     private lateinit var credentialManager: CredentialManager
     private lateinit var request: GetCredentialRequest
+    private val sharedPrefs = SharedPreferenceManager.get()
 
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        sharedPrefs = SharedPreferenceDataSource(this)
         credentialManager = CredentialManager.create(this)
 
         binding = ActivityLoginBinding.inflate(layoutInflater)

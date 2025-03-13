@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+<PreferenceCategory android:title="Tracked items">
+
+    <CheckBoxPreference
+        android:title="Track total GitHub commits"
+        android:key="@string/total_github_commits"
+        android:summary="Tracks the total number of commits in your own repositories"
+        />
+    <CheckBoxPreference
+        android:title="Track daily GitHub commits"
+        android:key="@string/daily_github_commits"
+        android:summary="Tracks the number of your daily GitHub commits in your own repositories"/>
+</PreferenceCategory>
+
+<PreferenceCategory android:title="Integration settings">
+    <Preference
+        android:title="Clear cache"
+        android:key="invalidate_github_cache"
+        android:summary="Manually invalidate your Provigos' GitHub data cache"
+        />
+    <Preference
+        android:title="Disable GitHub integration"
+        android:key="disable_github_integration"
+        android:summary="Stop Provigos from gathering your GitHub data"
+        />
+
+</PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>

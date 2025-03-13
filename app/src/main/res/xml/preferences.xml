@@ -6,23 +6,32 @@
             android:id="@+id/switch_preference_hc"
             android:key="@string/switch_pref1_key"
             android:title="@string/switch_pref1_title"
-            android:icon="@drawable/health_connect"/>
+            android:icon="@drawable/health_connect"
+            />
         <Preference
             android:id="@+id/github_integration"
-            android:key="github_integration"
-            android:title="GitHub"
-            android:icon="@drawable/github"/>
+            android:key="@string/switch_pref2_key"
+            android:title="@string/switch_pref2_title"
+            android:icon="@drawable/github"
+            />
         <Preference
             android:id="@+id/spotify_integration"
-            android:key="spotify_integration"
-            android:title="Spotify"
-            android:icon="@drawable/spotify"/>
+            android:key="@string/switch_pref3_key"
+            android:title="@string/switch_pref3_title"
+            android:icon="@drawable/spotify"
+            />
     </PreferenceCategory>
     <PreferenceCategory android:title="Account">
         <Preference
+            android:id="@+id/custom_items"
+            android:key="@string/switch_pref4_key"
+            android:title="@string/switch_pref4_title"
+            android:summary="Manage your customized trackable items"/>
+        <Preference
             android:id="@+id/sign_out"
-            android:key="@string/switch_pref2_key"
-            android:title="@string/switch_pref2_title"/>
+            android:key="@string/switch_pref5_key"
+            android:title="@string/switch_pref5_title"
+            android:summary="Remove your Provigos credentials"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -22,72 +22,122 @@
  */
 package com.provigos.android.modules
 
-import android.content.Context
 import android.content.SharedPreferences
-import com.facebook.stetho.BuildConfig
-import com.facebook.stetho.okhttp3.StethoInterceptor
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.provigos.android.application.ProvigosApplication
-import com.provigos.android.data.HttpManager
+import com.provigos.android.data.api.HttpManager
+import com.provigos.android.data.local.SharedPreferenceDataSource
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
-import com.provigos.android.util.RetrofitAPI
+import com.provigos.android.data.api.interfaces.GithubAPI
+import com.provigos.android.data.api.interfaces.ProvigosAPI
+import com.provigos.android.data.api.interfaces.SpotifyAPI
+import com.provigos.android.data.local.SharedPreferenceManager
 import com.squareup.moshi.Moshi
 import org.koin.android.ext.koin.androidApplication
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-val coreModule = module {
-
-    single<SharedPreferences> {
-        androidApplication().getSharedPreferences(androidApplication().packageName, Context.MODE_PRIVATE)
-    }
-
-    fun createMoshi() : Moshi {
-        return Moshi.Builder()
-            .add(Date::class.java, Rfc3339DateJsonAdapter())
-            .build()
-    }
-
-    fun createRetrofit(moshi: Moshi, httpClient: OkHttpClient): Retrofit {
+    inline fun <reified T> createRetrofit(okHttpClient: OkHttpClient, moshi: Moshi, baseUrl: String): T {
         return Retrofit.Builder()
-            .baseUrl(RetrofitAPI.PROVIGOS_API)
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .addConverterFactory(MoshiConverterFactory.create(moshi).asLenient())
-            .client(httpClient)
+            .baseUrl(baseUrl)
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
+            .create(T::class.java)
     }
 
-    fun createOkHttpClient() : OkHttpClient {
+    val coreModule = module {
 
-        val httpClient = OkHttpClient.Builder()
-        httpClient.readTimeout(60, TimeUnit.SECONDS)
-        httpClient.connectTimeout(60, TimeUnit.SECONDS)
-        httpClient.writeTimeout(60, TimeUnit.SECONDS)
+        single<SharedPreferences> {
+            val masterKey = MasterKey.Builder(androidApplication())
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
 
-        if(BuildConfig.DEBUG) {
-            val logging = HttpLoggingInterceptor()
-            logging.level = HttpLoggingInterceptor.Level.BODY
-            httpClient.addInterceptor(logging)
-            httpClient.addNetworkInterceptor(StethoInterceptor())
+            EncryptedSharedPreferences.create(
+                androidApplication(),
+                "encrypted_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
         }
 
-        return httpClient.build()
+        single {
+            SharedPreferenceDataSource(
+                encryptedSharedPreferences = get()
+            )
+        }
+
+        single {
+            SharedPreferenceManager.init(
+                sharedPreferenceDataSource = get()
+            )
+        }
+
+        single {
+            Moshi.Builder().apply {
+                add(Date::class.java, Rfc3339DateJsonAdapter())
+                addLast(KotlinJsonAdapterFactory())
+            }.build()
+        }
+
+        single {
+            OkHttpClient.Builder().apply {
+                connectTimeout(30, TimeUnit.SECONDS)
+                readTimeout(30, TimeUnit.SECONDS)
+                writeTimeout(30, TimeUnit.SECONDS)
+                addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+            }.build()
+        }
+
+        single<ProvigosAPI> {
+            createRetrofit<ProvigosAPI>(
+                okHttpClient = get(),
+                moshi = get(),
+                baseUrl = ProvigosAPI.PROVIGOS_API
+            )
+        }
+
+        single<GithubAPI> {
+            createRetrofit<GithubAPI>(
+                okHttpClient = get(),
+                moshi = get(),
+                baseUrl = GithubAPI.GITHUB_API
+            )
+        }
+
+        single<SpotifyAPI> {
+            createRetrofit<SpotifyAPI>(
+                okHttpClient = get(),
+                moshi = get(),
+                baseUrl = SpotifyAPI.SPOTIFY_API
+            )
+        }
+
+
+        single {
+            HttpManager(
+                provigosAPI = get(),
+                githubAPI = get(),
+                spotifyAPI = get(),
+                moshi = get()
+            )
+        }
+
+        viewModel {
+            DashboardViewModel(
+                mHealthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager,
+                mHttpManager = get()
+            )
+        }
     }
-
-    single { createRetrofit(get(), get()) }
-    single { createMoshi() }
-    single { createOkHttpClient() }
-    single { HttpManager() }
-
-    viewModel { DashboardViewModel(healthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager,
-        httpManager = HttpManager()) }
-
-}
 

@@ -22,17 +22,15 @@
  */
 package com.provigos.android.presentation.view.adapters
 
-import android.animation.ObjectAnimator
-import android.annotation.SuppressLint
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.provigos.android.R
+import java.util.Locale
 import kotlin.math.roundToLong
 
 class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
@@ -48,7 +46,6 @@ class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
 
     override fun getItemCount() = hashMap.size
 
-    @SuppressLint("SetTextI18n", "DefaultLocale")
     override fun onBindViewHolder(holder: DashboardRecyclerViewHolder, position: Int) {
 
         val (measurementType, measurementValue) = hashMap.entries.elementAt(position)
@@ -63,12 +60,14 @@ class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
             "leanBodyMass" -> R.string.lean_body_mass to context.getString(R.string.num_of_weight, measurementValue.toDouble().roundToLong().toString(), "kg")
             "bloodPressure" -> R.string.blood_pressure to "$measurementValue mmHg"
             "height" -> R.string.height to "$measurementValue cm"
-            "bodyTemperature" -> R.string.body_temperature to String.format("%.1f ℃", measurementValue.toDouble())
+            "bodyTemperature" -> R.string.body_temperature to String.format(Locale.US, "%.1f ℃", measurementValue.toDouble())
             "oxygenSaturation" -> R.string.oxygen_saturation to "$measurementValue %"
             "bloodGlucose" -> R.string.blood_glucose to "$measurementValue mmol/L"
             "respiratoryRate" -> R.string.respiratory_rate to "${measurementValue.toDouble().roundToLong()} rpm"
-            "totalGithubCommits" -> R.string.total_github_commits to measurementValue
-            "dailyGithubCommits" -> R.string.daily_github_commits to measurementValue
+            "githubTotal" -> R.string.total_github_commits to measurementValue
+            "githubDaily" -> R.string.daily_github_commits to measurementValue
+            "spotifyGenre" -> R.string.spotify_genre to measurementValue
+            "spotifyPopularity" -> R.string.spotify_popularity to measurementValue
             else -> null to null
         }
 
@@ -95,6 +94,7 @@ class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
         private val oldData: Map<String, String>,
         private val newData: Map<String, String>
     ): DiffUtil.Callback() {
+
         override fun getOldListSize(): Int = oldData.size
 
         override fun getNewListSize(): Int = newData.size
@@ -108,5 +108,4 @@ class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
         }
 
     }
-
 }

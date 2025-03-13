@@ -25,24 +25,17 @@ package com.provigos.android.presentation.view.activities
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ReportFragment.Companion.reportFragment
 import com.provigos.android.BuildConfig
-import com.provigos.android.data.SharedPreferenceDataSource
+import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.util.PkceHelper
-import net.openid.appauth.AuthorizationException
 import net.openid.appauth.AuthorizationRequest
-import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
 import net.openid.appauth.TokenRequest
 import net.openid.appauth.TokenResponse
-import okio.IOException
 import timber.log.Timber
-import java.net.SocketTimeoutException
 import java.util.UUID
 
 class OAuthActivity: AppCompatActivity() {
@@ -67,7 +60,7 @@ class OAuthActivity: AppCompatActivity() {
                 clientSecret = BuildConfig.SPOTIFY_CLIENT_SECRET,
                 authUrl = "https://accounts.spotify.com/authorize",
                 tokenUrl = "https://accounts.spotify.com/api/token",
-                scopes = "user-library-read",
+                scopes = "user-top-read",
                 pkce = true
             )
         )
@@ -78,13 +71,12 @@ class OAuthActivity: AppCompatActivity() {
     private var authDestination: String? = null
 
     private lateinit var authService: AuthorizationService
-    private lateinit var sharedPrefs: SharedPreferenceDataSource
+    private val sharedPrefs = SharedPreferenceManager.get()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         authService = AuthorizationService(this)
-        sharedPrefs = SharedPreferenceDataSource(this)
 
         authDestination = intent.extras?.getString("oauth") ?: run {
             Timber.tag("OAuthActivity").e("No auth destination provided, finishing activity")
@@ -163,9 +155,13 @@ class OAuthActivity: AppCompatActivity() {
             Timber.tag("OAuthActivity").e("OAuth response is null: User canceled auth or an error occurred")
         }
 
+
         sharedPrefs.setCodeVerifier("")
         sharedPrefs.setState("")
         sharedPrefs.setAuthDestination("")
+        startActivity(Intent(this, PermissionActivity::class.java)
+            .putExtra("type", destination)
+        )
         finish()
     }
 
@@ -253,7 +249,7 @@ class OAuthActivity: AppCompatActivity() {
         return authRequest.build()
     }
 
-    private fun refreshToken(destination: String) {
+    fun refreshToken(destination: String) {
 
         val authConfig = AUTH_CONFIGS[destination] ?: run {
             Timber.tag("OAuthActivity").e("Invalid auth destination for refresh token $destination")
@@ -305,13 +301,17 @@ class OAuthActivity: AppCompatActivity() {
             GITHUB -> {
                 Timber.tag("OAuthActivity").i("GitHub access token received: $accessToken")
                 sharedPrefs.setGithubAccessToken(accessToken)
+                sharedPrefs.setGithubUser(true)
             }
             SPOTIFY -> {
                 Timber.tag("OAuthActivity").i("Spotify access token received: $accessToken")
                 sharedPrefs.setSpotifyAccessToken(accessToken)
+                sharedPrefs.setSpotifyTokenExpiration(System.currentTimeMillis() + (3600 * 1000))
+                sharedPrefs.setSpotifyUser(true)
                 if(refreshToken.isNotBlank()) {
                     Timber.tag("OAuthActivity").i("Spotify refresh token received: $refreshToken")
                     sharedPrefs.setSpotifyRefreshToken(refreshToken)
+                    sharedPrefs.setSpotifyUser(true)
                 }
             }
             else -> throw IllegalArgumentException(ERROR_NO_IMPLEMENTATION)
