@@ -68,24 +68,46 @@ class OAuthActivity: AppCompatActivity() {
         private const val ERROR_NO_IMPLEMENTATION = "Implementation for the designated OAuth destination is not available"
     }
 
-    private var authDestination: String? = null
-
-    private lateinit var authService: AuthorizationService
     private val sharedPrefs = SharedPreferenceManager.get()
+    private var authDestination: String? = null
+    private lateinit var authService: AuthorizationService
+
+    private var authFlowLaunched = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         authService = AuthorizationService(this)
 
-        authDestination = intent.extras?.getString("oauth") ?: run {
+        authDestination = savedInstanceState?.getString("oauth_destination")
+            ?: intent.extras?.getString("oauth")
+            ?: sharedPrefs.getAuthDestination()
+
+        if(authDestination.isNullOrEmpty()) {
             Timber.tag("OAuthActivity").e("No auth destination provided, finishing activity")
             finish()
             return
         }
 
         sharedPrefs.setAuthDestination(authDestination!!)
-        startOAuthFlow()
+
+        if(intent.data != null) {
+            handleIntent(intent)
+        } else {
+            startOAuthFlow()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("oauth_destination", authDestination)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if(authFlowLaunched) {
+            finish()
+        }
     }
 
     override fun onDestroy() {
@@ -95,6 +117,7 @@ class OAuthActivity: AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        authFlowLaunched = false
         handleIntent(intent)
     }
 
@@ -116,6 +139,7 @@ class OAuthActivity: AppCompatActivity() {
             val authIntent = authService.getAuthorizationRequestIntent(authRequest)
                 .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
+            authFlowLaunched = true
             startActivity(authIntent)
 
         } catch (e: Exception) {
@@ -159,9 +183,15 @@ class OAuthActivity: AppCompatActivity() {
         sharedPrefs.setCodeVerifier("")
         sharedPrefs.setState("")
         sharedPrefs.setAuthDestination("")
-        startActivity(Intent(this, PermissionActivity::class.java)
-            .putExtra("type", destination)
-        )
+
+       startActivity(Intent(
+           this@OAuthActivity,
+           MainActivity::class.java
+       ).apply {
+           putExtra("open_settings", destination)
+           putExtra("select_tab", 1)
+           flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+       })
         finish()
     }
 

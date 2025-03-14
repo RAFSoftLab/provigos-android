@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Tracked items">
 
+    <Preference android:title="Spotify integration settings" android:selectable="false"/>
+
+    <PreferenceCategory android:title="Tracked items">
         <CheckBoxPreference
             android:title="Track your top artists' genres"
             android:key="@string/spotify_genre"

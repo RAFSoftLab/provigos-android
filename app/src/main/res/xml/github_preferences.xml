@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+ <Preference android:title="GitHub integration settings" android:selectable="false"/>
+
 <PreferenceCategory android:title="Tracked items">
 
     <CheckBoxPreference
@@ -14,7 +16,7 @@
         android:summary="Tracks the number of your daily GitHub commits in your own repositories"/>
 </PreferenceCategory>
 
-<PreferenceCategory android:title="Integration settings">
+<PreferenceCategory android:title="Integration settings"  android:iconSpaceReserved="false">
     <Preference
         android:title="Clear cache"
         android:key="invalidate_github_cache"

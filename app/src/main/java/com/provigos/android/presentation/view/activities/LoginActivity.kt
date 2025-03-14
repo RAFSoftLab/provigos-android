@@ -118,7 +118,11 @@ class LoginActivity: AppCompatActivity(R.layout.activity_login) {
                         val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                         val googleIdToken = googleIdTokenCredential.idToken
                         sharedPrefs.setGoogleToken(googleIdToken)
-                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                        if(sharedPrefs.isFirstTimeUser()) {
+                            startActivity(Intent(this@LoginActivity, IntroActivity::class.java))
+                        } else {
+                            startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                        }
                         finish()
                     } catch (e: GoogleIdTokenParsingException) {
                         Timber.tag("LoginActivity").e(e, "Received an invalid google id token response")

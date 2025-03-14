@@ -38,11 +38,17 @@ import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.api.HealthConnectManager
 import com.provigos.android.data.api.HttpManager
 import com.provigos.android.data.local.SharedPreferenceManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -52,6 +58,9 @@ import java.util.UUID
 
 class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                          private val mHttpManager: HttpManager): ViewModel() {
+
+    private val refreshMutex = Mutex()
+    private var currentRefreshJob: Job? = null
 
     private val sharedPrefs = SharedPreferenceManager.get()
     private var zdt = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
@@ -129,164 +138,226 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         val github = sharedPrefs.isGithubUser()
         val spotify = sharedPrefs.isSpotifyUser()
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Loading
+        currentRefreshJob?.cancel()
 
-            _dataToView.value = emptyMap()
-            _dataToSend.value = emptyMap()
+        currentRefreshJob = viewModelScope.launch {
 
-            coroutineScope {
-                val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
-                val githubDataJob = if (github) async { readGithubData() } else null
-                val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
+            refreshMutex.withLock {
+                _uiState.value = UiState.Loading
 
-                healthDataJob?.await()
-                githubDataJob?.await()
-                spotifyDataJob?.await()
+                _dataToView.value = emptyMap()
+                _dataToSend.value = emptyMap()
+
+                coroutineScope {
+                    val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
+                    val githubDataJob = if (github) async { readGithubData() } else null
+                    val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
+
+                    healthDataJob?.await()
+                    githubDataJob?.await()
+                    spotifyDataJob?.await()
+                }
+
+                _uiState.value = UiState.Done
             }
-
-            _uiState.value = UiState.Done
         }
     }
 
 
     private suspend fun readHealthConnectData() {
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(StepsRecord::class))) {
-            val stepsMap = mHealthConnectManager.readStepsForLast30Days(zdt.toInstant())
-            _dataToView.value += ("steps" to stepsMap[pureZdt]!!)
-            _dataToSend.value += ("steps" to stepsMap)
-        }
+        withContext(Dispatchers.IO) {
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        StepsRecord::class
+                    )
+                )
+            ) {
+                val stepsMap = mHealthConnectManager.readStepsForLast30Days(zdt.toInstant())
+                _dataToView.update { current -> current + ("steps" to stepsMap.values.last()) }
+                _dataToSend.update { current -> current + ("steps" to stepsMap) }
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(WeightRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readWeightForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.time,
-                            ZoneId.systemDefault()
-                        )
-                    ) to record.weight.inKilograms.toString()
-                },
-                "weight"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        WeightRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readWeightForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to record.weight.inKilograms.toString()
+                    },
+                    "weight"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(HeightRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readHeightForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.time,
-                            ZoneId.systemDefault()
-                        )
-                    ) to (record.height.inMeters * 100).toLong().toString()
-                },
-                "height"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        HeightRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readHeightForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to (record.height.inMeters * 100).toLong().toString()
+                    },
+                    "height"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(HeartRateRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readHeartRateForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.startTime,
-                            ZoneId.systemDefault()
-                        )
-                    ) to record.samples.last().beatsPerMinute.toString()
-                },
-                "heartRate"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        HeartRateRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readHeartRateForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.startTime,
+                                ZoneId.systemDefault()
+                            )
+                        ) to record.samples.last().beatsPerMinute.toString()
+                    },
+                    "heartRate"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BodyFatRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readBodyFatForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.time,
-                            ZoneId.systemDefault()
-                        )
-                    ) to record.percentage.value.toString()
-                },
-                "bodyFat"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        BodyFatRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readBodyFatForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to record.percentage.value.toString()
+                    },
+                    "bodyFat"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BloodPressureRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readBloodPressureForLast30Days,
-                { record ->
-                    pureDate(ZonedDateTime.ofInstant(record.time, ZoneId.systemDefault())) to
-                            "${record.systolic.inMillimetersOfMercury.toLong()}/${record.diastolic.inMillimetersOfMercury.toLong()}"
-                },
-                "bloodPressure"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        BloodPressureRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readBloodPressureForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to
+                                "${record.systolic.inMillimetersOfMercury.toLong()}/${record.diastolic.inMillimetersOfMercury.toLong()}"
+                    },
+                    "bloodPressure"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BodyTemperatureRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readBodyTemperatureForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.time,
-                            ZoneId.systemDefault()
-                        )
-                    ) to record.temperature.inCelsius.toString()
-                },
-                "bodyTemperature"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        BodyTemperatureRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readBodyTemperatureForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to record.temperature.inCelsius.toString()
+                    },
+                    "bodyTemperature"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BloodGlucoseRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readBloodGlucoseForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.time,
-                            ZoneId.systemDefault()
-                        )
-                    ) to record.level.inMillimolesPerLiter.toString()
-                },
-                "bloodGlucose"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        BloodGlucoseRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readBloodGlucoseForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to record.level.inMillimolesPerLiter.toString()
+                    },
+                    "bloodGlucose"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(OxygenSaturationRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readOxygenSaturationForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.time,
-                            ZoneId.systemDefault()
-                        )
-                    ) to record.percentage.value.toString()
-                },
-                "oxygenSaturation"
-            )
-        }
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        OxygenSaturationRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readOxygenSaturationForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to record.percentage.value.toString()
+                    },
+                    "oxygenSaturation"
+                )
+            }
 
-        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(RespiratoryRateRecord::class))) {
-            readHealthData(
-                mHealthConnectManager::readRespiratoryRateForLast30Days,
-                { record ->
-                    pureDate(
-                        ZonedDateTime.ofInstant(
-                            record.time,
-                            ZoneId.systemDefault()
-                        )
-                    ) to record.rate.toString()
-                },
-                "respiratoryRate"
-            )
+            if (mHealthConnectManager.hasHealthConnectPermission(
+                    HealthPermission.getReadPermission(
+                        RespiratoryRateRecord::class
+                    )
+                )
+            ) {
+                readHealthData(
+                    mHealthConnectManager::readRespiratoryRateForLast30Days,
+                    { record ->
+                        pureDate(
+                            ZonedDateTime.ofInstant(
+                                record.time,
+                                ZoneId.systemDefault()
+                            )
+                        ) to record.rate.toString()
+                    },
+                    "respiratoryRate"
+                )
+            }
         }
     }
 
@@ -301,8 +372,8 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                     val (date, value) = extractor(record)
                     map[date] = value
                 }
-                _dataToSend.value += (key to map)
-                _dataToView.value += (key to map.values.last())
+                _dataToSend.update {  currentMap -> currentMap + (key to map) }
+                _dataToView.update {  current -> current + (key to map.values.last()) }
             }
         } catch (_: Exception) {
             Timber.tag("DashboardViewModel").d("Error reading health data for $key")
@@ -321,37 +392,37 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
     suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double) = mHealthConnectManager.writeRespiratoryRate(date, rate)
 
     private suspend fun readGithubData() {
-        val githubCommits = mHttpManager.getGithubCommits()
-
-        if(sharedPrefs.isAllowGithubTotalCommits()) {
-            val totalCommits = githubCommits.values.sumOf { it.toLong() }
-            _dataToView.value += ("githubTotal" to totalCommits.toString())
-            //_dataToSend.value += "githubTotal" to mapOf(pureZdt to totalCommits.toString())
-        }
-        if(sharedPrefs.isAllowGithubDailyCommits()) {
-            val dailyCommits = githubCommits[pureZdt] ?: "0"
-            _dataToView.value += ("githubDaily" to dailyCommits)
-            //_dataToSend.value += "githubDaily" to mapOf(pureZdt to dailyCommits)
+        withContext(Dispatchers.IO) {
+            val githubCommits = mHttpManager.getGithubCommits()
+            if (sharedPrefs.isAllowGithubTotalCommits()) {
+                val totalCommits = githubCommits.values.sumOf { it.toLong() }
+                _dataToView.update { current -> current + ("githubTotal" to totalCommits.toString()) }
+                //_dataToSend.update { current -> current + ("githubTotal" to mapOf(pureZdt to totalCommits.toString())) }
+            }
+            if (sharedPrefs.isAllowGithubDailyCommits()) {
+                val dailyCommits = githubCommits[pureZdt] ?: "0"
+                _dataToView.update { current -> current + ("githubDaily" to dailyCommits) }
+                //_dataToSend.update { current -> current + ("githubDaily" to mapOf(pureZdt to dailyCommits)) }
+            }
         }
     }
 
     private suspend fun readSpotifyData() {
-        val spotifyData = mHttpManager.getSpotifyArtists()
-
-        spotifyData.forEach { (k, v) -> Timber.d("$k, $v") }
-
-        if(sharedPrefs.isAllowSpotifyArtistGenres()) {
-            val popularGenre: String? = spotifyData["spotifyGenre"]
-            if(popularGenre != null) {
-                _dataToView.value += ("spotifyGenre" to popularGenre)
-                //_dataToSend.value += "spotifyGenre" to mapOf(pureZdt to popularGenre)
+        withContext(Dispatchers.IO) {
+            val spotifyData = mHttpManager.getSpotifyArtists()
+            if (sharedPrefs.isAllowSpotifyArtistGenres()) {
+                val popularGenre: String? = spotifyData["spotifyGenre"]
+                if (popularGenre != null) {
+                    _dataToView.update { current -> current + ("spotifyGenre" to popularGenre) }
+                    //_dataToSend.update { current -> current + ("spotifyGenre" to mapOf(pureZdt to popularGenre)) }
+                }
             }
-        }
-        if(sharedPrefs.isAllowSpotifyArtistPopularity()) {
-            val popularity = spotifyData["spotifyPopularity"]
-            if(popularity != null) {
-                _dataToView.value += ("spotifyPopularity" to popularity)
-                //_dataToSend.value += "spotifyPopularity" to mapOf(pureZdt to popularity)
+            if (sharedPrefs.isAllowSpotifyArtistPopularity()) {
+                val popularity = spotifyData["spotifyPopularity"]
+                if (popularity != null) {
+                    _dataToView.update { current -> current + ("spotifyPopularity" to popularity) }
+                    //_dataToSend.update { current -> current + ("spotifyPopularity" to mapOf(pureZdt to popularity)) }
+                }
             }
         }
     }

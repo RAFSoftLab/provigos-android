@@ -27,6 +27,14 @@
             android:key="@string/switch_pref4_key"
             android:title="@string/switch_pref4_title"
             android:summary="Manage your customized trackable items"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="App">
+        <Preference
+            android:id="@+id/web_link"
+            android:key="web_link"
+            android:title="Provigos website"
+            android:summary="Visit the website for a detailed view on your data"/>
         <Preference
             android:id="@+id/sign_out"
             android:key="@string/switch_pref5_key"

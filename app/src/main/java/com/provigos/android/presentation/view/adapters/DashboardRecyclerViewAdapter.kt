@@ -37,6 +37,7 @@ class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
     RecyclerView.Adapter<DashboardRecyclerViewAdapter.DashboardRecyclerViewHolder>() {
 
     var onItemClicked: ((String) -> Unit)? = null
+    var isClickable: Boolean = true
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DashboardRecyclerViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
@@ -74,7 +75,11 @@ class DashboardRecyclerViewAdapter(private var hashMap: Map<String, String>):
         label?.let { holder.measurementType.setText(it) }
         value?.let { holder.measurementNumber.text = it }
 
-        holder.itemView.setOnClickListener { onItemClicked?.invoke(measurementType) }
+        holder.itemView.setOnClickListener {
+            if(isClickable) {
+                onItemClicked?.invoke(measurementType)
+            }
+        }
     }
 
     fun updateData(newData: Map<String, String>) {

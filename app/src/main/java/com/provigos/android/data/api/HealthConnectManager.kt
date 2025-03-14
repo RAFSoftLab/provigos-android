@@ -73,12 +73,6 @@ class HealthConnectManager(private val context: Context) {
             .contains(permission)
     }
 
-    suspend fun revokePermissions() {
-        mHealthConnectClient
-            .permissionController
-            .revokeAllPermissions()
-    }
-
     fun checkAvailability() {
         availability.value = when {
             HealthConnectClient.getSdkStatus(context) == SDK_AVAILABLE -> HealthConnectAvailability.INSTALLED

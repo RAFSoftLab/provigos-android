@@ -22,28 +22,30 @@
  */
 package com.provigos.android.presentation.view.fragments
 
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreferenceCompat
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.view.activities.OAuthActivity
 import com.provigos.android.presentation.view.activities.HealthConnectPrivacyPolicyActivity
-import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import com.provigos.android.presentation.view.activities.MainActivity
+import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SettingsFragmentCompat: PreferenceFragmentCompat() {
 
+    private val integrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>( ownerProducer = { requireActivity() })
     private val sharedPrefs = SharedPreferenceManager.get()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -53,13 +55,19 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val healthConnectSwitch = findPreference<Preference>(getString(R.string.switch_pref1_key))
-        val isHealthUser = sharedPrefs.isHealthUser()
-        if(isHealthUser) {
-            healthConnectSwitch?.summary = "Manage your Health Connect permissions"
-        } else {
-            healthConnectSwitch?.summary = "Allow Provigos to access your Health Connect data"
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                integrationViewModel.navigateIntegrationScreen.collect { destination ->
+                    destination?.let {
+                        openIntegrationSettings(it)
+                        integrationViewModel.resetIntegration()
+                    }
+                }
+            }
         }
+
+        val healthConnectSwitch = findPreference<Preference>(getString(R.string.switch_pref1_key))
+        healthConnectSwitch?.summary = "Manage your Health Connect permissions"
         healthConnectSwitch?.setOnPreferenceClickListener {
             healthConnectIntegration()
             true
@@ -75,9 +83,10 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
 
         githubSwitch?.setOnPreferenceClickListener {
             if(isGithubUser) {
-                openGithubPreferenceScreen()
+                openIntegrationSettings("github")
             } else {
                 githubIntegration()
+                parentFragmentManager.popBackStack()
             }
             true
         }
@@ -91,14 +100,21 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
         }
         spotifySwitch?.setOnPreferenceClickListener {
             if(isSpotifyUser) {
-                openSpotifyPreferenceScreen()
+                openIntegrationSettings("spotify")
             } else {
                 spotifyIntegration()
+                parentFragmentManager.popBackStack()
             }
             true
         }
 
         findPreference<Preference>(getString(R.string.switch_pref4_key))?.setOnPreferenceClickListener {
+            true
+        }
+
+        findPreference<Preference>("web_link")?.setOnPreferenceClickListener {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://provigos.com"))
+            startActivity(intent)
             true
         }
 
@@ -110,6 +126,8 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
 
     private fun healthConnectIntegration() {
         startActivity(Intent(activity, HealthConnectPrivacyPolicyActivity::class.java))
+        val activity = requireActivity() as? MainActivity
+        activity?.refreshDashboard()
     }
 
     private fun githubIntegration() {
@@ -150,5 +168,12 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
             .replace(R.id.view_settings, SpotifyPreferenceFragmentCompat())
             .addToBackStack(null)
             .commit()
+    }
+
+    private fun openIntegrationSettings(destination: String) {
+        when (destination) {
+            "github" -> openGithubPreferenceScreen()
+            "spotify" -> openSpotifyPreferenceScreen()
+        }
     }
 }

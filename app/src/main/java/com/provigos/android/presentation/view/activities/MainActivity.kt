@@ -22,18 +22,24 @@
  */
 package com.provigos.android.presentation.view.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayoutMediator
 import com.provigos.android.R
 import com.provigos.android.databinding.ActivityMainBinding
 import com.provigos.android.presentation.view.adapters.MainPagerAdapter
 import com.provigos.android.presentation.view.fragments.DashboardFragment
 import com.provigos.android.presentation.view.fragments.SettingsFragment
+import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
+import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity: AppCompatActivity(R.layout.activity_main) {
 
+    private val sharedIntegrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>()
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,17 +51,54 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
         val view = binding.root
         setContentView(view)
 
+        handleIntentExtras(intent)
+
         val mainPagerAdapter = MainPagerAdapter(this)
-        mainPagerAdapter.addFragment(DashboardFragment(), "Dashboard")
-        mainPagerAdapter.addFragment(SettingsFragment(), "Settings")
+        mainPagerAdapter.addFragment(DashboardFragment(), "Dashboard", "dashboard_fragment")
+        mainPagerAdapter.addFragment(SettingsFragment(), "Settings", "settings_fragment")
 
         binding.viewPager.adapter = mainPagerAdapter
         binding.viewPager.currentItem = 0
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = mainPagerAdapter.getTabTitle(position)
-            tab.tag = tab.text
+            tab.tag = mainPagerAdapter.getTabTag(position)
         }.attach()
+
+        observePreferenceChanges()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntentExtras(intent)
+    }
+
+    private fun handleIntentExtras(intent: Intent?) {
+        intent?.let {
+            val destination = it.getStringExtra("open_settings")
+            val tabIndex = it.getIntExtra("select_tab", 0)
+            if(!destination.isNullOrEmpty()) {
+                sharedIntegrationViewModel.setIntegrationSettings(destination)
+            }
+            binding.viewPager.currentItem = tabIndex
+        }
+    }
+
+    fun refreshDashboard() {
+       val pagerAdapter = binding.viewPager.adapter as MainPagerAdapter
+        val dashboardFragment = pagerAdapter.getFragmentAtPosition(0) as? DashboardFragment
+        dashboardFragment?.refreshData()
+    }
+
+    private fun observePreferenceChanges() {
+        lifecycleScope.launch {
+            sharedIntegrationViewModel.preferencesUpdated.collect { isUpdated ->
+                if(isUpdated) {
+                    refreshDashboard()
+                    sharedIntegrationViewModel.resetPreferencesChanged()
+                }
+            }
+        }
     }
 
     private fun enableStrictMode(flag: Boolean) {

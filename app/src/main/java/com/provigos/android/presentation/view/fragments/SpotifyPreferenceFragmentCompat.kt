@@ -30,10 +30,13 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
+import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     private val sharedPrefs = SharedPreferenceManager.get()
+    private val sharedIntegrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>( ownerProducer = { requireActivity() })
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.spotify_preferences, rootKey)
@@ -43,26 +46,18 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
         super.onViewCreated(view, savedInstanceState)
 
         val trackGenres = findPreference<CheckBoxPreference>(getString(R.string.spotify_genre))
-        trackGenres?.isChecked = sharedPrefs.isAllowGithubTotalCommits()
+        trackGenres?.isChecked = sharedPrefs.isAllowSpotifyArtistGenres()
         trackGenres?.setOnPreferenceChangeListener { _, newValue ->
-            val isEnabled = newValue as Boolean
-            if(isEnabled) {
-                sharedPrefs.setAllowSpotifyArtistGenres(true)
-            } else {
-                sharedPrefs.setAllowSpotifyArtistGenres(false)
-            }
+            sharedPrefs.setAllowSpotifyArtistGenres(newValue as Boolean)
+            sharedIntegrationViewModel.notifyPreferencesChanged()
             true
         }
 
         val trackPopularity = findPreference<CheckBoxPreference>(getString(R.string.spotify_popularity))
-        trackPopularity?.isChecked = sharedPrefs.isAllowGithubDailyCommits()
+        trackPopularity?.isChecked = sharedPrefs.isAllowSpotifyArtistPopularity()
         trackPopularity?.setOnPreferenceChangeListener { _, newValue ->
-            val isEnabled = newValue as Boolean
-            if(isEnabled) {
-                sharedPrefs.setAllowSpotifyArtistPopularity(true)
-            } else {
-                sharedPrefs.setAllowSpotifyArtistPopularity(false)
-            }
+            sharedPrefs.setAllowSpotifyArtistPopularity(newValue as Boolean)
+            sharedIntegrationViewModel.notifyPreferencesChanged()
             true
         }
 
@@ -83,6 +78,8 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
                     sharedPrefs.setAllowSpotifyArtistPopularity(false)
                     sharedPrefs.setSpotifyAccessToken("")
                     sharedPrefs.setSpotifyRefreshToken("")
+                    sharedIntegrationViewModel.notifyPreferencesChanged()
+                    parentFragmentManager.popBackStack()
                 }
                 .setNegativeButton("Cancel", null)
                 .show()

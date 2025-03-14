@@ -22,15 +22,10 @@
  */
 package com.provigos.android.data.api
 
-import android.content.Context
-import android.widget.Toast
-import androidx.collection.IntList
-import androidx.collection.emptyIntList
 import com.provigos.android.data.api.interfaces.GithubAPI
 import com.provigos.android.data.api.interfaces.ProvigosAPI
 import com.provigos.android.data.api.interfaces.SpotifyAPI
 import com.provigos.android.data.local.SharedPreferenceManager
-import com.provigos.android.presentation.view.activities.OAuthActivity
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -148,18 +143,14 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
 
     suspend fun getSpotifyArtists(): HashMap<String, String> {
 
-        Timber.d("IS THIS THING ON")
-
         val spotifyData: HashMap<String, String> = hashMapOf()
 
         if(!sharedPreferenceDataSource.isAllowSpotifyArtistPopularity() &&
             !sharedPreferenceDataSource.isAllowSpotifyArtistGenres()) {
-            Timber.d("IS THIS THING ON A")
             return spotifyData
         }
 
         if(sharedPreferenceDataSource.getSpotifyTokenExpiration() < System.currentTimeMillis()) {
-            Timber.d("IS THIS THING ON B")
             return spotifyData
         }
 
@@ -167,10 +158,7 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
             ?: throw IllegalArgumentException("Spotify token doesn't exist. Re-authorize")
 
         try {
-            Timber.d("IS THIS THING ON C")
             val userArtists = spotifyAPI.getTopArtists("Bearer $spotifyToken")
-
-            Timber.tag("HttpManager").d("$userArtists")
 
             val popularity = mutableListOf<Int>()
             val genres = mutableMapOf<String, Int>()

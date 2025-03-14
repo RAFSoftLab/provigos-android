@@ -30,6 +30,7 @@ class MainPagerAdapter(activity: MainActivity?): FragmentStateAdapter(activity!!
 
     private val mFragmentList : MutableList<Fragment> = ArrayList()
     private val mFragmentTitleList: MutableList<String> = ArrayList()
+    private val mFragmentTagList: MutableList<String> = ArrayList()
 
     override fun getItemCount(): Int {
         return mFragmentList.size
@@ -39,13 +40,22 @@ class MainPagerAdapter(activity: MainActivity?): FragmentStateAdapter(activity!!
         return mFragmentList[position]
     }
 
-    fun addFragment(fragment: Fragment, title: String) {
+    fun addFragment(fragment: Fragment, title: String, tag: String) {
         mFragmentList.add(fragment)
         mFragmentTitleList.add(title)
+        mFragmentTagList.add(tag)
     }
 
     fun getTabTitle(position: Int): String {
         return mFragmentTitleList[position]
+    }
+
+    fun getTabTag(position: Int): String {
+        return mFragmentTagList[position]
+    }
+
+    fun getFragmentAtPosition(position: Int): Fragment {
+        return mFragmentList[position]
     }
 
 }

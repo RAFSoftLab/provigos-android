@@ -33,6 +33,7 @@ import com.provigos.android.data.api.interfaces.GithubAPI
 import com.provigos.android.data.api.interfaces.ProvigosAPI
 import com.provigos.android.data.api.interfaces.SpotifyAPI
 import com.provigos.android.data.local.SharedPreferenceManager
+import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
 import com.squareup.moshi.Moshi
 import org.koin.android.ext.koin.androidApplication
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
@@ -131,6 +132,11 @@ import java.util.concurrent.TimeUnit
                 spotifyAPI = get(),
                 moshi = get()
             )
+        }
+
+
+        viewModel {
+            SharedIntegrationViewModel()
         }
 
         viewModel {

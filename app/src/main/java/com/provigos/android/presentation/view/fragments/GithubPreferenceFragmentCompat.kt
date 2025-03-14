@@ -30,10 +30,13 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
+import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     private val sharedPrefs = SharedPreferenceManager.get()
+    private val sharedIntegrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>( ownerProducer = { requireActivity() })
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.github_preferences, rootKey)
@@ -45,24 +48,16 @@ class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
         val trackTotal = findPreference<CheckBoxPreference>(getString(R.string.total_github_commits))
         trackTotal?.isChecked = sharedPrefs.isAllowGithubTotalCommits()
         trackTotal?.setOnPreferenceChangeListener { _, newValue ->
-            val isEnabled = newValue as Boolean
-            if(isEnabled) {
-                sharedPrefs.setAllowGithubTotalCommits(true)
-            } else {
-                sharedPrefs.setAllowGithubTotalCommits(false)
-            }
+            sharedPrefs.setAllowGithubTotalCommits(newValue as Boolean)
+            sharedIntegrationViewModel.notifyPreferencesChanged()
             true
         }
 
         val trackDaily = findPreference<CheckBoxPreference>(getString(R.string.daily_github_commits))
         trackDaily?.isChecked = sharedPrefs.isAllowGithubDailyCommits()
         trackDaily?.setOnPreferenceChangeListener { _, newValue ->
-            val isEnabled = newValue as Boolean
-            if(isEnabled) {
-                sharedPrefs.setAllowGithubDailyCommits(true)
-            } else {
-                sharedPrefs.setAllowGithubDailyCommits(false)
-            }
+            sharedPrefs.setAllowGithubDailyCommits(newValue as Boolean)
+            sharedIntegrationViewModel.notifyPreferencesChanged()
             true
         }
 
@@ -82,6 +77,8 @@ class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
                     sharedPrefs.setAllowGithubDailyCommits(false)
                     sharedPrefs.setAllowGithubTotalCommits(false)
                     sharedPrefs.setGithubAccessToken("")
+                    sharedIntegrationViewModel.notifyPreferencesChanged()
+                    parentFragmentManager.popBackStack()
                 }
                 .setNegativeButton("Cancel", null)
                 .show()

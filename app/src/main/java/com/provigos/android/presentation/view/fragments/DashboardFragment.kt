@@ -27,14 +27,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.provigos.android.R
+import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.databinding.FragmentDashboardBinding
 import com.provigos.android.presentation.view.activities.InputActivity
 import com.provigos.android.presentation.view.activities.Input2Activity
@@ -46,10 +45,15 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
-
     companion object {
+        private val sharedPrefs = SharedPreferenceManager.get()
         private val INPUT_ACTIVITY = InputActivity::class.java
         private val INPUT2_ACTIVITY = Input2Activity::class.java
+        private val userMap = listOf(
+            sharedPrefs.isHealthUser(),
+            sharedPrefs.isGithubUser(),
+            sharedPrefs.isSpotifyUser()
+        )
     }
 
     private val viewModel by viewModel<DashboardViewModel>()
@@ -70,6 +74,10 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         adapter = DashboardRecyclerViewAdapter(emptyMap())
         binding.dashboardRecyclerView.layoutManager = GridLayoutManager(context, 2)
         binding.dashboardRecyclerView.adapter = adapter
+
+        if(!userMap.contains(true)) {
+            binding.emptyDash.visibility = View.VISIBLE
+        }
 
         setupItemClickListener()
         setupSwipeToRefresh()
@@ -131,6 +139,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
             }
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.dataToView.collect { data ->
+                    adapter.isClickable = true
                     adapter.updateData(data)
                 }
             }
@@ -139,8 +148,18 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     private fun showLoading(isVisible: Boolean) {
         val visibility = if (isVisible) View.VISIBLE else View.GONE
+
         binding.loadingOverlay.visibility = visibility
         binding.loadingMessage.visibility = visibility
+
+        binding.swipeRefresh.isEnabled = !isVisible
+
+        binding.dashboardRecyclerView.isClickable = !isVisible
+        binding.dashboardRecyclerView.isFocusable = !isVisible
+        binding.dashboardRecyclerView.layoutManager = if (isVisible) null else GridLayoutManager(context, 2)
+
+        adapter.isClickable = !isVisible
+
         if(isVisible) animateLoadingText()
     }
 
@@ -162,8 +181,13 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
     private fun setupSwipeToRefresh() {
         val swipeRefresh = binding.swipeRefresh
         swipeRefresh.setOnRefreshListener {
-            viewModel.refreshData()
+            refreshData()
             swipeRefresh.isRefreshing = false
         }
+    }
+
+    fun refreshData() {
+        binding.emptyDash.visibility = View.GONE
+        viewModel.refreshData()
     }
 }

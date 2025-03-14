@@ -15,6 +15,7 @@
         app:layout_constraintBottom_toTopOf="@id/divider2"
         app:layout_constraintTop_toTopOf="parent"
         android:textAppearance="?android:textAppearanceMedium"
+        android:layout_marginTop="10dp"
         android:textStyle="bold"
         android:textSize="20sp"
         android:text="@string/privacy_policy_heading"

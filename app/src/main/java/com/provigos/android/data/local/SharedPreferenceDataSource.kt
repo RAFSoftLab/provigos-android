@@ -24,7 +24,6 @@ package com.provigos.android.data.local
 
 import android.content.SharedPreferences
 
-
 class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedPreferences) {
 
     companion object {
@@ -37,6 +36,7 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
         private const val STATE = "state"
         private const val AUTH_DESTINATION = "auth_destination"
         private const val PKCE_CODE_VERIFIER = "code_verifier"
+        private const val IS_FIRST_TIME_USER = "first_time_user"
         private const val IS_HEALTH_USER = "health_user"
         private const val IS_GITHUB_USER = "github_user"
         private const val IS_SPOTIFY_USER = "spotify_user"
@@ -86,6 +86,10 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
     fun getCodeVerifier(): String? { return encryptedSharedPreferences.getString(PKCE_CODE_VERIFIER, null) }
 
     fun setHealthUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_HEALTH_USER, bool).apply() }
+
+    fun isFirstTimeUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_FIRST_TIME_USER, true) }
+
+    fun setFirstTimeUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_FIRST_TIME_USER, bool).apply() }
 
     fun isHealthUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_HEALTH_USER, false) }
 

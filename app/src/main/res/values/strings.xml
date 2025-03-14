@@ -70,4 +70,11 @@ Mauris at nibh libero. Aliquam scelerisque enim sit amet cursus semper. Pellente
 
 Nullam placerat at justo sed scelerisque. Aliquam aliquam ornare mi ut fringilla. Aenean sollicitudin neque ante, eget cursus ante tempus sit amet. Proin vehicula in dui vitae gravida. Aenean venenatis enim pulvinar, fringilla mauris nec, fringilla urna. Vestibulum tincidunt mi sed egestas egestas. Duis gravida risus non nisi venenatis tincidunt.</string>
     <string name="privacy_policy_heading">Privacy Policy</string>
+    <string name="introductory_title">Hey there!</string>
+    <string name="introductory_body">Thank you for using Provigos. To start things going, we suggest you go to the SETTINGS tab and choose which data sources (or as we like to call them, integrations) you want us to track. You can always opt-in or out anytime you want from a specific data source. After opting-in, you can choose which data you would like to track from the specific data source. Some items can be updated from inside Provigos by clicking on the item\'s data card in the DASHBOARD. You can also check weekly charts and more info by going to the CHARTBOARD tab.
+        </string>
+    <string name="introductory_finish">Happy aggregating!</string>
+    <string name="got_it">Got it</string>
+    <string name="nothing_to_see_here">Nothing to see here for now.</string>
+    <string name="choose_integrations"> Choose integrations in the SETTINGS tab so we can get started.</string>
 </resources>
