@@ -40,6 +40,7 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
         private const val IS_HEALTH_USER = "health_user"
         private const val IS_GITHUB_USER = "github_user"
         private const val IS_SPOTIFY_USER = "spotify_user"
+        private const val IS_CUSTOM_USER = "custom_user"
         private const val ALLOW_GITHUB_TOTAL_COMMITS = "allow_github_total_commits"
         private const val ALLOW_GITHUB_DAILY_COMMITS = "allow_github_daily_commits"
         private const val ALLOW_SPOTIFY_ARTIST_GENRES = "allow_spotify_artist_genres"
@@ -91,6 +92,10 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
 
     fun setFirstTimeUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_FIRST_TIME_USER, bool).apply() }
 
+    fun isCustomUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_CUSTOM_USER, true) }
+
+    fun setCustomUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_CUSTOM_USER, bool).apply() }
+
     fun isHealthUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_HEALTH_USER, false) }
 
     fun setGithubUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_GITHUB_USER, bool).apply() }
@@ -130,4 +135,8 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
 
     fun getSpotifyTokenExpiration(): Long { return encryptedSharedPreferences.getLong(
         SPOTIFY_TOKEN_EXPIRATION, 0) }
+
+    fun setAllowCustomItem(name: String, bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(name, bool).apply() }
+
+    fun isAllowCustomItem(name: String): Boolean { return encryptedSharedPreferences.getBoolean(name, false) }
 }

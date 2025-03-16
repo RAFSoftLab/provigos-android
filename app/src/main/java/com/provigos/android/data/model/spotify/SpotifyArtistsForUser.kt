@@ -20,24 +20,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data.api.interfaces
+package com.provigos.android.data.model.spotify
 
-import com.provigos.android.data.model.spotify.SpotifyArtistsForUser
-import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.Query
+data class SpotifyArtistsForUser(
+    val items: List<SpotifyArtist>
+)
 
-interface SpotifyAPI {
-
-    companion object {
-        const val SPOTIFY_API = "https://api.spotify.com/"
-    }
-
-    @GET("v1/me/top/artists")
-    suspend fun getTopArtists(
-        @Header("Authorization") token: String,
-        @Query("time_range") type: String = "short_term",
-        @Query("limit") limit: Int = 50
-    ): SpotifyArtistsForUser
-}
+data class SpotifyArtist(
+    val genres: List<String>,
+    val popularity: Int
+)

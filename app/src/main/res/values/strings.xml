@@ -77,4 +77,18 @@ Nullam placerat at justo sed scelerisque. Aliquam aliquam ornare mi ut fringilla
     <string name="got_it">Got it</string>
     <string name="nothing_to_see_here">Nothing to see here for now.</string>
     <string name="choose_integrations"> Choose integrations in the SETTINGS tab so we can get started.</string>
+    <string name="name_your_custom_item">Name your custom item</string>
+    <string name="give_your_custom_item_a_label">Give your custom item a label</string>
+    <string name="in_what_units_is_it_measured">In what units is it measured?</string>
+    <string name="what_will_it_be_shown_as">What will it be shown as?</string>
+    <string name="how_to_refer_to_it">How to refer to it?</string>
+    <string name="units">Units:</string>
+    <string name="custom_label">Label:</string>
+    <string name="name">Name:</string>
+    <string name="how_to_measure_it">How to measure it?</string>
+    <string-array name="custom_spinner_options">
+        <item>Addition</item>
+        <item>More is better</item>
+        <item>Less is better</item>
+    </string-array>
 </resources>

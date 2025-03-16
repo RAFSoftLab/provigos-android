@@ -30,13 +30,13 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
-import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     private val sharedPrefs = SharedPreferenceManager.get()
-    private val sharedIntegrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>( ownerProducer = { requireActivity() })
+    private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>( ownerProducer = { requireActivity() })
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.github_preferences, rootKey)
@@ -49,7 +49,7 @@ class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
         trackTotal?.isChecked = sharedPrefs.isAllowGithubTotalCommits()
         trackTotal?.setOnPreferenceChangeListener { _, newValue ->
             sharedPrefs.setAllowGithubTotalCommits(newValue as Boolean)
-            sharedIntegrationViewModel.notifyPreferencesChanged()
+            mDashboardViewModel.notifyPreferencesChanged("github")
             true
         }
 
@@ -57,13 +57,13 @@ class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
         trackDaily?.isChecked = sharedPrefs.isAllowGithubDailyCommits()
         trackDaily?.setOnPreferenceChangeListener { _, newValue ->
             sharedPrefs.setAllowGithubDailyCommits(newValue as Boolean)
-            sharedIntegrationViewModel.notifyPreferencesChanged()
+            mDashboardViewModel.notifyPreferencesChanged("github")
             true
         }
 
         val githubCache = findPreference<Preference>("invalidate_github_cache")
         githubCache?.setOnPreferenceClickListener {
-            //TODO
+            mDashboardViewModel.invalidateCache("github")
             true
         }
 
@@ -77,7 +77,7 @@ class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
                     sharedPrefs.setAllowGithubDailyCommits(false)
                     sharedPrefs.setAllowGithubTotalCommits(false)
                     sharedPrefs.setGithubAccessToken("")
-                    sharedIntegrationViewModel.notifyPreferencesChanged()
+                    mDashboardViewModel.notifyPreferencesChanged("github")
                     parentFragmentManager.popBackStack()
                 }
                 .setNegativeButton("Cancel", null)

@@ -30,13 +30,13 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
-import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     private val sharedPrefs = SharedPreferenceManager.get()
-    private val sharedIntegrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>( ownerProducer = { requireActivity() })
+    private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>( ownerProducer = { requireActivity() })
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.spotify_preferences, rootKey)
@@ -49,7 +49,7 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
         trackGenres?.isChecked = sharedPrefs.isAllowSpotifyArtistGenres()
         trackGenres?.setOnPreferenceChangeListener { _, newValue ->
             sharedPrefs.setAllowSpotifyArtistGenres(newValue as Boolean)
-            sharedIntegrationViewModel.notifyPreferencesChanged()
+            mDashboardViewModel.notifyPreferencesChanged("spotify")
             true
         }
 
@@ -57,13 +57,13 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
         trackPopularity?.isChecked = sharedPrefs.isAllowSpotifyArtistPopularity()
         trackPopularity?.setOnPreferenceChangeListener { _, newValue ->
             sharedPrefs.setAllowSpotifyArtistPopularity(newValue as Boolean)
-            sharedIntegrationViewModel.notifyPreferencesChanged()
+            mDashboardViewModel.notifyPreferencesChanged("spotify")
             true
         }
 
         val spotifyCache = findPreference<Preference>("invalidate_spotify_cache")
         spotifyCache?.setOnPreferenceClickListener {
-            //TODO
+            mDashboardViewModel.invalidateCache("spotify")
             true
         }
 
@@ -78,7 +78,7 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
                     sharedPrefs.setAllowSpotifyArtistPopularity(false)
                     sharedPrefs.setSpotifyAccessToken("")
                     sharedPrefs.setSpotifyRefreshToken("")
-                    sharedIntegrationViewModel.notifyPreferencesChanged()
+                    mDashboardViewModel.notifyPreferencesChanged("spotify")
                     parentFragmentManager.popBackStack()
                 }
                 .setNegativeButton("Cancel", null)

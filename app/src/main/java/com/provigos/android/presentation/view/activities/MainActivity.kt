@@ -33,19 +33,19 @@ import com.provigos.android.databinding.ActivityMainBinding
 import com.provigos.android.presentation.view.adapters.MainPagerAdapter
 import com.provigos.android.presentation.view.fragments.DashboardFragment
 import com.provigos.android.presentation.view.fragments.SettingsFragment
-import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity: AppCompatActivity(R.layout.activity_main) {
 
-    private val sharedIntegrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>()
+    private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>()
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableStrictMode(false)
+        enableStrictMode()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
@@ -78,30 +78,30 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
             val destination = it.getStringExtra("open_settings")
             val tabIndex = it.getIntExtra("select_tab", 0)
             if(!destination.isNullOrEmpty()) {
-                sharedIntegrationViewModel.setIntegrationSettings(destination)
+                mDashboardViewModel.setIntegrationSettings(destination)
             }
             binding.viewPager.currentItem = tabIndex
         }
     }
 
-    fun refreshDashboard() {
-       val pagerAdapter = binding.viewPager.adapter as MainPagerAdapter
-        val dashboardFragment = pagerAdapter.getFragmentAtPosition(0) as? DashboardFragment
-        dashboardFragment?.refreshData()
-    }
-
     private fun observePreferenceChanges() {
         lifecycleScope.launch {
-            sharedIntegrationViewModel.preferencesUpdated.collect { isUpdated ->
+            mDashboardViewModel.preferencesUpdated.collect { isUpdated ->
                 if(isUpdated) {
                     refreshDashboard()
-                    sharedIntegrationViewModel.resetPreferencesChanged()
+                    mDashboardViewModel.resetPreferencesChanged()
                 }
             }
         }
     }
 
-    private fun enableStrictMode(flag: Boolean) {
+    private fun refreshDashboard() {
+       val pagerAdapter = binding.viewPager.adapter as MainPagerAdapter
+        val dashboardFragment = pagerAdapter.getFragmentAtPosition(0) as? DashboardFragment
+        dashboardFragment?.refreshData()
+    }
+
+    private fun enableStrictMode(flag: Boolean = true) {
         if(!flag) return
         else {
             StrictMode.setThreadPolicy(

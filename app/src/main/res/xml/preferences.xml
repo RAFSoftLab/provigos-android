@@ -27,19 +27,27 @@
             android:key="@string/switch_pref4_key"
             android:title="@string/switch_pref4_title"
             android:summary="Manage your customized trackable items"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory android:title="App">
-        <Preference
-            android:id="@+id/web_link"
-            android:key="web_link"
-            android:title="Provigos website"
-            android:summary="Visit the website for a detailed view on your data"/>
         <Preference
             android:id="@+id/sign_out"
             android:key="@string/switch_pref5_key"
             android:title="@string/switch_pref5_title"
             android:summary="Remove your Provigos credentials"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Application">
+        <Preference
+            android:id="@+id/licencing"
+            android:title="Licence"
+            android:key="licence"/>
+        <Preference
+            android:id="@+id/about_us"
+            android:key="about_us"
+            android:title="About us"/>
+        <Preference
+            android:id="@+id/web_link"
+            android:key="web_link"
+            android:title="Provigos website"
+            android:summary="Visit the website for a detailed view of your data"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

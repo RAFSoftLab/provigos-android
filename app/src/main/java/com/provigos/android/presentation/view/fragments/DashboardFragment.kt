@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright 2024 Provigos
+ * Copyright 2025 Provigos
 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,7 @@ import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 
 class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
@@ -108,7 +109,6 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
         adapter.onItemClicked = { type ->
             if (type != "githubTotal" && type != "githubDaily" && type != "spotifyGenre" && type != "spotifyPopularity") {
-                var permission = false
                 activity[type]?.let { target ->
                         val intent = Intent(context, target).apply {
                             putExtra("key", type)
@@ -133,6 +133,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
                         }
                         is DashboardViewModel.UiState.Error -> {
                             showLoading(false)
+                            Timber.tag("DashboardFragment").d("${uiState.exception}")
                         }
                     }
                 }

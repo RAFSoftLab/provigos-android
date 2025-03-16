@@ -39,13 +39,13 @@ import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.view.activities.OAuthActivity
 import com.provigos.android.presentation.view.activities.HealthConnectPrivacyPolicyActivity
 import com.provigos.android.presentation.view.activities.MainActivity
-import com.provigos.android.presentation.viewmodel.SharedIntegrationViewModel
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class SettingsFragmentCompat: PreferenceFragmentCompat() {
 
-    private val integrationViewModel: SharedIntegrationViewModel by viewModel<SharedIntegrationViewModel>( ownerProducer = { requireActivity() })
+    private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>( ownerProducer = { requireActivity() })
     private val sharedPrefs = SharedPreferenceManager.get()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -57,10 +57,10 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                integrationViewModel.navigateIntegrationScreen.collect { destination ->
+                mDashboardViewModel.navigateIntegrationScreen.collect { destination ->
                     destination?.let {
                         openIntegrationSettings(it)
-                        integrationViewModel.resetIntegration()
+                        mDashboardViewModel.resetIntegration()
                     }
                 }
             }
@@ -109,6 +109,7 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
         }
 
         findPreference<Preference>(getString(R.string.switch_pref4_key))?.setOnPreferenceClickListener {
+            openCustomPreferenceScreen()
             true
         }
 
@@ -126,8 +127,7 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
 
     private fun healthConnectIntegration() {
         startActivity(Intent(activity, HealthConnectPrivacyPolicyActivity::class.java))
-        val activity = requireActivity() as? MainActivity
-        activity?.refreshDashboard()
+        mDashboardViewModel.invalidateCache("health_connect")
     }
 
     private fun githubIntegration() {
@@ -166,6 +166,13 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
     private fun openSpotifyPreferenceScreen() {
         parentFragmentManager.beginTransaction()
             .replace(R.id.view_settings, SpotifyPreferenceFragmentCompat())
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun openCustomPreferenceScreen() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.view_settings, CustomPreferenceFragmentCompat())
             .addToBackStack(null)
             .commit()
     }

@@ -20,8 +20,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data.model
+package com.provigos.android.data.model.github
 
-data class GithubRepoModel(
+data class GithubUserModel(
+    val login: String,
     val name: String
 )

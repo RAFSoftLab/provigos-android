@@ -22,8 +22,10 @@
  */
 package com.provigos.android.data.api.interfaces
 
+import com.provigos.android.data.model.custom.CustomItemModel
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
@@ -39,9 +41,19 @@ interface ProvigosAPI {
     @POST("healthConnectIntegration")
     suspend fun postProvigosData(@Header("Authorization") token: String, @Body json: Any?): Response<String>
 
-    @GET("custom")
-    suspend fun getCustomData()
+    @Headers("Accept: */*", "Content-Type: application/json")
+    @GET("customFieldsKeys")
+    suspend fun getCustomFieldsKeys(@Header("Authorization") token: String): List<CustomItemModel>
 
-    @POST("custom")
-    suspend fun postCustomData()
+    @Headers("Accept: */*", "Content-Type: application/json")
+    @POST("customFieldsKeys")
+    suspend fun postCustomFieldsKeys(@Header("Authorization") token: String, @Body json: Any?): Response<String>
+
+    @Headers("Accept: */*", "Content-Type: application/json")
+    @DELETE("customFieldsKeys")
+    suspend fun deleteCustomFieldsKeys(@Header("Authorization") token: String, @Body json: Any?): Response<String>
+
+    @Headers("Accept: */*", "Content-Type: application/json")
+    @POST("customFieldsData")
+    suspend fun postCustomFieldsData(@Header("Authorization") token: String, @Body json: Any?): Response<String>
 }

@@ -20,9 +20,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data.model
+package com.provigos.android.data.model.custom
 
-data class GithubUserModel(
-    val login: String,
-    val name: String
+data class CustomItemModel(
+    val name: String,
+    val units: String,
+    val label: String,
+    val operation: String
 )

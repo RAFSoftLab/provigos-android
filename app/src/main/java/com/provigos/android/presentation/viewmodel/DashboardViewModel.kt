@@ -43,6 +43,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -57,9 +58,11 @@ import java.util.Locale
 import java.util.UUID
 
 class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
-                         private val mHttpManager: HttpManager): ViewModel() {
+                         val mHttpManager: HttpManager): ViewModel() {
 
     private val refreshMutex = Mutex()
+    private val cacheMutex = Mutex()
+
     private var currentRefreshJob: Job? = null
 
     private val sharedPrefs = SharedPreferenceManager.get()
@@ -70,14 +73,13 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         return String.format(Locale.getDefault(),"%d-%02d-%02d", zdt.year, zdt.month.value, zdt.dayOfMonth)
     }
 
-    private val _dataToView = MutableStateFlow<Map<String, String>>(emptyMap())
-    val dataToView: StateFlow<Map<String, String>> get() = _dataToView
-
-    private val _dataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
-    val dataToSend: StateFlow<Map<String, Map<String, String>>> get() = _dataToSend
-
     private val _uiState = MutableStateFlow<UiState>(UiState.Uninitialized)
     val uiState: StateFlow<UiState> get() = _uiState
+
+    private val _dataToView = MutableStateFlow<Map<String, String>>(emptyMap())
+    val dataToView: StateFlow<Map<String, String>> get() = _dataToView
+    private val _dataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+
 
     val writePermissionMap: Map<String, String> = mapOf(
         "steps" to HealthPermission.getWritePermission(StepsRecord::class),
@@ -92,6 +94,86 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         "respiratoryRate" to HealthPermission.getWritePermission(RespiratoryRateRecord::class)
     )
 
+    private val _navigateIntegrationScreen = MutableStateFlow<String?>(null)
+    val navigateIntegrationScreen: SharedFlow<String?> get() = _navigateIntegrationScreen
+
+    fun setIntegrationSettings(destination: String) {
+        _navigateIntegrationScreen.tryEmit(destination)
+    }
+
+    fun resetIntegration() {
+        _navigateIntegrationScreen.tryEmit(null)
+    }
+
+    private val _preferencesUpdated = MutableStateFlow(false)
+    val preferencesUpdated: StateFlow<Boolean> get() = _preferencesUpdated
+
+    fun notifyPreferencesChanged(destination: String) {
+        invalidateCache(destination)
+        _preferencesUpdated.tryEmit(true)
+    }
+
+    fun resetPreferencesChanged() {
+        _preferencesUpdated.value = false
+    }
+
+    private val invalidatedCaches = mutableSetOf<String>()
+
+    private val _cachedHealthDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val _cachedHealthDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+
+    private val _cachedGithubDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val _cachedGithubDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+
+    private val _cachedSpotifyDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val _cachedSpotifyDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+
+    fun invalidateCache(destination: String) {
+        viewModelScope.launch {
+            cacheMutex.withLock {
+                invalidatedCaches.add(destination)
+                when(destination) {
+                    "health_connect" -> {
+                        _cachedHealthDataToView.value = emptyMap()
+                        _cachedHealthDataToSend.value = emptyMap()
+                    }
+                    "github" -> {
+                        _cachedGithubDataToView.value = emptyMap()
+                        _cachedGithubDataToSend.value = emptyMap()
+                    }
+                    "spotify" -> {
+                        _cachedSpotifyDataToView.value = emptyMap()
+                        _cachedSpotifyDataToSend.value = emptyMap()
+                    }
+                    "custom" -> {
+
+                    }
+                }
+            }
+        }
+    }
+
+    private fun combineCaches() {
+
+        val healthEnabled = sharedPrefs.isHealthUser()
+        val githubEnabled = sharedPrefs.isGithubUser()
+        val spotifyEnabled = sharedPrefs.isSpotifyUser()
+
+        _dataToView.update { current -> current +
+            (if (healthEnabled) _cachedHealthDataToView.value else emptyMap()) +
+                    (if (githubEnabled) _cachedGithubDataToView.value else emptyMap()) +
+                    (if (spotifyEnabled) _cachedSpotifyDataToView.value else emptyMap())
+
+        }
+        _dataToSend.update { current -> current +
+            (if (healthEnabled) _cachedHealthDataToSend.value else emptyMap()) +
+                    (if (githubEnabled) _cachedGithubDataToSend.value else emptyMap()) +
+                    (if (spotifyEnabled) _cachedSpotifyDataToSend.value else emptyMap())
+        }
+
+        _uiState.value = UiState.Done
+    }
+
     fun fetchAllData() {
 
         val healthConnect = sharedPrefs.isHealthUser()
@@ -101,29 +183,29 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         viewModelScope.launch {
             _uiState.value = UiState.Loading
 
-            _dataToView.value = emptyMap()
-            _dataToSend.value = emptyMap()
+            try {
+                coroutineScope {
+                    val healthDataJob =
+                        if (healthConnect) async { readHealthConnectData() } else null
+                    val githubDataJob = if (github) async { readGithubData() } else null
+                    val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
 
-
-            coroutineScope {
-                val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
-                val githubDataJob = if (github) async { readGithubData() } else null
-                val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
-
-                healthDataJob?.await()
-                githubDataJob?.await()
-                spotifyDataJob?.await()
+                    healthDataJob?.await()
+                    githubDataJob?.await()
+                    spotifyDataJob?.await()
+                }
+            } catch (e: Exception) {
+                _uiState.value = UiState.Error(e)
             }
 
+            combineCaches()
             //sendData(_dataToSend.value)
-
-            _uiState.value = UiState.Done
         }
     }
 
     private fun sendData(dataToSend: Map<String, Map<String, String>>) {
         viewModelScope.launch {
-            val result = mHttpManager.postData(dataToSend)
+            val result = mHttpManager.postProvigosData(dataToSend)
             result.onSuccess {
                 Timber.tag("DashboardViewModel").d("Data sent: $it")
             }.onFailure { exception ->
@@ -134,230 +216,247 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
 
     fun refreshData() {
 
-        val healthConnect = sharedPrefs.isHealthUser()
-        val github = sharedPrefs.isGithubUser()
-        val spotify = sharedPrefs.isSpotifyUser()
-
         currentRefreshJob?.cancel()
 
         currentRefreshJob = viewModelScope.launch {
 
             refreshMutex.withLock {
+
                 _uiState.value = UiState.Loading
 
-                _dataToView.value = emptyMap()
-                _dataToSend.value = emptyMap()
+                try {
+                    coroutineScope {
+                        val healthDataJob = async { refreshHealthData() }
+                        val githubDataJob = async { refreshGithubData() }
+                        val spotifyDataJob = async { refreshSpotifyData() }
 
-                coroutineScope {
-                    val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
-                    val githubDataJob = if (github) async { readGithubData() } else null
-                    val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
-
-                    healthDataJob?.await()
-                    githubDataJob?.await()
-                    spotifyDataJob?.await()
+                        healthDataJob.await()
+                        githubDataJob.await()
+                        spotifyDataJob.await()
+                    }
+                } catch (e: Exception) {
+                    UiState.Error(e)
                 }
 
-                _uiState.value = UiState.Done
+                combineCaches()
+                //_sendData(_dataToSend.value)
             }
         }
     }
 
+    private suspend fun refreshHealthData() {
+        if(!sharedPrefs.isHealthUser()) return
+
+        val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
+            Triple("health_connect" in invalidatedCaches, _cachedHealthDataToView.value.isEmpty(), _cachedHealthDataToSend.value.isEmpty())
+        }
+
+        if (isInvalid || viewEmpty || sendEmpty) {
+            readHealthConnectData()
+            cacheMutex.withLock { invalidatedCaches.remove("health_connect") }
+        }
+    }
+
+    private suspend fun refreshGithubData() {
+        if(!sharedPrefs.isGithubUser()) return
+
+        val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
+            Triple("github" in invalidatedCaches, _cachedGithubDataToView.value.isEmpty(), _cachedGithubDataToSend.value.isEmpty())
+        }
+
+        if (isInvalid || viewEmpty || sendEmpty) {
+            readGithubData()
+            cacheMutex.withLock { invalidatedCaches.remove("github") }
+        }
+    }
+
+    private suspend fun refreshSpotifyData() {
+        if(!sharedPrefs.isSpotifyUser()) return
+
+        val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
+            Triple("spotify" in invalidatedCaches, _cachedSpotifyDataToView.value.isEmpty(), _cachedSpotifyDataToSend.value.isEmpty())
+        }
+
+        if(isInvalid || viewEmpty || sendEmpty) {
+            readSpotifyData()
+            cacheMutex.withLock { invalidatedCaches.remove("spotify") }
+        }
+    }
 
     private suspend fun readHealthConnectData() {
 
-        withContext(Dispatchers.IO) {
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        StepsRecord::class
-                    )
-                )
-            ) {
-                val stepsMap = mHealthConnectManager.readStepsForLast30Days(zdt.toInstant())
-                _dataToView.update { current -> current + ("steps" to stepsMap.values.last()) }
-                _dataToSend.update { current -> current + ("steps" to stepsMap) }
-            }
+        try {
+            withContext(Dispatchers.IO) {
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        WeightRecord::class
-                    )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readWeightForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to record.weight.inKilograms.toString()
-                    },
-                    "weight"
-                )
-            }
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(StepsRecord::class))) {
+                    val stepsMap = mHealthConnectManager.readStepsForLast30Days(zdt.toInstant())
+                    val lastStep = stepsMap.values.lastOrNull()
+                    if(lastStep != null) {
+                        _cachedHealthDataToView.update { current -> current + ("steps" to lastStep) }
+                        _cachedHealthDataToSend.update { current -> current + ("steps" to stepsMap) }
+                    } else {
+                        Timber.tag("DashboardViewModel").d("Error reading lastValue for steps")
+                    }
+                } else {
+                    Timber.tag("DashboardViewModel").d("No steps permission")
+                }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        HeightRecord::class
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(WeightRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readWeightForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to record.weight.inKilograms.toString()
+                        },
+                        "weight"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readHeightForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to (record.height.inMeters * 100).toLong().toString()
-                    },
-                    "height"
-                )
-            }
+                } else {
+                    Timber.tag("DashboardViewModel").d("No weight permission")
+                }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        HeartRateRecord::class
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(HeightRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readHeightForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to (record.height.inMeters * 100).toLong().toString()
+                        },
+                        "height"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readHeartRateForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.startTime,
-                                ZoneId.systemDefault()
-                            )
-                        ) to record.samples.last().beatsPerMinute.toString()
-                    },
-                    "heartRate"
-                )
-            }
+                } else {
+                    Timber.tag("DashboardViewModel").d("No height permission")
+                }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        BodyFatRecord::class
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(HeartRateRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readHeartRateForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.startTime,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to record.samples.last().beatsPerMinute.toString()
+                        },
+                        "heartRate"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readBodyFatForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to record.percentage.value.toString()
-                    },
-                    "bodyFat"
-                )
-            }
+                } else {
+                    Timber.tag("DashboardViewModel").d("No heart rate permission")
+                }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        BloodPressureRecord::class
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BodyFatRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readBodyFatForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to record.percentage.value.toString()
+                        },
+                        "bodyFat"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readBloodPressureForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to
-                                "${record.systolic.inMillimetersOfMercury.toLong()}/${record.diastolic.inMillimetersOfMercury.toLong()}"
-                    },
-                    "bloodPressure"
-                )
-            }
+                } else {
+                    Timber.tag("DashboardViewModel").d("No body fat permission")
+                }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        BodyTemperatureRecord::class
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BloodPressureRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readBloodPressureForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to
+                                    "${record.systolic.inMillimetersOfMercury.toLong()}/${record.diastolic.inMillimetersOfMercury.toLong()}"
+                        },
+                        "bloodPressure"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readBodyTemperatureForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to record.temperature.inCelsius.toString()
-                    },
-                    "bodyTemperature"
-                )
-            }
+                } else {
+                    Timber.tag("DashboardViewModel").d("No blood pressure permission")
+                }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        BloodGlucoseRecord::class
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BodyTemperatureRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readBodyTemperatureForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to record.temperature.inCelsius.toString()
+                        },
+                        "bodyTemperature"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readBloodGlucoseForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to record.level.inMillimolesPerLiter.toString()
-                    },
-                    "bloodGlucose"
-                )
-            }
+                } else {
+                    Timber.tag("DashboardViewModel").d("No body temperature permission")
+                }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        OxygenSaturationRecord::class
+                 if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(BloodGlucoseRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readBloodGlucoseForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to record.level.inMillimolesPerLiter.toString()
+                        },
+                        "bloodGlucose"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readOxygenSaturationForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to record.percentage.value.toString()
-                    },
-                    "oxygenSaturation"
-                )
-            }
+                } else {
+                     Timber.tag("DashboardViewModel").d("No blood glucose permission")
+                 }
 
-            if (mHealthConnectManager.hasHealthConnectPermission(
-                    HealthPermission.getReadPermission(
-                        RespiratoryRateRecord::class
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(OxygenSaturationRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readOxygenSaturationForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to record.percentage.value.toString()
+                        },
+                        "oxygenSaturation"
                     )
-                )
-            ) {
-                readHealthData(
-                    mHealthConnectManager::readRespiratoryRateForLast30Days,
-                    { record ->
-                        pureDate(
-                            ZonedDateTime.ofInstant(
-                                record.time,
-                                ZoneId.systemDefault()
-                            )
-                        ) to record.rate.toString()
-                    },
-                    "respiratoryRate"
-                )
+                } else {
+                    Timber.tag("DashboardViewModel").d("No oxygen saturation permission")
+                }
+
+                if (mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getReadPermission(RespiratoryRateRecord::class))) {
+                    readHealthData(
+                        mHealthConnectManager::readRespiratoryRateForLast30Days,
+                        { record ->
+                            pureDate(
+                                ZonedDateTime.ofInstant(
+                                    record.time,
+                                    ZoneId.systemDefault()
+                                )
+                            ) to record.rate.toString()
+                        },
+                        "respiratoryRate"
+                    )
+                } else {
+                    Timber.tag("DashboardViewModel").d("No respiratory rate permission")
+                }
             }
+        } catch (e: Exception) {
+            Timber.tag("DashboardViewModel").d("Health Connect data fetch failed: ${e.message}")
         }
     }
 
@@ -372,8 +471,15 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                     val (date, value) = extractor(record)
                     map[date] = value
                 }
-                _dataToSend.update {  currentMap -> currentMap + (key to map) }
-                _dataToView.update {  current -> current + (key to map.values.last()) }
+                _cachedHealthDataToSend.update {  currentMap -> currentMap + (key to map) }
+                val lastValue = map.values.lastOrNull()
+                if(lastValue != null) {
+                    _cachedHealthDataToView.update {  current -> current + (key to lastValue) }
+                } else {
+                    Timber.tag("DashboardViewModel").d("Error reading lastValue for $key")
+                }
+            } else {
+                Timber.tag("DashboardViewModel").d("Empty data list for $key")
             }
         } catch (_: Exception) {
             Timber.tag("DashboardViewModel").d("Error reading health data for $key")
@@ -392,38 +498,46 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
     suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double) = mHealthConnectManager.writeRespiratoryRate(date, rate)
 
     private suspend fun readGithubData() {
-        withContext(Dispatchers.IO) {
-            val githubCommits = mHttpManager.getGithubCommits()
-            if (sharedPrefs.isAllowGithubTotalCommits()) {
-                val totalCommits = githubCommits.values.sumOf { it.toLong() }
-                _dataToView.update { current -> current + ("githubTotal" to totalCommits.toString()) }
-                //_dataToSend.update { current -> current + ("githubTotal" to mapOf(pureZdt to totalCommits.toString())) }
+        try {
+            withContext(Dispatchers.IO) {
+                val githubCommits = mHttpManager.getGithubData()
+                if (sharedPrefs.isAllowGithubTotalCommits()) {
+                    val totalCommits = githubCommits.values.sumOf { it.toLong() }
+                    _cachedGithubDataToView.update { current -> current + ("githubTotal" to totalCommits.toString()) }
+                    //_cachedGithubDataToSend.update { current -> current + ("githubTotal" to mapOf(pureZdt to totalCommits.toString())) }
+                }
+                if (sharedPrefs.isAllowGithubDailyCommits()) {
+                    val dailyCommits = githubCommits[pureZdt] ?: "0"
+                    _cachedGithubDataToView.update { current -> current + ("githubDaily" to dailyCommits) }
+                    //_cachedGithubDataToSend.update { current -> current + ("githubDaily" to mapOf(pureZdt to dailyCommits)) }
+                }
             }
-            if (sharedPrefs.isAllowGithubDailyCommits()) {
-                val dailyCommits = githubCommits[pureZdt] ?: "0"
-                _dataToView.update { current -> current + ("githubDaily" to dailyCommits) }
-                //_dataToSend.update { current -> current + ("githubDaily" to mapOf(pureZdt to dailyCommits)) }
-            }
+        } catch (e: Exception) {
+            Timber.tag("DashboardViewModel").d("GitHub data fetch failed")
         }
     }
 
     private suspend fun readSpotifyData() {
-        withContext(Dispatchers.IO) {
-            val spotifyData = mHttpManager.getSpotifyArtists()
-            if (sharedPrefs.isAllowSpotifyArtistGenres()) {
-                val popularGenre: String? = spotifyData["spotifyGenre"]
-                if (popularGenre != null) {
-                    _dataToView.update { current -> current + ("spotifyGenre" to popularGenre) }
-                    //_dataToSend.update { current -> current + ("spotifyGenre" to mapOf(pureZdt to popularGenre)) }
+        try {
+            withContext(Dispatchers.IO) {
+                val spotifyData = mHttpManager.getSpotifyData()
+                if (sharedPrefs.isAllowSpotifyArtistGenres()) {
+                    val popularGenre: String? = spotifyData["spotifyGenre"]
+                    if (popularGenre != null) {
+                        _cachedSpotifyDataToView.update { current -> current + ("spotifyGenre" to popularGenre) }
+                        //_cachedSpotifyDataToSend.update { current -> current + ("spotifyGenre" to mapOf(pureZdt to popularGenre)) }
+                    }
+                }
+                if (sharedPrefs.isAllowSpotifyArtistPopularity()) {
+                    val popularity = spotifyData["spotifyPopularity"]
+                    if (popularity != null) {
+                        _cachedSpotifyDataToView.update { current -> current + ("spotifyPopularity" to popularity) }
+                        //_cachedSpotifyDataToSend.update { current -> current + ("spotifyPopularity" to mapOf(pureZdt to popularity)) }
+                    }
                 }
             }
-            if (sharedPrefs.isAllowSpotifyArtistPopularity()) {
-                val popularity = spotifyData["spotifyPopularity"]
-                if (popularity != null) {
-                    _dataToView.update { current -> current + ("spotifyPopularity" to popularity) }
-                    //_dataToSend.update { current -> current + ("spotifyPopularity" to mapOf(pureZdt to popularity)) }
-                }
-            }
+        } catch (e: Exception) {
+            Timber.tag("DashboardViewModel").d("Spotify data fetch failed")
         }
     }
 

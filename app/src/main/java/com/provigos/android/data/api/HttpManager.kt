@@ -26,6 +26,7 @@ import com.provigos.android.data.api.interfaces.GithubAPI
 import com.provigos.android.data.api.interfaces.ProvigosAPI
 import com.provigos.android.data.api.interfaces.SpotifyAPI
 import com.provigos.android.data.local.SharedPreferenceManager
+import com.provigos.android.data.model.custom.CustomItemModel
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
@@ -38,9 +39,8 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
 
     private val sharedPreferenceDataSource = SharedPreferenceManager.get()
 
-    suspend fun postData(userData:  Map<String, Map<String, String>>): Result<String> {
+    suspend fun postProvigosData(userData:  Map<String, Map<String, String>>): Result<String> {
         return try {
-
             val googleToken = sharedPreferenceDataSource.getGoogleToken()
             if(googleToken.isNullOrBlank()) {
                 Timber.tag("HttpManager").e("Google token is missing")
@@ -62,7 +62,7 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
 
             val response = provigosAPI.postProvigosData(googleToken, json)
 
-            return if(response.isSuccessful) {
+            if(response.isSuccessful) {
                 Timber.tag("HttpManager").d("POST Success: ${response.body()}")
                 Result.success("Data posted successfully")
             } else {
@@ -75,7 +75,113 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
         }
     }
 
-    suspend fun getGithubCommits(): HashMap<String, String> {
+    suspend fun postProvigosCustomKeys(customItemModel: CustomItemModel): Result<String> {
+        return try {
+            val googleToken = sharedPreferenceDataSource.getGoogleToken()
+            if(googleToken.isNullOrBlank()) {
+                Timber.tag("HttpManager").e("Google token is missing")
+                return Result.failure(IllegalArgumentException("Google token is null or empty"))
+            }
+
+            val jsonAdapter: JsonAdapter<CustomItemModel> = moshi.adapter(CustomItemModel::class.java)
+
+            val json = jsonAdapter.toJsonValue(customItemModel)
+            val response = provigosAPI.postCustomFieldsKeys(googleToken, json)
+
+            if(response.isSuccessful) {
+                Timber.tag("HttpManager").d("POST Success: ${response.body()}")
+                Result.success("Custom data keys posted successfully")
+            } else {
+                Timber.tag("HttpManager").e("POST Error: ${response.code()} - ${response.errorBody()?.string()}")
+                Result.failure(Exception("POST failed: ${response.code()} - ${response.errorBody()?.string()}"))
+            }
+        } catch (e: Exception) {
+            Timber.tag("HttpManager").e("Exception in postProvigosCustomKeys: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getProvigosCustomKeys(): List<CustomItemModel> {
+        val googleToken = sharedPreferenceDataSource.getGoogleToken()
+        if(googleToken.isNullOrBlank()) {
+            Timber.tag("HttpManager").e("Google token is missing")
+            throw IllegalArgumentException("Google token is null or empty")
+        }
+        val customItems = provigosAPI.getCustomFieldsKeys(googleToken)
+
+        if(customItems.isEmpty()) {
+            Timber.tag("HttpManager").d("API empty or error occurred")
+            return customItems
+        } else {
+            return customItems
+        }
+    }
+
+    suspend fun deleteProvigosCustomKeys(customItemModel: CustomItemModel): Result<String> {
+
+        val googleToken = sharedPreferenceDataSource.getGoogleToken()
+        if(googleToken.isNullOrBlank()) {
+            Timber.tag("HttpManager").e("Google token is missing")
+            throw IllegalArgumentException("Google token is null or empty")
+        }
+
+        return try {
+            val jsonAdapter: JsonAdapter<CustomItemModel> = moshi.adapter(CustomItemModel::class.java)
+
+            val json = jsonAdapter.toJsonValue(customItemModel)
+            val response = provigosAPI.postCustomFieldsKeys(googleToken, json)
+
+            if(response.isSuccessful) {
+                Timber.tag("HttpManager").d("DELETE Success: ${response.body()}")
+                Result.success("Deleted data keys successfully")
+            } else {
+                Timber.tag("HttpManager").e("DELETE Error: ${response.code()} - ${response.errorBody()?.string()}")
+                Result.failure(Exception("DELETE failed: ${response.code()} - ${response.errorBody()?.string()}"))
+            }
+        } catch (e: Exception) {
+            Timber.tag("HttpManager").e("Exception in deleteProvigosCustomKeys: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun postProvigosCustomData(customData: Map<String, Map<String, String>>): Result<String> {
+        return try {
+
+            val googleToken = sharedPreferenceDataSource.getGoogleToken()
+            if(googleToken.isNullOrBlank()) {
+                Timber.tag("HttpManager").e("Google token is missing")
+                return Result.failure(IllegalArgumentException("Google token is null or empty"))
+            }
+
+            val jsonAdapter: JsonAdapter<Map<String, Map<String, String>>> = moshi.adapter(
+                Types.newParameterizedType(
+                    Map::class.java,
+                    String::class.java,
+                    Types.newParameterizedType(
+                        Map::class.java,
+                        String::class.java,
+                        String::class.java
+                    )
+                )
+            )
+
+            val json = jsonAdapter.toJsonValue(customData)
+            val response = provigosAPI.postCustomFieldsData(googleToken, json)
+
+            if(response.isSuccessful) {
+                Timber.tag("HttpManager").d("POST Success: ${response.body()}")
+                Result.success("Custom data posted successfully")
+            } else {
+                Timber.tag("HttpManager").e("POST Error: ${response.code()} - ${response.errorBody()?.string()}")
+                Result.failure(Exception("POST failed: ${response.code()} - ${response.errorBody()?.string()}"))
+            }
+        } catch (e: Exception) {
+            Timber.tag("HttpManager").e("Exception in postProvigosCustomData: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getGithubData(): HashMap<String, String> {
 
         val githubCommits: HashMap<String, String> = hashMapOf()
 
@@ -141,7 +247,7 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
         return githubCommits
     }
 
-    suspend fun getSpotifyArtists(): HashMap<String, String> {
+    suspend fun getSpotifyData(): HashMap<String, String> {
 
         val spotifyData: HashMap<String, String> = hashMapOf()
 
@@ -193,11 +299,5 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
         }
 
         return spotifyData
-    }
-
-    suspend fun getMe() {
-
-        val response = spotifyAPI.getMe("Bearer ${sharedPreferenceDataSource.getSpotifyAccessToken()}")
-        Timber.e("${response.body()}")
     }
 }

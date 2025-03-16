@@ -22,9 +22,9 @@
  */
 package com.provigos.android.data.api.interfaces
 
-import com.provigos.android.data.model.GithubRepoModel
-import com.provigos.android.data.model.GithubRepoCommitModel
-import com.provigos.android.data.model.GithubUserModel
+import com.provigos.android.data.model.github.GithubRepoModel
+import com.provigos.android.data.model.github.GithubRepoCommitModel
+import com.provigos.android.data.model.github.GithubUserModel
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
