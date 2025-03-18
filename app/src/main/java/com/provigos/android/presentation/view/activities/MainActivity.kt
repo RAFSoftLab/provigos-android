@@ -26,7 +26,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayoutMediator
 import com.provigos.android.R
 import com.provigos.android.databinding.ActivityMainBinding
@@ -34,7 +33,6 @@ import com.provigos.android.presentation.view.adapters.MainPagerAdapter
 import com.provigos.android.presentation.view.fragments.DashboardFragment
 import com.provigos.android.presentation.view.fragments.SettingsFragment
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity: AppCompatActivity(R.layout.activity_main) {
@@ -45,7 +43,7 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        enableStrictMode()
+        enableStrictMode(false)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
@@ -64,8 +62,6 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
             tab.text = mainPagerAdapter.getTabTitle(position)
             tab.tag = mainPagerAdapter.getTabTag(position)
         }.attach()
-
-        observePreferenceChanges()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -81,17 +77,6 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
                 mDashboardViewModel.setIntegrationSettings(destination)
             }
             binding.viewPager.currentItem = tabIndex
-        }
-    }
-
-    private fun observePreferenceChanges() {
-        lifecycleScope.launch {
-            mDashboardViewModel.preferencesUpdated.collect { isUpdated ->
-                if(isUpdated) {
-                    refreshDashboard()
-                    mDashboardViewModel.resetPreferencesChanged()
-                }
-            }
         }
     }
 

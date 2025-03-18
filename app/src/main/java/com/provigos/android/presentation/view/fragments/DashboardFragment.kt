@@ -40,6 +40,7 @@ import com.provigos.android.presentation.view.activities.Input2Activity
 import com.provigos.android.presentation.view.adapters.DashboardRecyclerViewAdapter
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -57,7 +58,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         )
     }
 
-    private val viewModel by viewModel<DashboardViewModel>()
+    private val viewModel by viewModel<DashboardViewModel>(ownerProducer = { requireActivity() } )
 
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var adapter: DashboardRecyclerViewAdapter
@@ -122,14 +123,19 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
     private fun observeData() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { uiState ->
+                viewModel.uiState
+                    .combine(viewModel.dataToView) { uiState, data -> Pair(uiState, data)  }
+                    .collect { (uiState, data) ->
+                    Timber.d("DashboardFragment uiState $uiState")
                     when (uiState) {
-                        is DashboardViewModel.UiState.Uninitialized -> showLoading(true)
-                        is DashboardViewModel.UiState.Loading -> showLoading(true)
-                        is DashboardViewModel.UiState.Refreshing -> showLoading(true)
+                        is DashboardViewModel.UiState.Uninitialized,
+                        is DashboardViewModel.UiState.Loading,
+                        is DashboardViewModel.UiState.Refreshing -> {
+                            showLoading(true)
+                        }
                         is DashboardViewModel.UiState.Done -> {
                             showLoading(false)
-                            adapter.updateData(viewModel.dataToView.value)
+                            adapter.updateData(data)
                         }
                         is DashboardViewModel.UiState.Error -> {
                             showLoading(false)
@@ -138,27 +144,22 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
                     }
                 }
             }
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.dataToView.collect { data ->
-                    adapter.isClickable = true
-                    adapter.updateData(data)
-                }
-            }
         }
     }
 
     private fun showLoading(isVisible: Boolean) {
         val visibility = if (isVisible) View.VISIBLE else View.GONE
+        val recycler = if (isVisible) View.GONE else View.VISIBLE
 
         binding.loadingOverlay.visibility = visibility
         binding.loadingMessage.visibility = visibility
 
+        binding.dashboardRecyclerView.visibility = recycler
+        if(recycler == View.VISIBLE && binding.dashboardRecyclerView.layoutManager == null) {
+            binding.dashboardRecyclerView.layoutManager = GridLayoutManager(context, 2)
+        }
+
         binding.swipeRefresh.isEnabled = !isVisible
-
-        binding.dashboardRecyclerView.isClickable = !isVisible
-        binding.dashboardRecyclerView.isFocusable = !isVisible
-        binding.dashboardRecyclerView.layoutManager = if (isVisible) null else GridLayoutManager(context, 2)
-
         adapter.isClickable = !isVisible
 
         if(isVisible) animateLoadingText()

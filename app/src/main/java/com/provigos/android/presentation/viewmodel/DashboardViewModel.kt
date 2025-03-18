@@ -105,16 +105,12 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         _navigateIntegrationScreen.tryEmit(null)
     }
 
-    private val _preferencesUpdated = MutableStateFlow(false)
-    val preferencesUpdated: StateFlow<Boolean> get() = _preferencesUpdated
-
     fun notifyPreferencesChanged(destination: String) {
-        invalidateCache(destination)
-        _preferencesUpdated.tryEmit(true)
-    }
-
-    fun resetPreferencesChanged() {
-        _preferencesUpdated.value = false
+        Timber.d("notifyPreferencesChanged $destination")
+        viewModelScope.launch {
+            invalidateCache(destination)
+            refreshData()
+        }
     }
 
     private val invalidatedCaches = mutableSetOf<String>()
@@ -128,50 +124,51 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
     private val _cachedSpotifyDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _cachedSpotifyDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
 
-    fun invalidateCache(destination: String) {
-        viewModelScope.launch {
-            cacheMutex.withLock {
-                invalidatedCaches.add(destination)
-                when(destination) {
-                    "health_connect" -> {
-                        _cachedHealthDataToView.value = emptyMap()
-                        _cachedHealthDataToSend.value = emptyMap()
-                    }
-                    "github" -> {
-                        _cachedGithubDataToView.value = emptyMap()
-                        _cachedGithubDataToSend.value = emptyMap()
-                    }
-                    "spotify" -> {
-                        _cachedSpotifyDataToView.value = emptyMap()
-                        _cachedSpotifyDataToSend.value = emptyMap()
-                    }
-                    "custom" -> {
+    suspend fun invalidateCache(destination: String) {
+        Timber.e("invalidateCache for $destination")
+        cacheMutex.withLock {
+            invalidatedCaches.add(destination)
+            when (destination) {
+                "health_connect" -> {
+                    _cachedHealthDataToView.value = emptyMap()
+                    _cachedHealthDataToSend.value = emptyMap()
+                }
+                "github" -> {
+                    _cachedGithubDataToView.value = emptyMap()
+                    _cachedGithubDataToSend.value = emptyMap()
+                }
+                "spotify" -> {
+                    _cachedSpotifyDataToView.value = emptyMap()
+                    _cachedSpotifyDataToSend.value = emptyMap()
+                }
+                "custom" -> {
 
-                    }
                 }
             }
         }
     }
 
     private fun combineCaches() {
-
+        Timber.d("combineCaches combining caches")
         val healthEnabled = sharedPrefs.isHealthUser()
         val githubEnabled = sharedPrefs.isGithubUser()
         val spotifyEnabled = sharedPrefs.isSpotifyUser()
 
-        _dataToView.update { current -> current +
-            (if (healthEnabled) _cachedHealthDataToView.value else emptyMap()) +
-                    (if (githubEnabled) _cachedGithubDataToView.value else emptyMap()) +
-                    (if (spotifyEnabled) _cachedSpotifyDataToView.value else emptyMap())
-
-        }
-        _dataToSend.update { current -> current +
-            (if (healthEnabled) _cachedHealthDataToSend.value else emptyMap()) +
-                    (if (githubEnabled) _cachedGithubDataToSend.value else emptyMap()) +
-                    (if (spotifyEnabled) _cachedSpotifyDataToSend.value else emptyMap())
+        val newDataToView = buildMap {
+            if (healthEnabled) putAll(_cachedHealthDataToView.value)
+            if (githubEnabled) putAll(_cachedGithubDataToView.value)
+            if (spotifyEnabled) putAll(_cachedSpotifyDataToView.value)
         }
 
-        _uiState.value = UiState.Done
+        val newDataToSend = buildMap {
+            if (healthEnabled) putAll(_cachedHealthDataToSend.value)
+            if (githubEnabled) putAll(_cachedGithubDataToSend.value)
+            if (spotifyEnabled) putAll(_cachedSpotifyDataToSend.value)
+        }
+
+        Timber.d("combineCaches new data $newDataToView")
+        _dataToView.value = newDataToView
+        _dataToSend.value = newDataToSend
     }
 
     fun fetchAllData() {
@@ -182,11 +179,9 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
 
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-
             try {
                 coroutineScope {
-                    val healthDataJob =
-                        if (healthConnect) async { readHealthConnectData() } else null
+                    val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
                     val githubDataJob = if (github) async { readGithubData() } else null
                     val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
 
@@ -200,6 +195,7 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
 
             combineCaches()
             //sendData(_dataToSend.value)
+            _uiState.value = UiState.Done
         }
     }
 
@@ -215,14 +211,16 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
     }
 
     fun refreshData() {
-
+        Timber.d("refreshData refreshing")
         currentRefreshJob?.cancel()
 
         currentRefreshJob = viewModelScope.launch {
 
             refreshMutex.withLock {
 
-                _uiState.value = UiState.Loading
+                _uiState.value = UiState.Refreshing
+                _uiState.tryEmit(UiState.Refreshing)
+                Timber.d("DashboardVM uiState ${uiState.value}")
 
                 try {
                     coroutineScope {
@@ -237,9 +235,11 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                 } catch (e: Exception) {
                     UiState.Error(e)
                 }
-
-                combineCaches()
+                cacheMutex.withLock {
+                    combineCaches()
+                }
                 //_sendData(_dataToSend.value)
+                _uiState.value = UiState.Done
             }
         }
     }
@@ -276,8 +276,9 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
             Triple("spotify" in invalidatedCaches, _cachedSpotifyDataToView.value.isEmpty(), _cachedSpotifyDataToSend.value.isEmpty())
         }
-
+        Timber.d("RefreshSpotify: isInvalid=$isInvalid, viewEmpty=$viewEmpty, sendEmpty=$sendEmpty")
         if(isInvalid || viewEmpty || sendEmpty) {
+            Timber.d("RefreshSpotify Trigger re-fetch")
             readSpotifyData()
             cacheMutex.withLock { invalidatedCaches.remove("spotify") }
         }
@@ -521,7 +522,9 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         try {
             withContext(Dispatchers.IO) {
                 val spotifyData = mHttpManager.getSpotifyData()
+                Timber.d("readSpotifyData isAllowSpotifyArtistGenres ${sharedPrefs.isAllowSpotifyArtistGenres()} before if")
                 if (sharedPrefs.isAllowSpotifyArtistGenres()) {
+                    Timber.d("readSpotifyData isAllowSpotifyArtistGenres ${sharedPrefs.isAllowSpotifyArtistGenres()} after if")
                     val popularGenre: String? = spotifyData["spotifyGenre"]
                     if (popularGenre != null) {
                         _cachedSpotifyDataToView.update { current -> current + ("spotifyGenre" to popularGenre) }

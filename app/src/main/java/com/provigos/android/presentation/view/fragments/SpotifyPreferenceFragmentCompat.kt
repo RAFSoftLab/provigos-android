@@ -25,13 +25,16 @@ package com.provigos.android.presentation.view.fragments
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 
 class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
@@ -48,22 +51,29 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
         val trackGenres = findPreference<CheckBoxPreference>(getString(R.string.spotify_genre))
         trackGenres?.isChecked = sharedPrefs.isAllowSpotifyArtistGenres()
         trackGenres?.setOnPreferenceChangeListener { _, newValue ->
-            sharedPrefs.setAllowSpotifyArtistGenres(newValue as Boolean)
-            mDashboardViewModel.notifyPreferencesChanged("spotify")
+            lifecycleScope.launch {
+                sharedPrefs.setAllowSpotifyArtistGenres(newValue as Boolean)
+                Timber.d("Spotify genre preference changed: $newValue")
+                mDashboardViewModel.notifyPreferencesChanged("spotify")
+            }
             true
         }
 
         val trackPopularity = findPreference<CheckBoxPreference>(getString(R.string.spotify_popularity))
         trackPopularity?.isChecked = sharedPrefs.isAllowSpotifyArtistPopularity()
         trackPopularity?.setOnPreferenceChangeListener { _, newValue ->
-            sharedPrefs.setAllowSpotifyArtistPopularity(newValue as Boolean)
-            mDashboardViewModel.notifyPreferencesChanged("spotify")
+            lifecycleScope.launch {
+                sharedPrefs.setAllowSpotifyArtistPopularity(newValue as Boolean)
+                mDashboardViewModel.notifyPreferencesChanged("spotify")
+            }
             true
         }
 
         val spotifyCache = findPreference<Preference>("invalidate_spotify_cache")
         spotifyCache?.setOnPreferenceClickListener {
-            mDashboardViewModel.invalidateCache("spotify")
+            lifecycleScope.launch {
+                mDashboardViewModel.invalidateCache("spotify")
+            }
             true
         }
 
@@ -78,7 +88,9 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
                     sharedPrefs.setAllowSpotifyArtistPopularity(false)
                     sharedPrefs.setSpotifyAccessToken("")
                     sharedPrefs.setSpotifyRefreshToken("")
-                    mDashboardViewModel.notifyPreferencesChanged("spotify")
+                    lifecycleScope.launch {
+                        mDashboardViewModel.notifyPreferencesChanged("spotify")
+                    }
                     parentFragmentManager.popBackStack()
                 }
                 .setNegativeButton("Cancel", null)

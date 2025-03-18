@@ -38,7 +38,6 @@ import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.view.activities.OAuthActivity
 import com.provigos.android.presentation.view.activities.HealthConnectPrivacyPolicyActivity
-import com.provigos.android.presentation.view.activities.MainActivity
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -127,7 +126,9 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
 
     private fun healthConnectIntegration() {
         startActivity(Intent(activity, HealthConnectPrivacyPolicyActivity::class.java))
-        mDashboardViewModel.invalidateCache("health_connect")
+        lifecycleScope.launch {
+            mDashboardViewModel.invalidateCache("health_connect")
+        }
     }
 
     private fun githubIntegration() {

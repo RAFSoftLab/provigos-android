@@ -25,12 +25,14 @@ package com.provigos.android.presentation.view.fragments
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
@@ -48,22 +50,28 @@ class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
         val trackTotal = findPreference<CheckBoxPreference>(getString(R.string.total_github_commits))
         trackTotal?.isChecked = sharedPrefs.isAllowGithubTotalCommits()
         trackTotal?.setOnPreferenceChangeListener { _, newValue ->
-            sharedPrefs.setAllowGithubTotalCommits(newValue as Boolean)
-            mDashboardViewModel.notifyPreferencesChanged("github")
+            lifecycleScope.launch {
+                sharedPrefs.setAllowGithubTotalCommits(newValue as Boolean)
+                mDashboardViewModel.notifyPreferencesChanged("github")
+            }
             true
         }
 
         val trackDaily = findPreference<CheckBoxPreference>(getString(R.string.daily_github_commits))
         trackDaily?.isChecked = sharedPrefs.isAllowGithubDailyCommits()
         trackDaily?.setOnPreferenceChangeListener { _, newValue ->
-            sharedPrefs.setAllowGithubDailyCommits(newValue as Boolean)
-            mDashboardViewModel.notifyPreferencesChanged("github")
+            lifecycleScope.launch {
+                sharedPrefs.setAllowGithubDailyCommits(newValue as Boolean)
+                mDashboardViewModel.notifyPreferencesChanged("github")
+            }
             true
         }
 
         val githubCache = findPreference<Preference>("invalidate_github_cache")
         githubCache?.setOnPreferenceClickListener {
-            mDashboardViewModel.invalidateCache("github")
+            lifecycleScope.launch {
+                mDashboardViewModel.invalidateCache("github")
+            }
             true
         }
 
@@ -77,7 +85,9 @@ class GithubPreferenceFragmentCompat: PreferenceFragmentCompat() {
                     sharedPrefs.setAllowGithubDailyCommits(false)
                     sharedPrefs.setAllowGithubTotalCommits(false)
                     sharedPrefs.setGithubAccessToken("")
-                    mDashboardViewModel.notifyPreferencesChanged("github")
+                    lifecycleScope.launch {
+                        mDashboardViewModel.notifyPreferencesChanged("github")
+                    }
                     parentFragmentManager.popBackStack()
                 }
                 .setNegativeButton("Cancel", null)
