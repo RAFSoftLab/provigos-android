@@ -688,7 +688,8 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
             withContext(Dispatchers.IO) {
                 _customKeys.value = mHttpManager.getProvigosCustomKeys()
                 customData = mHttpManager.getProvigosCustomData()
-                _cachedCustomDataToView.update { current -> current + customData.mapValues { (_, innerMap) -> innerMap[pureZdt] ?: "0" } }
+                val newDataToView = buildMap { putAll(customData.mapValues { (_, innerMap) -> innerMap[pureZdt] ?: "0" }) }
+                _cachedCustomDataToView.value = newDataToView
             }
         } catch (e: Exception) {
             Timber.tag("DashboardViewModel").d("Custom data fetch failed: ${e.message}")
