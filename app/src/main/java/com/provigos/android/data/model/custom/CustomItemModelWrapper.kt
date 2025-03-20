@@ -22,9 +22,12 @@
  */
 package com.provigos.android.data.model.custom
 
+data class CustomItemModelWrapper(
+    val customFields: List<CustomItemModel>
+)
+
 data class CustomItemModel(
     val name: String,
     val units: String,
-    val label: String,
-    val operation: String
+    val label: String
 )

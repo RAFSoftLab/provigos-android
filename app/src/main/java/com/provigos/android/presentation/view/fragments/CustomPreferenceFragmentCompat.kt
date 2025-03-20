@@ -22,25 +22,41 @@
  */
 package com.provigos.android.presentation.view.fragments
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
 import com.provigos.android.presentation.view.activities.EditActivity
+import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class CustomPreferenceFragmentCompat: PreferenceFragmentCompat() {
+
+    private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>(ownerProducer = { requireActivity() } )
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
        setPreferencesFromResource(R.xml.custom_preferences, rootKey)
     }
+
+    private val activityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.resultCode == Activity.RESULT_OK) {
+            mDashboardViewModel.notifyPreferencesChanged("custom")
+        }
+    }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val addCustom = findPreference<Preference>("add_custom_item")
         addCustom?.setOnPreferenceClickListener {
-            startActivity(Intent(requireContext(), EditActivity::class.java))
+            val intent = Intent(requireContext(), EditActivity::class.java).putExtra("value", true)
+            activityResultLauncher.launch(intent)
             true
         }
 

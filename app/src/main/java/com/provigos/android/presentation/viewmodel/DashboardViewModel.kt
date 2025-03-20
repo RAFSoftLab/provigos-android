@@ -38,10 +38,13 @@ import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.api.HealthConnectManager
 import com.provigos.android.data.api.HttpManager
 import com.provigos.android.data.local.SharedPreferenceManager
+import com.provigos.android.data.model.DashboardViewItemModel
+import com.provigos.android.data.model.custom.CustomItemModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,9 +59,10 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.UUID
+import kotlin.math.roundToLong
 
-class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
-                         val mHttpManager: HttpManager): ViewModel() {
+class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager,
+                         private val mHttpManager: HttpManager): ViewModel() {
 
     private val refreshMutex = Mutex()
     private val cacheMutex = Mutex()
@@ -77,25 +81,17 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
     val uiState: StateFlow<UiState> get() = _uiState
 
     private val _dataToView = MutableStateFlow<Map<String, String>>(emptyMap())
-    val dataToView: StateFlow<Map<String, String>> get() = _dataToView
     private val _dataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
 
-
-    val writePermissionMap: Map<String, String> = mapOf(
-        "steps" to HealthPermission.getWritePermission(StepsRecord::class),
-        "weight" to HealthPermission.getWritePermission(WeightRecord::class),
-        "height" to HealthPermission.getWritePermission(HeightRecord::class),
-        "heartRate" to HealthPermission.getWritePermission(HeartRateRecord::class),
-        "bodyFat" to HealthPermission.getWritePermission(BodyFatRecord::class),
-        "bloodPressure" to HealthPermission.getWritePermission(BloodPressureRecord::class),
-        "bodyTemperature" to HealthPermission.getWritePermission(BodyTemperatureRecord::class),
-        "bloodGlucose" to HealthPermission.getWritePermission(BloodGlucoseRecord::class),
-        "oxygenSaturation" to HealthPermission.getWritePermission(OxygenSaturationRecord::class),
-        "respiratoryRate" to HealthPermission.getWritePermission(RespiratoryRateRecord::class)
-    )
+    private val _mDashboardViewList = MutableStateFlow<List<DashboardViewItemModel>>(emptyList())
+    val mDashboardViewList: StateFlow<List<DashboardViewItemModel>> get() = _mDashboardViewList
 
     private val _navigateIntegrationScreen = MutableStateFlow<String?>(null)
     val navigateIntegrationScreen: SharedFlow<String?> get() = _navigateIntegrationScreen
+
+    private var customData: Map<String, Map<String, String>> = mapOf()
+    private val _customKeys = MutableStateFlow<List<CustomItemModel>>(emptyList())
+    val customKeys: StateFlow<List<CustomItemModel>> get() = _customKeys
 
     fun setIntegrationSettings(destination: String) {
         _navigateIntegrationScreen.tryEmit(destination)
@@ -114,18 +110,15 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
     }
 
     private val invalidatedCaches = mutableSetOf<String>()
-
     private val _cachedHealthDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _cachedHealthDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
-
     private val _cachedGithubDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _cachedGithubDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
-
     private val _cachedSpotifyDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _cachedSpotifyDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+    private val _cachedCustomDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
 
     suspend fun invalidateCache(destination: String) {
-        Timber.e("invalidateCache for $destination")
         cacheMutex.withLock {
             invalidatedCaches.add(destination)
             when (destination) {
@@ -142,6 +135,7 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                     _cachedSpotifyDataToSend.value = emptyMap()
                 }
                 "custom" -> {
+                    _cachedCustomDataToView.value = emptyMap()
 
                 }
             }
@@ -149,15 +143,16 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
     }
 
     private fun combineCaches() {
-        Timber.d("combineCaches combining caches")
         val healthEnabled = sharedPrefs.isHealthUser()
         val githubEnabled = sharedPrefs.isGithubUser()
         val spotifyEnabled = sharedPrefs.isSpotifyUser()
+        val customEnabled = sharedPrefs.isCustomUser()
 
         val newDataToView = buildMap {
             if (healthEnabled) putAll(_cachedHealthDataToView.value)
             if (githubEnabled) putAll(_cachedGithubDataToView.value)
             if (spotifyEnabled) putAll(_cachedSpotifyDataToView.value)
+            if (customEnabled) putAll(_cachedCustomDataToView.value)
         }
 
         val newDataToSend = buildMap {
@@ -168,7 +163,42 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
 
         Timber.d("combineCaches new data $newDataToView")
         _dataToView.value = newDataToView
+        _mDashboardViewList.value = transformData(_dataToView.value)
         _dataToSend.value = newDataToSend
+    }
+
+    private fun transformData(map: Map<String, String>): List<DashboardViewItemModel> {
+        return map.mapNotNull { (k, v) ->
+            when(k) {
+                "steps" -> DashboardViewItemModel("steps", "Steps", v)
+                "weight" -> DashboardViewItemModel("weight", "Weight", "${v.toDouble().roundToLong()} kg")
+                "heartRate" -> DashboardViewItemModel("heartRate", "Heart rate", "${v.toDouble().roundToLong()} bpm")
+                "bodyFat" -> DashboardViewItemModel("bodyFat", "Body fat", "$v %")
+                "bloodPressure" -> DashboardViewItemModel("bloodPressure", "Blood pressure", "$v mmHg")
+                "height" -> DashboardViewItemModel("height", "Height", "$v cm")
+                "bodyTemperature" -> DashboardViewItemModel("bodyTemperature", "Body temperature", String.format(Locale.US, "%.1f ℃", v.toDouble()))
+                "oxygenSaturation" -> DashboardViewItemModel("oxygenSaturation", "Oxygen saturation", "$v %")
+                "bloodGlucose" -> DashboardViewItemModel("bloodGlucose", "Blood glucose", "$v mmol/L")
+                "respiratoryRate" -> DashboardViewItemModel("respiratoryRate", "Respiratory rate", "$v rpm")
+                "githubTotal" -> DashboardViewItemModel("githubTotal", "Total commits", v)
+                "githubDaily" -> DashboardViewItemModel("githubDaily", "Commits today", v)
+                "spotifyGenre" -> DashboardViewItemModel("spotifyGenre", "Most listened to genre", v)
+                "spotifyPopularity" -> DashboardViewItemModel("spotifyPopularity", "Average artist popularity", v)
+                else -> transformCustomData(k, v)
+            }
+        }
+    }
+
+    private fun transformCustomData(key: String, value: String): DashboardViewItemModel? {
+        val item = _customKeys.value.find { it.name == key }
+        return if(item != null && sharedPrefs.isAllowCustomItem(item.name)) {
+            val name = item.name
+            val unit = item.units
+            val label = item.label
+            DashboardViewItemModel(name, label, "$value $unit")
+        } else {
+            null
+        }
     }
 
     fun fetchAllData() {
@@ -176,6 +206,7 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         val healthConnect = sharedPrefs.isHealthUser()
         val github = sharedPrefs.isGithubUser()
         val spotify = sharedPrefs.isSpotifyUser()
+        val custom = sharedPrefs.isCustomUser()
 
         viewModelScope.launch {
             _uiState.value = UiState.Loading
@@ -184,10 +215,12 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                     val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
                     val githubDataJob = if (github) async { readGithubData() } else null
                     val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
+                    val customDataJob = if (custom) async { readCustomData() } else null
 
                     healthDataJob?.await()
                     githubDataJob?.await()
                     spotifyDataJob?.await()
+                    customDataJob?.await()
                 }
             } catch (e: Exception) {
                 _uiState.value = UiState.Error(e)
@@ -219,18 +252,18 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
             refreshMutex.withLock {
 
                 _uiState.value = UiState.Refreshing
-                _uiState.tryEmit(UiState.Refreshing)
-                Timber.d("DashboardVM uiState ${uiState.value}")
 
                 try {
                     coroutineScope {
                         val healthDataJob = async { refreshHealthData() }
                         val githubDataJob = async { refreshGithubData() }
                         val spotifyDataJob = async { refreshSpotifyData() }
+                        val customDataJob = async { refreshCustomData() }
 
                         healthDataJob.await()
                         githubDataJob.await()
                         spotifyDataJob.await()
+                        customDataJob.await()
                     }
                 } catch (e: Exception) {
                     UiState.Error(e)
@@ -250,7 +283,6 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
             Triple("health_connect" in invalidatedCaches, _cachedHealthDataToView.value.isEmpty(), _cachedHealthDataToSend.value.isEmpty())
         }
-
         if (isInvalid || viewEmpty || sendEmpty) {
             readHealthConnectData()
             cacheMutex.withLock { invalidatedCaches.remove("health_connect") }
@@ -263,7 +295,6 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
             Triple("github" in invalidatedCaches, _cachedGithubDataToView.value.isEmpty(), _cachedGithubDataToSend.value.isEmpty())
         }
-
         if (isInvalid || viewEmpty || sendEmpty) {
             readGithubData()
             cacheMutex.withLock { invalidatedCaches.remove("github") }
@@ -276,16 +307,31 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
             Triple("spotify" in invalidatedCaches, _cachedSpotifyDataToView.value.isEmpty(), _cachedSpotifyDataToSend.value.isEmpty())
         }
-        Timber.d("RefreshSpotify: isInvalid=$isInvalid, viewEmpty=$viewEmpty, sendEmpty=$sendEmpty")
         if(isInvalid || viewEmpty || sendEmpty) {
-            Timber.d("RefreshSpotify Trigger re-fetch")
             readSpotifyData()
+            cacheMutex.withLock { invalidatedCaches.remove("spotify") }
+        }
+    }
+
+    private suspend fun refreshCustomData() {
+        if(!sharedPrefs.isCustomUser()) return
+
+        val (isInvalid, viewEmpty) = cacheMutex.withLock {
+            Pair("spotify" in invalidatedCaches, _cachedCustomDataToView.value.isEmpty())
+        }
+        if(isInvalid || viewEmpty) {
+            readCustomData()
             cacheMutex.withLock { invalidatedCaches.remove("spotify") }
         }
     }
 
     private suspend fun readHealthConnectData() {
 
+        val maxRetries = 3
+        var retryCount = 0
+        val baseDelay = 1000L
+
+        while (retryCount <= maxRetries) {
         try {
             withContext(Dispatchers.IO) {
 
@@ -456,8 +502,17 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                     Timber.tag("DashboardViewModel").d("No respiratory rate permission")
                 }
             }
+            return
         } catch (e: Exception) {
-            Timber.tag("DashboardViewModel").d("Health Connect data fetch failed: ${e.message}")
+            if (retryCount == maxRetries) {
+                Timber.tag("DashboardViewModel").d("Health Connect data fetch failed: ${e.message}")
+                break
+            }
+        }
+            val delayMs = baseDelay * (retryCount + 1)
+            Timber.tag("DashboardViewModel").d("Health Connect data fetch failed (retry ${retryCount + 1}/$maxRetries). Retrying in $delayMs ms")
+            delay(delayMs)
+            retryCount++
         }
     }
 
@@ -487,16 +542,102 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         }
     }
 
-    suspend fun writeSteps(start: ZonedDateTime, count: Long) = mHealthConnectManager.writeSteps(start, count)
-    suspend fun writeWeight(date: ZonedDateTime, weight: Double) = mHealthConnectManager.writeWeight(date, weight)
-    suspend fun writeHeight(date: ZonedDateTime, height: Long) = mHealthConnectManager.writeHeight(date, height)
-    suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long) = mHealthConnectManager.writeHeartRate(start, end, count)
-    suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double) = mHealthConnectManager.writeBodyFat(date, percentage)
-    suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long) = mHealthConnectManager.writeBloodPressure(date, upper, lower)
-    suspend fun writeBodyTemperature(date: ZonedDateTime, temperature: Double) = mHealthConnectManager.writeBodyTemperature(date, temperature)
-    suspend fun writeBloodGlucose(date: ZonedDateTime, level: Double) = mHealthConnectManager.writeBloodGlucose(date, level)
-    suspend fun writeOxygenSaturation(date: ZonedDateTime, percentage: Double) = mHealthConnectManager.writeOxygenSaturation(date, percentage)
-    suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double) = mHealthConnectManager.writeRespiratoryRate(date, rate)
+    suspend fun writeSteps(start: ZonedDateTime, count: Long): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(StepsRecord::class))) {
+            mHealthConnectManager.writeSteps(start, count)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeWeight(date: ZonedDateTime, weight: Double): Boolean {
+       if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(WeightRecord::class))) {
+            mHealthConnectManager.writeWeight(date, weight)
+           return true
+       } else {
+           return false
+       }
+    }
+    suspend fun writeHeight(date: ZonedDateTime, height: Long): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(HeightRecord::class))) {
+            mHealthConnectManager.writeHeight(date, height)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeHeartRate(start: ZonedDateTime, end: ZonedDateTime, count: Long): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(HeartRateRecord::class))) {
+            mHealthConnectManager.writeHeartRate(start, end, count)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeBodyFat(date: ZonedDateTime, percentage: Double): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(BodyFatRecord::class))) {
+            mHealthConnectManager.writeBodyFat(date, percentage)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeBloodPressure(date: ZonedDateTime, upper: Long, lower: Long): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(BloodPressureRecord::class))) {
+            mHealthConnectManager.writeBloodPressure(date, upper, lower)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeBodyTemperature(date: ZonedDateTime, temperature: Double): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(BodyTemperatureRecord::class))) {
+            mHealthConnectManager.writeBodyTemperature(date, temperature)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeBloodGlucose(date: ZonedDateTime, level: Double): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(BloodGlucoseRecord::class))) {
+            mHealthConnectManager.writeBloodGlucose(date, level)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeOxygenSaturation(date: ZonedDateTime, percentage: Double): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(OxygenSaturationRecord::class))) {
+            mHealthConnectManager.writeOxygenSaturation(date, percentage)
+            return true
+        } else {
+            return false
+        }
+    }
+    suspend fun writeRespiratoryRate(date: ZonedDateTime, rate: Double): Boolean {
+        if(mHealthConnectManager.hasHealthConnectPermission(HealthPermission.getWritePermission(RespiratoryRateRecord::class))) {
+            mHealthConnectManager.writeRespiratoryRate(date, rate)
+            return true
+        } else {
+            return false
+        }
+    }
+
+    suspend fun writeCustomData(item: CustomItemModel, value: String): Boolean {
+        val map = mapOf(pureZdt to value)
+        val postKeys = mHttpManager.postProvigosCustomKeys(listOf(item))
+        val postData = mHttpManager.postProvigosCustomData(mapOf(item.name to map))
+        return postKeys && postData
+    }
+
+    suspend fun updateCustomData(name: String, value: String): Boolean {
+        val map = mapOf(pureZdt to value)
+        return mHttpManager.postProvigosCustomData(mapOf(name to map))
+    }
+
+    suspend fun updateCustomKeys(item: CustomItemModel): Boolean {
+        return mHttpManager.postProvigosCustomKeys(listOf(item))
+    }
 
     private suspend fun readGithubData() {
         try {
@@ -514,7 +655,7 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                 }
             }
         } catch (e: Exception) {
-            Timber.tag("DashboardViewModel").d("GitHub data fetch failed")
+            Timber.tag("DashboardViewModel").d("GitHub data fetch failed: ${e.message}")
         }
     }
 
@@ -522,9 +663,7 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
         try {
             withContext(Dispatchers.IO) {
                 val spotifyData = mHttpManager.getSpotifyData()
-                Timber.d("readSpotifyData isAllowSpotifyArtistGenres ${sharedPrefs.isAllowSpotifyArtistGenres()} before if")
                 if (sharedPrefs.isAllowSpotifyArtistGenres()) {
-                    Timber.d("readSpotifyData isAllowSpotifyArtistGenres ${sharedPrefs.isAllowSpotifyArtistGenres()} after if")
                     val popularGenre: String? = spotifyData["spotifyGenre"]
                     if (popularGenre != null) {
                         _cachedSpotifyDataToView.update { current -> current + ("spotifyGenre" to popularGenre) }
@@ -540,7 +679,19 @@ class DashboardViewModel(val mHealthConnectManager: HealthConnectManager,
                 }
             }
         } catch (e: Exception) {
-            Timber.tag("DashboardViewModel").d("Spotify data fetch failed")
+            Timber.tag("DashboardViewModel").d("Spotify data fetch failed: ${e.message}")
+        }
+    }
+
+    private suspend fun readCustomData() {
+        try {
+            withContext(Dispatchers.IO) {
+                _customKeys.value = mHttpManager.getProvigosCustomKeys()
+                customData = mHttpManager.getProvigosCustomData()
+                _cachedCustomDataToView.update { current -> current + customData.mapValues { (_, innerMap) -> innerMap[pureZdt] ?: "0" } }
+            }
+        } catch (e: Exception) {
+            Timber.tag("DashboardViewModel").d("Custom data fetch failed: ${e.message}")
         }
     }
 

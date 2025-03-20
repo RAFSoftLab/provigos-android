@@ -116,8 +116,6 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
 
         val zonedDateTime = ZonedDateTime.of(date, time, ZoneId.systemDefault())
 
-        val permission = viewModel.writePermissionMap[type]
-
         when(type) {
             "weight" -> {
                 description.text = "Weight"
@@ -129,15 +127,13 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                 numberPicker2.maxValue = 9
                 binding.saveText.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeWeight(
-                                zonedDateTime,
-                                "${numberPicker.value}.${numberPicker2.value}".toDouble()
-                            )
-                            finish()
-                        } else {
+                        if(!viewModel.writeWeight(
+                            zonedDateTime,
+                            "${numberPicker.value}.${numberPicker2.value}".toDouble()
+                        )) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -151,12 +147,10 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                 numberPicker2.maxValue = 200
                 binding.saveText.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeBloodPressure(zonedDateTime, numberPicker.value.toLong(), numberPicker2.value.toLong())
-                            finish()
-                        } else {
+                        if(!viewModel.writeBloodPressure(zonedDateTime, numberPicker.value.toLong(), numberPicker2.value.toLong())) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -170,15 +164,13 @@ class Input2Activity: AppCompatActivity(R.layout.activity_input2) {
                 numberPicker2.maxValue = 9
                 binding.saveText.setOnClickListener {
                     GlobalScope.launch {
-                        if (viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeBodyTemperature(
-                                zonedDateTime,
-                                "${numberPicker.value}.${numberPicker2.value}".toDouble()
-                            )
-                            finish()
-                        } else {
+                        if(!viewModel.writeBodyTemperature(
+                            zonedDateTime,
+                            "${numberPicker.value}.${numberPicker2.value}".toDouble()
+                        )) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }

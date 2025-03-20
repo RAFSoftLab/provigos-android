@@ -20,13 +20,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.provigos.android.data.model.spotify
+package com.provigos.android.data.model
 
-data class SpotifyArtistsForUser(
-    val items: List<SpotifyArtist>
-)
-
-data class SpotifyArtist(
-    val genres: List<String>,
-    val popularity: Int
+data class DashboardViewItemModel(
+    val type: String,
+    val label: String,
+    val value: String
 )

@@ -60,33 +60,39 @@
             android:inputType="text"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
-        android:id="@+id/custom_measure_label"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/custom_value_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/how_to_measure_it"
+        android:hint="@string/give_us_a_starting_value"
         app:layout_constraintTop_toBottomOf="@id/custom_units_layout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp">
 
-    <Spinner
-        android:id="@+id/custom_spinner_field"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/custom_value_field"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:entries="@array/custom_spinner_options"
-        app:layout_constraintTop_toBottomOf="@id/custom_measure_label"
+        android:id="@+id/custom_disclaimer"
+        android:textSize="12sp"
+        android:text="@string/custom_disclaimer"
+        app:layout_constraintTop_toBottomOf="@id/custom_value_layout"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"/>
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <LinearLayout
         android:id="@+id/button_container"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/custom_spinner_field"
+        app:layout_constraintTop_toBottomOf="@id/custom_disclaimer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

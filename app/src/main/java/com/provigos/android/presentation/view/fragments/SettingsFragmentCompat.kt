@@ -38,6 +38,7 @@ import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.view.activities.OAuthActivity
 import com.provigos.android.presentation.view.activities.HealthConnectPrivacyPolicyActivity
+import com.provigos.android.presentation.view.activities.LicenseActivity
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -112,14 +113,19 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
             true
         }
 
-        findPreference<Preference>("web_link")?.setOnPreferenceClickListener {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://provigos.com"))
-            startActivity(intent)
+        findPreference<Preference>(getString(R.string.switch_pref5_key))?.setOnPreferenceClickListener {
+            showSignOutDialog()
             true
         }
 
-        findPreference<Preference>(getString(R.string.switch_pref5_key))?.setOnPreferenceClickListener {
-            showSignOutDialog()
+        findPreference<Preference>("licencing")?.setOnPreferenceClickListener {
+            startActivity(Intent(requireActivity(), LicenseActivity::class.java))
+            true
+        }
+
+        findPreference<Preference>("web_link")?.setOnPreferenceClickListener {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://provigos.com"))
+            startActivity(intent)
             true
         }
     }

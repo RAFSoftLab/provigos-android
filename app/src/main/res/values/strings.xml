@@ -86,9 +86,30 @@ Nullam placerat at justo sed scelerisque. Aliquam aliquam ornare mi ut fringilla
     <string name="custom_label">Label:</string>
     <string name="name">Name:</string>
     <string name="how_to_measure_it">How to measure it?</string>
-    <string-array name="custom_spinner_options">
-        <item>Addition</item>
-        <item>More is better</item>
-        <item>Less is better</item>
-    </string-array>
+    <string name="give_us_a_starting_value">Give us a starting value</string>
+    <string name="custom_disclaimer">Disclaimer: Custom data works only for tracking data on a daily basis.</string>
+    <string name="mit_license"><![CDATA[
+         MIT License
+
+        Copyright 2025 Provigos
+
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.]]>
+    </string>
 </resources>

@@ -22,10 +22,9 @@
  */
 package com.provigos.android.data.api.interfaces
 
-import com.provigos.android.data.model.custom.CustomItemModel
+import com.provigos.android.data.model.custom.CustomItemModelWrapper
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
@@ -43,17 +42,17 @@ interface ProvigosAPI {
 
     @Headers("Accept: */*", "Content-Type: application/json")
     @GET("customFieldsKeys")
-    suspend fun getCustomFieldsKeys(@Header("Authorization") token: String): List<CustomItemModel>
+    suspend fun getCustomFieldsKeys(@Header("Authorization") token: String): CustomItemModelWrapper
 
     @Headers("Accept: */*", "Content-Type: application/json")
     @POST("customFieldsKeys")
     suspend fun postCustomFieldsKeys(@Header("Authorization") token: String, @Body json: Any?): Response<String>
 
     @Headers("Accept: */*", "Content-Type: application/json")
-    @DELETE("customFieldsKeys")
-    suspend fun deleteCustomFieldsKeys(@Header("Authorization") token: String, @Body json: Any?): Response<String>
-
-    @Headers("Accept: */*", "Content-Type: application/json")
     @POST("customFieldsData")
     suspend fun postCustomFieldsData(@Header("Authorization") token: String, @Body json: Any?): Response<String>
+
+    @Headers("Accept: */*", "Content-Type: application/json")
+    @GET("customFieldsData")
+    suspend fun getCustomFieldsData(@Header("Authorization") token: String): Map<String, Map<String, String>>
 }

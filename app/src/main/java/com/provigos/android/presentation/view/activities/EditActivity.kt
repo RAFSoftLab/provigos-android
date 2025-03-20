@@ -22,9 +22,11 @@
  */
 package com.provigos.android.presentation.view.activities
 
+import android.app.Activity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -32,18 +34,14 @@ import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.data.model.custom.CustomItemModel
 import com.provigos.android.databinding.ActivityEditBinding
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class EditActivity: AppCompatActivity() {
 
     private val viewModel: DashboardViewModel by viewModel<DashboardViewModel>()
-
-    private val spinnerMap = mapOf(
-        "Addition" to 1,
-        "More is better" to 2,
-        "Less is better" to 3
-    )
 
     private val sharedPrefs = SharedPreferenceManager.get()
     private lateinit var binding: ActivityEditBinding
@@ -65,31 +63,42 @@ class EditActivity: AppCompatActivity() {
 
         val units = intent.extras?.getString("units") ?: ""
         val customUnitsField = binding.customUnitsField
-       customUnitsField.setText(units)
+        customUnitsField.setText(units)
 
-        val operation = intent.extras?.getString("operation") ?: "Addition"
-        val customSpinnerField = binding.customSpinnerField
-        customSpinnerField.setSelection(spinnerMap[operation]!!)
+        val customValueField = binding.customValueField
+
+        val customValue = intent.extras?.getBoolean("value")
+        customValueField.visibility = if (customValue!!) View.VISIBLE else View.GONE
 
         binding.customCancel.setOnClickListener {
             finish()
         }
 
         binding.customContinue.setOnClickListener {
-            if(customNameField.text.isNullOrBlank() || customLabelField.text.isNullOrBlank() || customUnitsField.text.isNullOrBlank()) {
+            if (customNameField.text.isNullOrBlank() ||
+                customLabelField.text.isNullOrBlank() ||
+                customUnitsField.text.isNullOrBlank()
+            ) {
                 Toast.makeText(this, "All fields are mandatory!", Toast.LENGTH_SHORT).show()
-            }
-            else {
+            } else {
                 lifecycleScope.launch {
-                    viewModel.mHttpManager.postProvigosCustomKeys(
-                        CustomItemModel(
-                            customNameField.text.toString(),
-                            customLabelField.text.toString(),
-                            customUnitsField.text.toString(),
-                            customSpinnerField.selectedItem.toString()
-                        )
+                    val customItem = CustomItemModel(
+                        customNameField.text.toString(),
+                        customUnitsField.text.toString(),
+                        customLabelField.text.toString()
                     )
-                    sharedPrefs.setAllowCustomItem(customNameField.text.toString(), true)
+                    val success = if (customValue) {
+                        viewModel.writeCustomData(customItem, customValueField.text.toString())
+                            .also {
+                                if (it) sharedPrefs.setAllowCustomItem(customItem.name, true)
+                            }
+                    } else {
+                        viewModel.updateCustomKeys(customItem)
+                    }
+                    if(success) {
+                        setResult(Activity.RESULT_OK)
+                        finish()
+                    }
                 }
             }
         }

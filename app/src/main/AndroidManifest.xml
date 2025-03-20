@@ -54,6 +54,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".presentation.view.activities.EditActivity" android:exported="true"/>
+        <activity android:name=".presentation.view.activities.LicenseActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.IntroActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.MainActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.Input2Activity" android:exported="true"/>

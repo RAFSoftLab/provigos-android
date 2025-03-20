@@ -22,11 +22,13 @@
  */
 package com.provigos.android.presentation.view.fragments
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -58,7 +60,14 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         )
     }
 
-    private val viewModel by viewModel<DashboardViewModel>(ownerProducer = { requireActivity() } )
+    private val activityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.resultCode == Activity.RESULT_OK) {
+            mDashboardViewModel.notifyPreferencesChanged("custom")
+        }
+    }
+
+    private val mDashboardViewModel by viewModel<DashboardViewModel>(ownerProducer = { requireActivity() } )
 
     private lateinit var binding: FragmentDashboardBinding
     private lateinit var adapter: DashboardRecyclerViewAdapter
@@ -73,7 +82,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
         binding = FragmentDashboardBinding.inflate(inflater, container, false)
 
-        adapter = DashboardRecyclerViewAdapter(emptyMap())
+        adapter = DashboardRecyclerViewAdapter(emptyList())
         binding.dashboardRecyclerView.layoutManager = GridLayoutManager(context, 2)
         binding.dashboardRecyclerView.adapter = adapter
 
@@ -91,7 +100,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.fetchAllData()
+        mDashboardViewModel.fetchAllData()
     }
 
     private fun setupItemClickListener() {
@@ -110,11 +119,16 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
         adapter.onItemClicked = { type ->
             if (type != "githubTotal" && type != "githubDaily" && type != "spotifyGenre" && type != "spotifyPopularity") {
-                activity[type]?.let { target ->
-                        val intent = Intent(context, target).apply {
-                            putExtra("key", type)
-                        }
-                        startActivity(intent)
+                if(activity.containsKey(type)) {
+                    val intent = Intent(context, activity[type]).putExtra("key", type)
+                    startActivity(intent)
+                } else {
+                    val item = mDashboardViewModel.customKeys.value.find { it.name == type }
+                    val intent = Intent(context, InputActivity::class.java)
+                        .putExtra("name", item?.name)
+                        .putExtra("units", item?.units)
+                        .putExtra("label", item?.label)
+                    activityResultLauncher.launch(intent)
                 }
             }
         }
@@ -123,15 +137,14 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
     private fun observeData() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState
-                    .combine(viewModel.dataToView) { uiState, data -> Pair(uiState, data)  }
+                mDashboardViewModel.uiState
+                    .combine(mDashboardViewModel.mDashboardViewList) { uiState, data -> Pair(uiState, data)  }
                     .collect { (uiState, data) ->
-                    Timber.d("DashboardFragment uiState $uiState")
                     when (uiState) {
                         is DashboardViewModel.UiState.Uninitialized,
                         is DashboardViewModel.UiState.Loading,
                         is DashboardViewModel.UiState.Refreshing -> {
-                            showLoading(true)
+                            showLoading(true, "Refreshing")
                         }
                         is DashboardViewModel.UiState.Done -> {
                             showLoading(false)
@@ -147,7 +160,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private fun showLoading(isVisible: Boolean) {
+    private fun showLoading(isVisible: Boolean, text: String = "Loading") {
         val visibility = if (isVisible) View.VISIBLE else View.GONE
         val recycler = if (isVisible) View.GONE else View.VISIBLE
 
@@ -162,18 +175,18 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         binding.swipeRefresh.isEnabled = !isVisible
         adapter.isClickable = !isVisible
 
-        if(isVisible) animateLoadingText()
+        if(isVisible) animateLoadingText(text)
     }
 
-    private fun animateLoadingText() {
+    private fun animateLoadingText(text: String) {
         lifecycleScope.launch {
-            var loadingText = "Loading"
+            var loadingText = text
             while(binding.loadingMessage.visibility == View.VISIBLE) {
                 binding.loadingMessage.text = loadingText
                 loadingText = when (loadingText) {
-                    "Loading." -> "Loading.."
-                    "Loading.." -> "Loading..."
-                    else -> "Loading."
+                    "${text}." -> "${text}.."
+                    "${text}.." -> "${text}..."
+                    else -> "${text}."
                 }
                 delay(200)
             }
@@ -190,6 +203,6 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     fun refreshData() {
         binding.emptyDash.visibility = View.GONE
-        viewModel.refreshData()
+        mDashboardViewModel.refreshData()
     }
 }

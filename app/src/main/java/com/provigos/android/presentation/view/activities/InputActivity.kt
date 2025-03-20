@@ -23,9 +23,11 @@
 package com.provigos.android.presentation.view.activities
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Bundle
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -62,7 +64,7 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
         val view = binding.root
         setContentView(view)
 
-        val type = intent.extras?.getString("key")
+        val type = intent.extras?.getString("key") ?: "custom"
 
         val description = binding.inputDescription
         val measurement = binding.inputMeasurement
@@ -113,8 +115,6 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
 
         val zonedDateTime = ZonedDateTime.of(date, time, ZoneId.systemDefault())
 
-        val permission = viewModel.writePermissionMap[type]
-
         when (type) {
             "heartRate" -> {
                 description.text = "Heart Rate"
@@ -123,16 +123,14 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 200
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeHeartRate(
-                                zonedDateTime,
-                                zonedDateTime,
-                                numberPicker.value.toLong()
-                            )
-                            finish()
-                        } else {
+                        if(!viewModel.writeHeartRate(
+                            zonedDateTime,
+                            zonedDateTime,
+                            numberPicker.value.toLong()
+                        )) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -143,12 +141,10 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 100
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeBodyFat(zonedDateTime, numberPicker.value.toDouble())
-                            finish()
-                        } else {
+                        if(!viewModel.writeBodyFat(zonedDateTime, numberPicker.value.toDouble())) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -159,15 +155,13 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 100
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeOxygenSaturation(
-                                zonedDateTime,
-                                numberPicker.value.toDouble()
-                            )
-                            finish()
-                        } else {
+                        if(!viewModel.writeOxygenSaturation(
+                            zonedDateTime,
+                            numberPicker.value.toDouble()
+                        )) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -178,15 +172,13 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 1500
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeBloodGlucose(
-                                zonedDateTime,
-                                numberPicker.value.toDouble()
-                            )
-                            finish()
-                        } else {
+                        if(!viewModel.writeBloodGlucose(
+                            zonedDateTime,
+                            numberPicker.value.toDouble()
+                        )) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -197,12 +189,10 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 15000
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeSteps(zonedDateTime, numberPicker.value.toLong())
-                            finish()
-                        } else {
+                        if(!viewModel.writeSteps(zonedDateTime, numberPicker.value.toLong())) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -213,12 +203,10 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 250
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeHeight(zonedDateTime, numberPicker.value.toLong())
-                            finish()
-                        } else {
+                        if(!viewModel.writeHeight(zonedDateTime, numberPicker.value.toLong())) {
                             toast()
                         }
+                        finish()
                     }
                 }
             }
@@ -229,16 +217,33 @@ class InputActivity: AppCompatActivity(R.layout.activity_input) {
                 numberPicker.maxValue = 100
                 binding.inputSave.setOnClickListener {
                     GlobalScope.launch {
-                        if(viewModel.mHealthConnectManager.hasHealthConnectPermission(permission!!)) {
-                            viewModel.writeRespiratoryRate(
-                                zonedDateTime,
-                                numberPicker.value.toDouble()
-                            )
-                            finish()
-                        } else {
+                        if(!viewModel.writeRespiratoryRate(
+                            zonedDateTime,
+                            numberPicker.value.toDouble()
+                        )) {
                             toast()
                         }
+                        finish()
                     }
+                }
+            }
+            "custom" -> {
+                datePicker.visibility = View.GONE
+                timePicker.visibility = View.GONE
+                binding.datetime.visibility = View.GONE
+                description.text = intent.extras?.getString("label")
+                measurement.text = intent.extras?.getString("units")
+                numberPicker.minValue = 0
+                numberPicker.maxValue = 100
+                binding.inputSave.setOnClickListener {
+                    GlobalScope.launch {
+                        if(!viewModel.updateCustomData(
+                                intent.extras?.getString("name")!!,
+                                numberPicker.value.toString())) {
+                        }
+                    }
+                    setResult(Activity.RESULT_OK)
+                    finish()
                 }
             }
         }

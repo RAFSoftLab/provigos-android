@@ -29,6 +29,7 @@ import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.data.model.custom.CustomItemModel
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 
 class CustomTrackingPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
@@ -37,9 +38,10 @@ class CustomTrackingPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 
-        val customList = emptyList<CustomItemModel>()
+        val customList = mDashboardViewModel.customKeys.value
+        Timber.d("$customList")
 
-        preferenceManager.createPreferenceScreen(requireContext()).apply {
+        preferenceScreen = preferenceManager.createPreferenceScreen(requireContext()).apply {
             customList.forEach { item ->
                 addPreference(createCheckBox(item))
             }
@@ -48,6 +50,7 @@ class CustomTrackingPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     private fun createCheckBox(item: CustomItemModel): CheckBoxPreference {
         return CheckBoxPreference(requireContext()).apply {
+            Timber.d("${item.name}, ${item.label}, ${item.name}")
             isChecked = sharedPrefs.isAllowCustomItem(item.name)
             summary = item.label
             title = item.name

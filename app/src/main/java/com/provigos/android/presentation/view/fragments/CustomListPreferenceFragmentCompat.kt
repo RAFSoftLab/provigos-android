@@ -22,24 +22,36 @@
  */
 package com.provigos.android.presentation.view.fragments
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.data.model.custom.CustomItemModel
 import com.provigos.android.presentation.view.activities.EditActivity
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 
 class CustomListPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>(ownerProducer = { requireActivity() } )
 
+    private val activityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.resultCode == Activity.RESULT_OK) {
+            Timber.d("t result")
+            mDashboardViewModel.notifyPreferencesChanged("custom")
+            parentFragmentManager.popBackStack()
+        }
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 
-        val customList = emptyList<CustomItemModel>()
+        val customList = mDashboardViewModel.customKeys.value
 
-        preferenceManager.createPreferenceScreen(requireContext()).apply {
+        preferenceScreen = preferenceManager.createPreferenceScreen(requireContext()).apply {
             customList.forEach { item ->
                 addPreference(createPreference(item))
             }
@@ -51,13 +63,13 @@ class CustomListPreferenceFragmentCompat: PreferenceFragmentCompat() {
             title = item.name
             summary = item.label
             setOnPreferenceClickListener {
-                startActivity(Intent(requireActivity(), EditActivity::class.java).apply {
+                val intent = Intent(requireActivity(), EditActivity::class.java).apply {
                     putExtra("name", item.name)
                     putExtra("label", item.label)
                     putExtra("units", item.units)
-                    putExtra("operation", item.operation)
-                })
-                parentFragmentManager.popBackStack()
+                    putExtra("value", false)
+                }
+                activityResultLauncher.launch(intent)
                 true
             }
         }

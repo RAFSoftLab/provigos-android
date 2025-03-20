@@ -53,7 +53,6 @@ class SpotifyPreferenceFragmentCompat: PreferenceFragmentCompat() {
         trackGenres?.setOnPreferenceChangeListener { _, newValue ->
             lifecycleScope.launch {
                 sharedPrefs.setAllowSpotifyArtistGenres(newValue as Boolean)
-                Timber.d("Spotify genre preference changed: $newValue")
                 mDashboardViewModel.notifyPreferencesChanged("spotify")
             }
             true

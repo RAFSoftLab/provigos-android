@@ -37,7 +37,8 @@
     <PreferenceCategory android:title="Application">
         <Preference
             android:id="@+id/licencing"
-            android:title="Licence"
+            android:title="License"
+            android:summary="Read about the MIT License"
             android:key="licence"/>
         <Preference
             android:id="@+id/about_us"
