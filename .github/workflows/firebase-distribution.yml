@@ -1,7 +1,8 @@
 name: Firebase App Distribution
 'on':
   push:
-    branches: [ main ]
+    branches:
+      - main
   tags:
     - v*
 jobs:
