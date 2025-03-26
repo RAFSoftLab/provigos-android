@@ -13,6 +13,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug Service Account
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > service-account.json
+          cat service-account.json
+      
+      - name: Cache Gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+
       - name: Create secrets.properties
         run: |
           echo "google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" > secrets.properties
@@ -20,7 +33,6 @@ jobs:
           echo "github_client_secret=${{ secrets.GH_CLIENT_SECRET }}" > secrets.properties
           echo "spotify_client_id=${{ secrets.SPOTIFY_CLIENT_ID }}" > secrets.properties
           echo "spotify_client_secret=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> secrets.properties
-          
 
       - name: Generate Debug Keystore
         run: |
