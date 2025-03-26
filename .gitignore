@@ -38,3 +38,10 @@ secrets.properties
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+app/release/output-metadata.json
+app/release/baselineProfiles/0/app-release.dm
+app/release/app-release.aab
+/app/release
+/app
+app/release/app-release.aab
+*.aab
