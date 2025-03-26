@@ -29,8 +29,8 @@ android {
         vectorDrawables.useSupportLibrary = true
         manifestPlaceholders["appAuthRedirectScheme"] = "com.provigos.android"
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${secrets["GOOGLE_CLIENT_ID"]}\"")
-        buildConfigField("String", "GITHUB_CLIENT_ID", "\"${secrets["GITHUB_CLIENT_ID"]}\"")
-        buildConfigField("String", "GITHUB_CLIENT_SECRET", "\"${secrets["GITHUB_CLIENT_SECRET"]}\"")
+        buildConfigField("String", "GITHUB_CLIENT_ID", "\"${secrets["GH_CLIENT_ID"]}\"")
+        buildConfigField("String", "GITHUB_CLIENT_SECRET", "\"${secrets["GH_CLIENT_SECRET"]}\"")
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"${secrets["SPOTIFY_CLIENT_ID"]}\"")
         buildConfigField("String", "SPOTIFY_CLIENT_SECRET", "\"${secrets["SPOTIFY_CLIENT_SECRET"]}\"")
     }
