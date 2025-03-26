@@ -1,42 +1,33 @@
 name: Firebase App Distribution
-
-on:
+'on':
   push:
-  branches:
-    - main
+    branches: [ main ]
   tags:
-    - 'v*'
-
+    - v*
 jobs:
-  build-and-distribute:
+  build-and-distribute: null
   runs-on: ubuntu-latest
-
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-          distribution: 'temurin'
-          java-version: '11'
-
+        distribution: temurin
+        java-version: '11'
     - name: Make gradlew executable
       run: chmod +x ./gradlew
-
     - name: Build APK
       run: ./gradlew assembleRelease
-
     - name: Upload APK
       uses: actions/upload-artifact@v3
       with:
-          name: app-release
-          path: app/build/outputs/apk/release/app-release.apk
-
+        name: app-release
+        path: app/build/outputs/apk/release/app-release.apk
     - name: Distribute to Firebase App Distribution
       uses: wzieba/Firebase-Distribution-Github-Action@v1
       with:
-          appId: ${{ secrets.FIREBASE_APP_ID }}
-          token: ${{ secrets.FIREBASE_TOKEN }}
-          groups: testers
-          file: app/build/outputs/apk/release/app-release.apk
+        appId: '${{ secrets.FIREBASE_APP_ID }}'
+        token: '${{ secrets.FIREBASE_TOKEN }}'
+        groups: testers
+        file: app/build/outputs/apk/release/app-release.apk
