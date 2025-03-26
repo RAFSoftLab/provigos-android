@@ -38,9 +38,9 @@ android {
     testOptions {
         animationsDisabled = true
     }
-
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -50,6 +50,10 @@ android {
                 artifactType = "APK"
                 testers = "dadasovicmilos19@gmail.com, stefancrnobrnja@outlook.com, provigos.project@gmail.com"
             }
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
         }
     }
     compileOptions {
