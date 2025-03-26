@@ -10,6 +10,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.appdistribution")
 }
 
 
@@ -44,6 +46,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            firebaseAppDistribution {
+                artifactType = "APK"
+                testers = "dadasovicmilos19@gmail.com, stefancrnobrnja@outlook.com, provigos.project@gmail.com"
+            }
         }
     }
     compileOptions {
@@ -67,6 +73,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.preference)
     implementation(libs.play.services.base)
+    implementation(platform(libs.firebase.bom))
 
     // TEST
     testImplementation(libs.junit)
