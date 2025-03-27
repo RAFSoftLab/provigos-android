@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.JacocoOptions
 import org.jetbrains.kotlin.konan.properties.Properties
 import java.io.FileInputStream
 
@@ -12,6 +13,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
     id("com.google.firebase.appdistribution")
+    id("jacoco")
 }
 
 
@@ -50,8 +52,35 @@ android {
         debug {
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = true
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
     }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
+
+    tasks.register<JacocoReport>("jacocoTestReport") {
+        dependsOn("testDebugUnitTest")
+
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+        }
+
+        executionData.setFrom(fileTree(layout.buildDirectory).include("/jacoco/testDebugUnitTest.exec"))
+
+        sourceDirectories.setFrom(files("$projectDir/src/main/java"))
+        classDirectories.setFrom(
+            files(
+                fileTree("${layout.buildDirectory}/intermediates/javac/debug") {
+                    exclude("**/R.class", "**/R$*.class", "**/BuildConfig.class", "**/Manifest*.*")
+                }
+            )
+        )
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -74,6 +103,7 @@ dependencies {
     implementation(libs.androidx.preference)
     implementation(libs.play.services.base)
     implementation(platform(libs.firebase.bom))
+    implementation(libs.org.jacoco.core)
 
     // TEST
     testImplementation(libs.junit)
@@ -144,11 +174,6 @@ dependencies {
 
     // Activity
     implementation(libs.androidx.activity.ktx)
-
-    // Room
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.rxjava2)
-    ksp(libs.androidx.room.compiler)
 
     //Health Connect
     implementation(libs.androidx.connect.client)
