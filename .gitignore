@@ -44,3 +44,4 @@ app/release/app-release.aab
 /app/release
 /app
 *.aab
+/debug.keystore
