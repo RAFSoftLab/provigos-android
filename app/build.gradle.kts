@@ -46,10 +46,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            firebaseAppDistribution {
-                artifactType = "APK"
-                testers = "dadasovicmilos19@gmail.com, stefancrnobrnja@outlook.com, provigos.project@gmail.com"
-            }
         }
         debug {
             signingConfig = signingConfigs.getByName("debug")
