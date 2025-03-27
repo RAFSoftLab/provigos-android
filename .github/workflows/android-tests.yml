@@ -31,6 +31,14 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      - name: Create secrets.properties
+        run: |
+          echo "google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" > secrets.properties
+          echo "github_client_id=${{ secrets.GH_CLIENT_ID }}" >> secrets.properties
+          echo "github_client_secret=${{ secrets.GH_CLIENT_SECRET }}" >> secrets.properties
+          echo "spotify_client_id=${{ secrets.SPOTIFY_CLIENT_ID }}" >> secrets.properties
+          echo "spotify_client_secret=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> secrets.properties
+
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
@@ -74,6 +82,14 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      - name: Create secrets.properties
+        run: |
+          echo "google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" > secrets.properties
+          echo "github_client_id=${{ secrets.GH_CLIENT_ID }}" >> secrets.properties
+          echo "github_client_secret=${{ secrets.GH_CLIENT_SECRET }}" >> secrets.properties
+          echo "spotify_client_id=${{ secrets.SPOTIFY_CLIENT_ID }}" >> secrets.properties
+          echo "spotify_client_secret=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> secrets.properties      
+
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -101,7 +117,7 @@ jobs:
           disable-animations: true
           script: |
             adb wait-for-device shell getprop sys.boot_completed
-      
+
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
