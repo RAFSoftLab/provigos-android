@@ -175,6 +175,11 @@ dependencies {
     // Activity
     implementation(libs.androidx.activity.ktx)
 
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.rxjava2)
+    ksp(libs.androidx.room.compiler)
+
     //Health Connect
     implementation(libs.androidx.connect.client)
 

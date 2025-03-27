@@ -38,7 +38,7 @@ jobs:
         run: ./gradlew jacocoTestReport
 
       - name: Upload Unit Test Coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: unit-test-coverage
           path: app/build/reports/jacoco/
@@ -115,7 +115,7 @@ jobs:
         run: ./gradlew jacocoAndroidTestReport
 
       - name: Upload Instrumented Test Coverage (API ${{ matrix.api-level }})
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: instrumented-test-coverage-api-${{ matrix.api-level }}
           path: app/build/reports/coverage/debug/
