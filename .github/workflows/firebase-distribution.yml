@@ -17,21 +17,23 @@ jobs:
         run: |
           echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > service-account.json
           cat service-account.json
-      
+
       - name: Cache Gradle
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/gradle-wrapper.properties', '**/build.gradle*', '**/gradle.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
       - name: Create secrets.properties
         run: |
           echo "google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" > secrets.properties
-          echo "github_client_id=${{ secrets.GH_CLIENT_ID }}" > secrets.properties
-          echo "github_client_secret=${{ secrets.GH_CLIENT_SECRET }}" > secrets.properties
-          echo "spotify_client_id=${{ secrets.SPOTIFY_CLIENT_ID }}" > secrets.properties
+          echo "github_client_id=${{ secrets.GH_CLIENT_ID }}" >> secrets.properties
+          echo "github_client_secret=${{ secrets.GH_CLIENT_SECRET }}" >> secrets.properties
+          echo "spotify_client_id=${{ secrets.SPOTIFY_CLIENT_ID }}" >> secrets.properties
           echo "spotify_client_secret=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> secrets.properties
 
       - name: Generate Debug Keystore

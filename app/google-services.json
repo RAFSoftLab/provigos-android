@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "27780730731",
-    "project_id": "provigos-android",
-    "storage_bucket": "provigos-android.firebasestorage.app"
+    "project_number": "377327077624",
+    "project_id": "provigos-f2895",
+    "storage_bucket": "provigos-f2895.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:27780730731:android:8002387d740dc36da2862e",
+        "mobilesdk_app_id": "1:377327077624:android:39053d5572f86d956ad30d",
         "android_client_info": {
           "package_name": "com.provigos.android"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCk3lGWtkiEK2Avu5vG4HO82_LU1Xobu_U"
+          "current_key": "AIzaSyACua4BvNaBPaVk40M9NBGFBWbi9GBeWNo"
         }
       ],
       "services": {
