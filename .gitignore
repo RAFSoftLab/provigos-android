@@ -42,6 +42,5 @@ app/release/output-metadata.json
 app/release/baselineProfiles/0/app-release.dm
 app/release/app-release.aab
 /app/release
-/app
 *.aab
 /debug.keystore

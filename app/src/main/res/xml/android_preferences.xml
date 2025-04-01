@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference android:title="Android integration settings" android:selectable="false"/>
+
+    <PreferenceCategory android:title="Tracked items">
+
+        <CheckBoxPreference
+            android:title="Track screen time"
+            android:key="screen_time"
+            android:summary="Tracks your Android daily screen time"
+            />
+        <CheckBoxPreference
+            android:title="Track notification count"
+            android:key="notification_count"
+            android:summary="Tracks your Android daily notification count"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Integration settings"  android:iconSpaceReserved="false">
+        <Preference
+            android:title="Clear cache"
+            android:key="invalidate_android_cache"
+            android:summary="Manually invalidate your Provigos' Android data cache"
+            />
+        <CheckBoxPreference android:title="Allow Android trackers"
+            android:key="is_android_user"/>
+
+    </PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>
