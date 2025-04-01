@@ -136,7 +136,8 @@ import java.util.concurrent.TimeUnit
         viewModel {
             DashboardViewModel(
                 mHealthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager,
-                mHttpManager = get()
+                mHttpManager = get(),
+                mAndroidUsageStatsManager = (androidApplication() as ProvigosApplication).androidUsageStatsManager
             )
         }
     }

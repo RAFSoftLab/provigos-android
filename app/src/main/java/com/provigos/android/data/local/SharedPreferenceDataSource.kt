@@ -41,10 +41,13 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
         private const val IS_GITHUB_USER = "github_user"
         private const val IS_SPOTIFY_USER = "spotify_user"
         private const val IS_CUSTOM_USER = "custom_user"
+        private const val IS_ANDROID_USER = "android_user"
         private const val ALLOW_GITHUB_TOTAL_COMMITS = "allow_github_total_commits"
         private const val ALLOW_GITHUB_DAILY_COMMITS = "allow_github_daily_commits"
         private const val ALLOW_SPOTIFY_ARTIST_GENRES = "allow_spotify_artist_genres"
         private const val ALLOW_SPOTIFY_ARTIST_POPULARITY = "allow_spotify_artist_popularity"
+        private const val ALLOW_ANDROID_SCREEN_TIME = "allow_android_screen_time"
+        private const val ALLOW_ANDROID_NOTIFICATION_COUNT = "allow_android_notification_count"
     }
 
     fun setPrivacyPolicy(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(PRIVATE_POLICY_KEY, bool).apply() }
@@ -92,9 +95,13 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
 
     fun setFirstTimeUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_FIRST_TIME_USER, bool).apply() }
 
-    fun isCustomUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_CUSTOM_USER, true) }
+    fun isCustomUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_CUSTOM_USER, false) }
 
     fun setCustomUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_CUSTOM_USER, bool).apply() }
+
+    fun isAndroidUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_ANDROID_USER, false) }
+
+    fun setAndroidUser(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(IS_ANDROID_USER, bool).apply() }
 
     fun isHealthUser(): Boolean { return encryptedSharedPreferences.getBoolean(IS_HEALTH_USER, false) }
 
@@ -139,4 +146,16 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
     fun setAllowCustomItem(name: String, bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(name, bool).apply() }
 
     fun isAllowCustomItem(name: String): Boolean { return encryptedSharedPreferences.getBoolean(name, false) }
+
+    fun isAllowAndroidScreenTime(): Boolean { return encryptedSharedPreferences.getBoolean(
+        ALLOW_ANDROID_SCREEN_TIME, false) }
+
+    fun setAllowAndroidScreenTime(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(
+        ALLOW_ANDROID_SCREEN_TIME, bool).apply() }
+
+    fun isAllowAndroidNotificationCount(): Boolean { return encryptedSharedPreferences.getBoolean(
+        ALLOW_ANDROID_NOTIFICATION_COUNT, false) }
+
+    fun setAllowAndroidNotificationCount(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(
+        ALLOW_ANDROID_NOTIFICATION_COUNT, bool).apply() }
 }

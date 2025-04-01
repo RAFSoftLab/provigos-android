@@ -24,6 +24,7 @@ package com.provigos.android.application
 
 import android.app.Application
 import com.facebook.stetho.Stetho
+import com.provigos.android.data.api.AndroidUsageStatsManager
 import com.provigos.android.data.api.HealthConnectManager
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.modules.coreModule
@@ -39,6 +40,7 @@ import timber.log.Timber
 class ProvigosApplication : Application() {
 
     val healthConnectManager by lazy { HealthConnectManager(this) }
+    val androidUsageStatsManager by lazy { AndroidUsageStatsManager(this) }
 
     override fun onCreate() {
         super.onCreate()

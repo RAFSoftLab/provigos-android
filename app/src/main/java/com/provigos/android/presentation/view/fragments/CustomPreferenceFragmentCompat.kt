@@ -27,16 +27,21 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
+import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
+import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.view.activities.EditActivity
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class CustomPreferenceFragmentCompat: PreferenceFragmentCompat() {
 
     private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>(ownerProducer = { requireActivity() } )
+    private val sharedPrefs = SharedPreferenceManager.get()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
        setPreferencesFromResource(R.xml.custom_preferences, rootKey)
@@ -75,6 +80,16 @@ class CustomPreferenceFragmentCompat: PreferenceFragmentCompat() {
                 .replace(R.id.view_settings, CustomTrackingPreferenceFragmentCompat())
                 .addToBackStack(null)
                 .commit()
+            true
+        }
+
+        val trackCustomUser = findPreference<CheckBoxPreference>("is_custom_user")
+        trackCustomUser?.isChecked = sharedPrefs.isCustomUser()
+        trackCustomUser?.setOnPreferenceChangeListener { _, newValue ->
+            lifecycleScope.launch {
+                sharedPrefs.setCustomUser(newValue as Boolean)
+                mDashboardViewModel.notifyPreferencesChanged("custom")
+            }
             true
         }
     }

@@ -142,7 +142,9 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
                     .collect { (uiState, data) ->
                     when (uiState) {
                         is DashboardViewModel.UiState.Uninitialized,
-                        is DashboardViewModel.UiState.Loading,
+                        is DashboardViewModel.UiState.Loading -> {
+                            showLoading(true, "Loading")
+                        }
                         is DashboardViewModel.UiState.Refreshing -> {
                             showLoading(true, "Refreshing")
                         }
@@ -160,7 +162,7 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
         }
     }
 
-    private fun showLoading(isVisible: Boolean, text: String = "Loading") {
+    private fun showLoading(isVisible: Boolean, text: String = "") {
         val visibility = if (isVisible) View.VISIBLE else View.GONE
         val recycler = if (isVisible) View.GONE else View.VISIBLE
 

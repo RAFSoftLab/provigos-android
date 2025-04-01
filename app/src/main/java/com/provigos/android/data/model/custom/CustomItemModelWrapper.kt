@@ -22,12 +22,24 @@
  */
 package com.provigos.android.data.model.custom
 
+import androidx.annotation.Keep
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@Keep
+@JsonClass(generateAdapter = true)
 data class CustomItemModelWrapper(
+    @Json(name = "customFields")
     val customFields: List<CustomItemModel>
 )
 
+@Keep
+@JsonClass(generateAdapter = true)
 data class CustomItemModel(
+    @Json(name = "name")
     val name: String,
+    @Json(name = "units")
     val units: String,
+    @Json(name = "label")
     val label: String
 )

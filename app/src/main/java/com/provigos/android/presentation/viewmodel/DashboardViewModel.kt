@@ -35,6 +35,7 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.provigos.android.data.api.AndroidUsageStatsManager
 import com.provigos.android.data.api.HealthConnectManager
 import com.provigos.android.data.api.HttpManager
 import com.provigos.android.data.local.SharedPreferenceManager
@@ -62,7 +63,8 @@ import java.util.UUID
 import kotlin.math.roundToLong
 
 class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager,
-                         private val mHttpManager: HttpManager): ViewModel() {
+                         private val mHttpManager: HttpManager,
+                         private val mAndroidUsageStatsManager: AndroidUsageStatsManager): ViewModel() {
 
     private val refreshMutex = Mutex()
     private val cacheMutex = Mutex()
@@ -93,13 +95,9 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
     private val _customKeys = MutableStateFlow<List<CustomItemModel>>(emptyList())
     val customKeys: StateFlow<List<CustomItemModel>> get() = _customKeys
 
-    fun setIntegrationSettings(destination: String) {
-        _navigateIntegrationScreen.tryEmit(destination)
-    }
+    fun setIntegrationSettings(destination: String) = _navigateIntegrationScreen.tryEmit(destination)
 
-    fun resetIntegration() {
-        _navigateIntegrationScreen.tryEmit(null)
-    }
+    fun resetIntegration() = _navigateIntegrationScreen.tryEmit(null)
 
     fun notifyPreferencesChanged(destination: String) {
         Timber.d("notifyPreferencesChanged $destination")
@@ -117,6 +115,8 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
     private val _cachedSpotifyDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _cachedSpotifyDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
     private val _cachedCustomDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val _cachedAndroidDataToView = MutableStateFlow<Map<String, String>>(emptyMap())
+    private val _cachedAndroidDataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
 
     suspend fun invalidateCache(destination: String) {
         cacheMutex.withLock {
@@ -138,6 +138,10 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                     _cachedCustomDataToView.value = emptyMap()
 
                 }
+                "android" -> {
+                    _cachedAndroidDataToView.value = emptyMap()
+                    _cachedAndroidDataToSend.value = emptyMap()
+                }
             }
         }
     }
@@ -147,12 +151,14 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
         val githubEnabled = sharedPrefs.isGithubUser()
         val spotifyEnabled = sharedPrefs.isSpotifyUser()
         val customEnabled = sharedPrefs.isCustomUser()
+        val androidEnabled = sharedPrefs.isAndroidUser()
 
         val newDataToView = buildMap {
             if (healthEnabled) putAll(_cachedHealthDataToView.value)
             if (githubEnabled) putAll(_cachedGithubDataToView.value)
             if (spotifyEnabled) putAll(_cachedSpotifyDataToView.value)
             if (customEnabled) putAll(_cachedCustomDataToView.value)
+            if (androidEnabled) putAll(_cachedAndroidDataToView.value)
         }
 
         val newDataToSend = buildMap {
@@ -184,12 +190,15 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                 "githubDaily" -> DashboardViewItemModel("githubDaily", "Commits today", v)
                 "spotifyGenre" -> DashboardViewItemModel("spotifyGenre", "Most listened to genre", v)
                 "spotifyPopularity" -> DashboardViewItemModel("spotifyPopularity", "Average artist popularity", v)
+                "screenTime" -> DashboardViewItemModel("screenTime", "Daily screen time", v)
+                "notificationCount" -> DashboardViewItemModel("notificationCount", "Daily notifications", v)
                 else -> transformCustomData(k, v)
             }
         }
     }
 
     private fun transformCustomData(key: String, value: String): DashboardViewItemModel? {
+        if(!sharedPrefs.isCustomUser()) return null
         val item = _customKeys.value.find { it.name == key }
         return if(item != null && sharedPrefs.isAllowCustomItem(item.name)) {
             val name = item.name
@@ -207,6 +216,7 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
         val github = sharedPrefs.isGithubUser()
         val spotify = sharedPrefs.isSpotifyUser()
         val custom = sharedPrefs.isCustomUser()
+        val android = sharedPrefs.isAndroidUser()
 
         viewModelScope.launch {
             _uiState.value = UiState.Loading
@@ -216,11 +226,13 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                     val githubDataJob = if (github) async { readGithubData() } else null
                     val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
                     val customDataJob = if (custom) async { readCustomData() } else null
+                    val androidDataJob = if (android) async { readAndroidData() } else null
 
                     healthDataJob?.await()
                     githubDataJob?.await()
                     spotifyDataJob?.await()
                     customDataJob?.await()
+                    androidDataJob?.await()
                 }
             } catch (e: Exception) {
                 _uiState.value = UiState.Error(e)
@@ -259,11 +271,13 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                         val githubDataJob = async { refreshGithubData() }
                         val spotifyDataJob = async { refreshSpotifyData() }
                         val customDataJob = async { refreshCustomData() }
+                        val androidDataJob = async { refreshAndroidData() }
 
                         healthDataJob.await()
                         githubDataJob.await()
                         spotifyDataJob.await()
                         customDataJob.await()
+                        androidDataJob.await()
                     }
                 } catch (e: Exception) {
                     UiState.Error(e)
@@ -322,6 +336,18 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
         if(isInvalid || viewEmpty) {
             readCustomData()
             cacheMutex.withLock { invalidatedCaches.remove("spotify") }
+        }
+    }
+
+    private suspend fun refreshAndroidData() {
+        if(!sharedPrefs.isAndroidUser()) return
+
+        val (isInvalid, viewEmpty, sendEmpty) = cacheMutex.withLock {
+            Triple("android" in invalidatedCaches, _cachedAndroidDataToView.value.isEmpty(), _cachedAndroidDataToSend.value.isEmpty())
+        }
+        if(isInvalid || viewEmpty || sendEmpty) {
+            readAndroidData()
+            cacheMutex.withLock { invalidatedCaches.remove("android") }
         }
     }
 
@@ -623,6 +649,19 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
         }
     }
 
+    private suspend fun readCustomData() {
+        try {
+            withContext(Dispatchers.IO) {
+                _customKeys.value = mHttpManager.getProvigosCustomKeys()
+                customData = mHttpManager.getProvigosCustomData()
+                val newDataToView = buildMap { putAll(customData.mapValues { (_, innerMap) -> innerMap[pureZdt] ?: "0" }) }
+                _cachedCustomDataToView.value = newDataToView
+            }
+        } catch (e: Exception) {
+            Timber.tag("DashboardViewModel").d("Custom data fetch failed: ${e.message}")
+        }
+    }
+
     suspend fun writeCustomData(item: CustomItemModel, value: String): Boolean {
         val map = mapOf(pureZdt to value)
         val postKeys = mHttpManager.postProvigosCustomKeys(listOf(item))
@@ -683,16 +722,24 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
         }
     }
 
-    private suspend fun readCustomData() {
+    private suspend fun readAndroidData() {
         try {
             withContext(Dispatchers.IO) {
-                _customKeys.value = mHttpManager.getProvigosCustomKeys()
-                customData = mHttpManager.getProvigosCustomData()
-                val newDataToView = buildMap { putAll(customData.mapValues { (_, innerMap) -> innerMap[pureZdt] ?: "0" }) }
-                _cachedCustomDataToView.value = newDataToView
+                if (sharedPrefs.isAllowAndroidScreenTime()) {
+                    val screenTime = mAndroidUsageStatsManager.getScreenTime()
+                    val formattedScreenTime = AndroidUsageStatsManager.formatDuration(screenTime)
+                    _cachedAndroidDataToView.update { current -> current + ("screenTime" to formattedScreenTime) }
+                    //_cachedAndroidDataToSend.update { current -> current + ("screenTime" to mapOf(pureZdt to formattedScreenTime) }
+                }
+                if (sharedPrefs.isAllowAndroidNotificationCount()) {
+                    val notificationCount =
+                        mAndroidUsageStatsManager.getNotificationsNumber().toString()
+                    _cachedAndroidDataToView.update { current -> current + ("notificationCount" to notificationCount) }
+                    //_cachedAndroidDataToSend.update { current -> current + ("notificationCount" to mapOf(pureZdt to notificationCount) }
+                }
             }
         } catch (e: Exception) {
-            Timber.tag("DashboardViewModel").d("Custom data fetch failed: ${e.message}")
+            Timber.tag("DashboardViewModel").d("Android data fetch failed: ${e.message}")
         }
     }
 

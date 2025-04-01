@@ -14,6 +14,8 @@
             android:summary="Select which custom items you want to track. Tracking is on by default for any custom item you create"
             android:id="@+id/custom_item_tracking"
             android:key="custom_item_tracking"/>
+        <CheckBoxPreference android:title="Allow custom trackers"
+            android:key="is_custom_user"/>
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

@@ -22,7 +22,13 @@
  */
 package com.provigos.android.data.model.github
 
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class GithubUserModel(
+    @Json(name = "login")
     val login: String,
+    @Json(name = "name")
     val name: String
 )

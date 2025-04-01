@@ -1,4 +1,3 @@
-import com.android.build.api.dsl.JacocoOptions
 import org.jetbrains.kotlin.konan.properties.Properties
 import java.io.FileInputStream
 
@@ -16,7 +15,7 @@ plugins {
     id("jacoco")
 }
 
-
+@Suppress("UnstableApiUsage")
 android {
     namespace = "com.provigos.android"
     compileSdk = 35

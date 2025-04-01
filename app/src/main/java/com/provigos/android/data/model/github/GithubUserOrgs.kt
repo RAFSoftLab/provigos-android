@@ -22,6 +22,11 @@
  */
 package com.provigos.android.data.model.github
 
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class GithubUserOrgs(
+    @Json(name = "repos_url")
     val repos_url: String
 )

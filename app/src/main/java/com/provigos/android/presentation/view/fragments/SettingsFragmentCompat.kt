@@ -108,8 +108,20 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
             true
         }
 
+        val androidSwitch = findPreference<Preference>("android_integration")
+        val isAndroidUser = sharedPrefs.isAndroidUser()
+        if(isAndroidUser) {
+            androidSwitch?.summary = "Manage your Android integration"
+        } else {
+            androidSwitch?.summary = "Allow Provigos to access your Android data"
+        }
+        androidSwitch?.setOnPreferenceClickListener {
+            openIntegrationSettings("android")
+            true
+        }
+
         findPreference<Preference>(getString(R.string.switch_pref4_key))?.setOnPreferenceClickListener {
-            openCustomPreferenceScreen()
+            openIntegrationSettings("custom")
             true
         }
 
@@ -184,10 +196,19 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
             .commit()
     }
 
+    private fun openAndroidPreferenceScreen() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.view_settings, AndroidPreferenceFragmentCompat())
+            .addToBackStack(null)
+            .commit()
+    }
+
     private fun openIntegrationSettings(destination: String) {
         when (destination) {
             "github" -> openGithubPreferenceScreen()
             "spotify" -> openSpotifyPreferenceScreen()
+            "android" -> openAndroidPreferenceScreen()
+            "custom" -> openCustomPreferenceScreen()
         }
     }
 }

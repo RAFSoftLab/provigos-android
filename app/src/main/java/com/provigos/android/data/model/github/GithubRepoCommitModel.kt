@@ -22,17 +22,29 @@
  */
 package com.provigos.android.data.model.github
 
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class GithubRepoCommitModel(
+    @Json(name = "url")
     val url: String,
+    @Json(name = "commit")
     val commit: UserCommitModel
 )
 
+@JsonClass(generateAdapter = true)
 data class UserCommitModel(
+    @Json(name = "message")
     val message: String,
+    @Json(name = "author")
     val author: CommitAuthorModel
 )
 
+@JsonClass(generateAdapter = true)
 data class CommitAuthorModel(
+    @Json(name = "name")
     val name: String,
+    @Json(name = "date")
     val date: String
 )

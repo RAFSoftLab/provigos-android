@@ -20,6 +20,12 @@
             android:title="@string/switch_pref3_title"
             android:icon="@drawable/spotify"
             />
+        <Preference
+            android:id="@+id/android_integration"
+            android:key="android_integration"
+            android:title="Android"
+            android:icon="@drawable/common_full_open_on_phone"
+            />
     </PreferenceCategory>
     <PreferenceCategory android:title="Account">
         <Preference

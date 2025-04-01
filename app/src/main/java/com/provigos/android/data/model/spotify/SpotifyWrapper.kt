@@ -22,11 +22,19 @@
  */
 package com.provigos.android.data.model.spotify
 
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class SpotifyWrapper(
+    @Json(name = "items")
     val items: List<SpotifyArtist>
 )
 
+@JsonClass(generateAdapter = true)
 data class SpotifyArtist(
+    @Json(name = "genres")
     val genres: List<String>,
+    @Json(name = "popularity")
     val popularity: Int
 )

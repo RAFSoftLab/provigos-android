@@ -104,6 +104,7 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
     }
 
     suspend fun getProvigosCustomKeys(): List<CustomItemModel> {
+        if(!sharedPreferenceDataSource.isCustomUser()) return emptyList()
         val googleToken = sharedPreferenceDataSource.getGoogleToken()
         if (googleToken.isNullOrBlank()) {
             Timber.tag("HttpManager").e("Google token is missing")
@@ -114,6 +115,7 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
     }
 
     suspend fun getProvigosCustomData(): Map<String, Map<String, String>> {
+        if(!sharedPreferenceDataSource.isCustomUser()) return emptyMap()
         val googleToken = sharedPreferenceDataSource.getGoogleToken()
         if(googleToken.isNullOrBlank()) {
             Timber.tag("HttpManager").e("Google token is missing")
@@ -186,7 +188,7 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
 
             val repos = githubAPI.getGithubUserRepos("Bearer $githubToken")
 
-            for(repo in repos) {
+            for (repo in repos) {
                 val repoName = repo.name
 
                 val commits = githubAPI.getGithubUserCommits(
@@ -198,17 +200,19 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
 
                 for (commit in commits) {
                     val date = commit.commit.author.date.substring(0, 10)
-                    githubCommits[date] = (githubCommits[date]?.toLong()?.plus(1) ?: 1).toString()
+                    githubCommits[date] =
+                        (githubCommits[date]?.toLong()?.plus(1) ?: 1).toString()
                 }
             }
 
 
             val orgs = githubAPI.getGithubUserOrgs("Bearer $githubToken", userLogin)
-            for(org in orgs) {
+            for (org in orgs) {
                 Timber.tag("HttpManager").d("$org")
-                val orgRepos = githubAPI.getGithubUserOrgsRepos("Bearer $githubToken", org.login)
+                val orgRepos =
+                    githubAPI.getGithubUserOrgsRepos("Bearer $githubToken", org.login)
 
-                for(repo in orgRepos) {
+                for (repo in orgRepos) {
                     val repoName = repo.name
 
                     val commits = githubAPI.getGithubUserCommits(
@@ -218,10 +222,11 @@ class HttpManager(private val provigosAPI: ProvigosAPI,
                         userLogin
                     )
 
-                    for(commit in commits) {
-                        if(userName == commit.commit.author.name) {
+                    for (commit in commits) {
+                        if (userName == commit.commit.author.name) {
                             val date = commit.commit.author.date.substring(0, 10)
-                            githubCommits[date] = (githubCommits[date]?.toLong()?.plus(1) ?: 1).toString()
+                            githubCommits[date] =
+                                (githubCommits[date]?.toLong()?.plus(1) ?: 1).toString()
                         }
                     }
                 }
