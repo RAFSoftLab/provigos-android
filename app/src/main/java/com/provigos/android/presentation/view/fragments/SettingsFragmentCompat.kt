@@ -130,7 +130,7 @@ class SettingsFragmentCompat: PreferenceFragmentCompat() {
             true
         }
 
-        findPreference<Preference>("licencing")?.setOnPreferenceClickListener {
+        findPreference<Preference>("licence")?.setOnPreferenceClickListener {
             startActivity(Intent(requireActivity(), LicenseActivity::class.java))
             true
         }
