@@ -37,14 +37,11 @@ The Provigos Android App allows users to:
 ## Tech Stack
 
 - **Kotlin**: The primary language for app development.
-- **Android Jetpack**: Components such as ViewModel, LiveData, and Room for MVVM architecture.
-- **RxJava**: For concurrent behavior. 
 - **Koin**: For dependency injection.
 - **Retrofit**: For API communication with the backend services.
 - **Moshi**: For serialization and deserialization. 
 - **Coroutines**: For asynchronous programming.
-- **Glide**: For image loading and caching.
-- **Firebase** (optional): For push notifications and analytics.
+- **Firebase**: For app distribution.
 
 ---
 
@@ -85,9 +82,9 @@ app/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/provigos/android
-│   │   │   ├── ui/ (Activities, Fragments, Adapters)
+│   │   │   ├── presentation/ (Activities, Fragments, Adapters)
 │   │   │   ├── data/ (Repositories, Data Sources)
-│   │   │   └── utils/ (Helpers, Extensions)
+│   │   │   └── util/ (Helpers, Extensions)
 │   │   └── res/ (Layouts, Drawables, Values)
 │   └── test/ (Unit Tests)
 │
@@ -95,9 +92,9 @@ app/
 ```
 ### Key Directories
 ```
-ui/: Contains the user interface logic (Activities, Fragments, and Adapters).
+presentation/: Contains the user interface logic (Activities, Fragments, and Adapters).
 data/: Repositories and data sources for handling data operations.
-utils/: Helper functions, extensions, and utilities.
+util/: Helper functions, extensions, and utilities.
 res/: Resources such as layouts, drawables, and strings.
 ```
 ## Contributing
