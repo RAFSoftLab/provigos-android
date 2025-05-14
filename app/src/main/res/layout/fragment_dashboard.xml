@@ -1,97 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/swipeRefresh"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:viewBindingIgnore="false">
+    tools:viewBindingIgnore="false"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:id="@+id/view_dashboard">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="16dp"
-            android:visibility="gone"
-            android:id="@+id/empty_dash">
+            android:id="@+id/swipeRefresh">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/second_text_nothing"
-                android:text="@string/nothing_to_see_here"
-                android:textSize="18sp"
-                app:layout_constraintVertical_chainStyle="packed"
-                android:textColor="@color/teal1"
-                android:gravity="center"
-                android:id="@+id/first_text_nothing"
-                android:layout_marginBottom="16dp"
-                android:textStyle="bold" />
-
-            <TextView
-                app:layout_constraintVertical_chainStyle="packed"
-                android:id="@+id/second_text_nothing"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/first_text_nothing"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:text="@string/choose_integrations"
-                android:textSize="16sp"
-                android:textColor="@color/teal1"
-                android:gravity="center"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="32dp"/>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/dashboard_recycler_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layoutAnimation="@anim/layout_animation" />
-
-        <FrameLayout
-            android:id="@+id/loadingOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone"
-            android:background="@android:color/transparent">
-
-            <View
-                android:id="@+id/blurView"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#80000000"
-                android:alpha="0.7" />
+                android:layout_height="match_parent">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:gravity="center">
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="16dp"
+                    android:visibility="gone"
+                    android:id="@+id/empty_dash">
 
-                <TextView
-                    android:id="@+id/loadingMessage"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/teal1"
-                    android:textSize="16sp"
-                    android:layout_marginTop="8dp"
-                    android:visibility="gone" />
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintBottom_toTopOf="@id/second_text_nothing"
+                        android:text="@string/nothing_to_see_here"
+                        android:textSize="18sp"
+                        app:layout_constraintVertical_chainStyle="packed"
+                        android:textColor="@color/teal1"
+                        android:gravity="center"
+                        android:id="@+id/first_text_nothing"
+                        android:layout_marginBottom="16dp"
+                        android:textStyle="bold" />
 
-        </FrameLayout>
+                    <TextView
+                        app:layout_constraintVertical_chainStyle="packed"
+                        android:id="@+id/second_text_nothing"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/first_text_nothing"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        android:text="@string/choose_integrations"
+                        android:textSize="16sp"
+                        android:textColor="@color/teal1"
+                        android:gravity="center"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="32dp"/>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/dashboard_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layoutAnimation="@anim/layout_animation" />
+
+                <FrameLayout
+                    android:id="@+id/loadingOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    android:background="@android:color/transparent">
+
+                    <View
+                        android:id="@+id/blurView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="#80000000"
+                        android:alpha="0.7" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/loadingMessage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/teal1"
+                            android:textSize="16sp"
+                            android:layout_marginTop="8dp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </FrameLayout>
+            </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </FrameLayout>
-</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

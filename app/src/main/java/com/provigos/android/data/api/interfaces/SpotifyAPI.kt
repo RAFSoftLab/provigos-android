@@ -22,11 +22,13 @@
  */
 package com.provigos.android.data.api.interfaces
 
+import androidx.annotation.Keep
 import com.provigos.android.data.model.spotify.SpotifyWrapper
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Query
 
+@Keep
 interface SpotifyAPI {
 
     companion object {

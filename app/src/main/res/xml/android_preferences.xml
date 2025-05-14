@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference android:title="Android integration settings" android:selectable="false"/>
 
@@ -10,13 +10,18 @@
             android:key="screen_time"
             android:summary="Tracks your Android daily screen time"
             />
-        <CheckBoxPreference
-            android:title="Track notification count"
-            android:key="notification_count"
-            android:summary="Tracks your Android daily notification count"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Items requiring Admin rights (Experimental)">
+        <CheckBoxPreference android:title="Track unlock attempts"
+        android:key="unlock_attempts"
+        android:summary="Tracks failed unlock screen attempts"/>
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Integration settings"  android:iconSpaceReserved="false">
+        <Preference
+            android:key="admin_user"
+            android:title="Grant/Revoke device Admin rights"/>
         <Preference
             android:title="Clear cache"
             android:key="invalidate_android_cache"
@@ -27,4 +32,4 @@
 
     </PreferenceCategory>
 
-</androidx.preference.PreferenceScreen>
+</PreferenceScreen>

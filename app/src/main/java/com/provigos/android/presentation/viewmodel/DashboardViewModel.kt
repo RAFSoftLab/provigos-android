@@ -63,8 +63,8 @@ import java.util.UUID
 import kotlin.math.roundToLong
 
 class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager,
-                         private val mHttpManager: HttpManager,
-                         private val mAndroidUsageStatsManager: AndroidUsageStatsManager): ViewModel() {
+    private val mHttpManager: HttpManager,
+    private val mAndroidUsageStatsManager: AndroidUsageStatsManager): ViewModel() {
 
     private val refreshMutex = Mutex()
     private val cacheMutex = Mutex()
@@ -88,12 +88,13 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
     private val _mDashboardViewList = MutableStateFlow<List<DashboardViewItemModel>>(emptyList())
     val mDashboardViewList: StateFlow<List<DashboardViewItemModel>> get() = _mDashboardViewList
 
-    private val _navigateIntegrationScreen = MutableStateFlow<String?>(null)
-    val navigateIntegrationScreen: SharedFlow<String?> get() = _navigateIntegrationScreen
-
-    private var customData: Map<String, Map<String, String>> = mapOf()
+    private val _customData = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+    val customData: StateFlow<Map<String, Map<String, String>>> get() = _customData
     private val _customKeys = MutableStateFlow<List<CustomItemModel>>(emptyList())
     val customKeys: StateFlow<List<CustomItemModel>> get() = _customKeys
+
+    private val _navigateIntegrationScreen = MutableStateFlow<String?>(null)
+    val navigateIntegrationScreen: SharedFlow<String?> get() = _navigateIntegrationScreen
 
     fun setIntegrationSettings(destination: String) = _navigateIntegrationScreen.tryEmit(destination)
 
@@ -191,7 +192,7 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                 "spotifyGenre" -> DashboardViewItemModel("spotifyGenre", "Most listened to genre", v)
                 "spotifyPopularity" -> DashboardViewItemModel("spotifyPopularity", "Average artist popularity", v)
                 "screenTime" -> DashboardViewItemModel("screenTime", "Daily screen time", v)
-                "notificationCount" -> DashboardViewItemModel("notificationCount", "Daily notifications", v)
+                "unlockAttempts" -> DashboardViewItemModel("unlockAttempts", "Unlock attempts", v)
                 else -> transformCustomData(k, v)
             }
         }
@@ -223,15 +224,15 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
             try {
                 coroutineScope {
                     val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
-                    val githubDataJob = if (github) async { readGithubData() } else null
-                    val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
-                    val customDataJob = if (custom) async { readCustomData() } else null
+                    //val githubDataJob = if (github) async { readGithubData() } else null
+                    //val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
+                    //val customDataJob = if (custom) async { readCustomData() } else null
                     val androidDataJob = if (android) async { readAndroidData() } else null
 
                     healthDataJob?.await()
-                    githubDataJob?.await()
-                    spotifyDataJob?.await()
-                    customDataJob?.await()
+                    //githubDataJob?.await()
+                    //spotifyDataJob?.await()
+                    //customDataJob?.await()
                     androidDataJob?.await()
                 }
             } catch (e: Exception) {
@@ -268,15 +269,15 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                 try {
                     coroutineScope {
                         val healthDataJob = async { refreshHealthData() }
-                        val githubDataJob = async { refreshGithubData() }
-                        val spotifyDataJob = async { refreshSpotifyData() }
-                        val customDataJob = async { refreshCustomData() }
+                        //val githubDataJob = async { refreshGithubData() }
+                        //val spotifyDataJob = async { refreshSpotifyData() }
+                        //val customDataJob = async { refreshCustomData() }
                         val androidDataJob = async { refreshAndroidData() }
 
                         healthDataJob.await()
-                        githubDataJob.await()
-                        spotifyDataJob.await()
-                        customDataJob.await()
+                        //githubDataJob.await()
+                        //spotifyDataJob.await()
+                        //customDataJob.await()
                         androidDataJob.await()
                     }
                 } catch (e: Exception) {
@@ -653,8 +654,8 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
         try {
             withContext(Dispatchers.IO) {
                 _customKeys.value = mHttpManager.getProvigosCustomKeys()
-                customData = mHttpManager.getProvigosCustomData()
-                val newDataToView = buildMap { putAll(customData.mapValues { (_, innerMap) -> innerMap[pureZdt] ?: "0" }) }
+                _customData.value = mHttpManager.getProvigosCustomData()
+                val newDataToView = buildMap { putAll(_customData.value.mapValues { (_, innerMap) -> innerMap[pureZdt] ?: "0" }) }
                 _cachedCustomDataToView.value = newDataToView
             }
         } catch (e: Exception) {
@@ -731,16 +732,21 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                     _cachedAndroidDataToView.update { current -> current + ("screenTime" to formattedScreenTime) }
                     //_cachedAndroidDataToSend.update { current -> current + ("screenTime" to mapOf(pureZdt to formattedScreenTime) }
                 }
-                if (sharedPrefs.isAllowAndroidNotificationCount()) {
-                    val notificationCount =
-                        mAndroidUsageStatsManager.getNotificationsNumber().toString()
-                    _cachedAndroidDataToView.update { current -> current + ("notificationCount" to notificationCount) }
+                Timber.d("is allow biometrics ${sharedPrefs.isAllowAndroidBiometrics()}")
+                if (sharedPrefs.isAllowAndroidBiometrics()) {
+                    val unlockAttempts = sharedPrefs.unlockAttemptsCount()
+                    Timber.d("$unlockAttempts")
+                    _cachedAndroidDataToView.update { current -> current + ("unlockAttempts" to unlockAttempts.toString()) }
                     //_cachedAndroidDataToSend.update { current -> current + ("notificationCount" to mapOf(pureZdt to notificationCount) }
                 }
             }
         } catch (e: Exception) {
             Timber.tag("DashboardViewModel").d("Android data fetch failed: ${e.message}")
         }
+    }
+
+    fun getChartData(destination: String): Map<String, String> {
+        return _dataToSend.value.get(destination)!!
     }
 
     sealed class UiState {

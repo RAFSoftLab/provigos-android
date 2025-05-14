@@ -46,15 +46,6 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-    inline fun <reified T> createRetrofit(okHttpClient: OkHttpClient, moshi: Moshi, baseUrl: String): T {
-        return Retrofit.Builder()
-            .baseUrl(baseUrl)
-            .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .build()
-            .create(T::class.java)
-    }
-
     val coreModule = module {
 
         single<SharedPreferences> {
@@ -100,27 +91,30 @@ import java.util.concurrent.TimeUnit
         }
 
         single<ProvigosAPI> {
-            createRetrofit<ProvigosAPI>(
-                okHttpClient = get(),
-                moshi = get(),
-                baseUrl = ProvigosAPI.PROVIGOS_API
-            )
+            Retrofit.Builder()
+                .baseUrl(ProvigosAPI.PROVIGOS_API)
+                .client(get())
+                .addConverterFactory(MoshiConverterFactory.create(get()))
+                .build()
+                .create(ProvigosAPI::class.java)
         }
 
         single<GithubAPI> {
-            createRetrofit<GithubAPI>(
-                okHttpClient = get(),
-                moshi = get(),
-                baseUrl = GithubAPI.GITHUB_API
-            )
+            Retrofit.Builder()
+                .baseUrl(GithubAPI.GITHUB_API)
+                .client(get())
+                .addConverterFactory(MoshiConverterFactory.create(get()))
+                .build()
+                .create(GithubAPI::class.java)
         }
 
         single<SpotifyAPI> {
-            createRetrofit<SpotifyAPI>(
-                okHttpClient = get(),
-                moshi = get(),
-                baseUrl = SpotifyAPI.SPOTIFY_API
-            )
+            Retrofit.Builder()
+                .baseUrl(SpotifyAPI.SPOTIFY_API)
+                .client(get())
+                .addConverterFactory(MoshiConverterFactory.create(get()))
+                .build()
+                .create(SpotifyAPI::class.java)
         }
 
 
@@ -133,11 +127,14 @@ import java.util.concurrent.TimeUnit
             )
         }
 
+        single { (androidApplication() as ProvigosApplication).healthConnectManager }
+        single { (androidApplication() as ProvigosApplication).androidUsageStatsManager }
+
         viewModel {
             DashboardViewModel(
-                mHealthConnectManager = (androidApplication() as ProvigosApplication).healthConnectManager,
+                mHealthConnectManager = get(),
                 mHttpManager = get(),
-                mAndroidUsageStatsManager = (androidApplication() as ProvigosApplication).androidUsageStatsManager
+                mAndroidUsageStatsManager = get()
             )
         }
     }

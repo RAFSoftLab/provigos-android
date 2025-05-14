@@ -25,3 +25,6 @@
     public <init>(com.squareup.moshi.Moshi);
 }
 -keep @com.squareup.moshi.JsonClass class *
+-keep interface com.provigos.android.data.api.interfaces.GithubAPI { *; }
+-keep interface com.provigos.android.data.api.interfaces.ProvigosAPI { *; }
+-keep interface com.provigos.android.data.api.interfaces.SpotifyAPI { *; }

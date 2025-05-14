@@ -22,6 +22,7 @@
  */
 package com.provigos.android.data.api.interfaces
 
+import androidx.annotation.Keep
 import com.provigos.android.data.model.github.GithubRepoModel
 import com.provigos.android.data.model.github.GithubRepoCommitModel
 import com.provigos.android.data.model.github.GithubUserModel
@@ -32,6 +33,7 @@ import retrofit2.http.Headers
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+@Keep
 interface GithubAPI {
 
     companion object {

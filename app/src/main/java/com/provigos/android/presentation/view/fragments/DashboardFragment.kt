@@ -37,8 +37,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.databinding.FragmentDashboardBinding
-import com.provigos.android.presentation.view.activities.InputActivity
-import com.provigos.android.presentation.view.activities.Input2Activity
+import com.provigos.android.presentation.view.activities.DetailsActivity
 import com.provigos.android.presentation.view.adapters.DashboardRecyclerViewAdapter
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.delay
@@ -51,12 +50,11 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
     companion object {
         private val sharedPrefs = SharedPreferenceManager.get()
-        private val INPUT_ACTIVITY = InputActivity::class.java
-        private val INPUT2_ACTIVITY = Input2Activity::class.java
         private val userMap = listOf(
             sharedPrefs.isHealthUser(),
             sharedPrefs.isGithubUser(),
-            sharedPrefs.isSpotifyUser()
+            sharedPrefs.isSpotifyUser(),
+            sharedPrefs.isAndroidUser()
         )
     }
 
@@ -104,30 +102,41 @@ class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
     }
 
     private fun setupItemClickListener() {
-        val activity = mapOf(
-            "weight" to INPUT2_ACTIVITY,
-            "bloodPressure" to INPUT2_ACTIVITY,
-            "bodyTemperature" to INPUT2_ACTIVITY,
-            "steps" to INPUT_ACTIVITY,
-            "heartRate" to INPUT_ACTIVITY,
-            "bodyFat" to INPUT_ACTIVITY,
-            "height" to INPUT_ACTIVITY,
-            "bloodGlucose" to INPUT_ACTIVITY,
-            "oxygenSaturation" to INPUT_ACTIVITY,
-            "respiratoryRate" to INPUT_ACTIVITY,
+        val activity = listOf(
+            "weight",
+            "bloodPressure",
+            "bodyTemperature",
+            "steps",
+            "heartRate",
+            "bodyFat",
+            "height",
+            "bloodGlucose",
+            "oxygenSaturation",
+            "respiratoryRate"
         )
 
         adapter.onItemClicked = { type ->
-            if (type != "githubTotal" && type != "githubDaily" && type != "spotifyGenre" && type != "spotifyPopularity") {
-                if(activity.containsKey(type)) {
-                    val intent = Intent(context, activity[type]).putExtra("key", type)
-                    startActivity(intent)
+            val intent = Intent(context, DetailsActivity::class.java)
+            if (type != "githubTotal"
+                && type != "githubDaily"
+                && type != "spotifyGenre"
+                && type != "spotifyPopularity") {
+                    if (activity.contains(type)) {
+                        val bundle = Bundle().apply { mDashboardViewModel.getChartData(type).forEach { (k, v) -> putString(k, v) } }
+                        intent.apply {
+                            putExtra("data", bundle)
+                            putExtra("key", type)
+                        }
+                        startActivity(intent)
                 } else {
                     val item = mDashboardViewModel.customKeys.value.find { it.name == type }
-                    val intent = Intent(context, InputActivity::class.java)
-                        .putExtra("name", item?.name)
-                        .putExtra("units", item?.units)
-                        .putExtra("label", item?.label)
+                        val bundle = Bundle().apply { mDashboardViewModel.customData.value[type]?.forEach { (k, v) -> putString(k, v) } }
+                    intent.apply {
+                        putExtra("data", bundle)
+                        putExtra("name", item?.name)
+                        putExtra("units", item?.units)
+                        putExtra("label", item?.label)
+                    }
                     activityResultLauncher.launch(intent)
                 }
             }

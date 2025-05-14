@@ -22,13 +22,23 @@
  */
 package com.provigos.android.presentation.view.fragments
 
+import android.app.Activity
+import android.app.AlertDialog
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.provigos.android.R
+import com.provigos.android.util.AndroidAdminReceiverManager
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
 import kotlinx.coroutines.launch
@@ -39,8 +49,21 @@ class AndroidPreferenceFragmentCompat: PreferenceFragmentCompat() {
     private val sharedPrefs = SharedPreferenceManager.get()
     private val mDashboardViewModel: DashboardViewModel by viewModel<DashboardViewModel>( ownerProducer = { requireActivity() } )
 
+    private lateinit var adminLauncher: ActivityResultLauncher<Intent>
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.android_preferences, rootKey)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        adminLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    Toast.makeText(requireContext(), "Admin enabled!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Admin required!", Toast.LENGTH_SHORT).show()
+                }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -56,12 +79,31 @@ class AndroidPreferenceFragmentCompat: PreferenceFragmentCompat() {
             true
         }
 
-        val trackNotifications = findPreference<CheckBoxPreference>("notification_count")
-        trackNotifications?.isChecked = sharedPrefs.isAllowAndroidNotificationCount()
-        trackNotifications?.setOnPreferenceChangeListener { _, newValue ->
+        val trackUnlockAttempts = findPreference<CheckBoxPreference>("unlock_attempts")
+        trackUnlockAttempts?.isEnabled = isDeviceAdminEnabled()
+        trackUnlockAttempts?.setOnPreferenceChangeListener { _, newValue ->
             lifecycleScope.launch {
-                sharedPrefs.setAllowAndroidNotificationCount(newValue as Boolean)
+                sharedPrefs.setAllowAndroidBiometrics(newValue as Boolean)
                 mDashboardViewModel.notifyPreferencesChanged("android")
+            }
+            true
+        }
+
+        /*fun Context.openUsageAccessSettings() {
+    try {
+        startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+    } catch (e: ActivityNotFoundException) {
+        // Fallback: open general settings if this specific screen isn’t available
+        startActivity(Intent(Settings.ACTION_SETTINGS))
+    }
+}   */
+
+        val adminRights = findPreference<Preference>("admin_user")
+        adminRights?.setOnPreferenceClickListener {
+            if (isDeviceAdminEnabled()) {
+                revokeAdminRights()
+            } else {
+                askForGrantAdminRights()
             }
             true
         }
@@ -82,6 +124,34 @@ class AndroidPreferenceFragmentCompat: PreferenceFragmentCompat() {
                 mDashboardViewModel.notifyPreferencesChanged("android")
             }
             true
+        }
+    }
+
+    private fun isDeviceAdminEnabled(): Boolean {
+        val devicePolicyManager = requireContext().getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        val adminComponent = ComponentName(requireContext(), AndroidAdminReceiverManager::class.java)
+        return devicePolicyManager.isAdminActive(adminComponent)
+    }
+
+    private fun askForGrantAdminRights() {
+        val adminComponent = ComponentName(requireContext(), AndroidAdminReceiverManager::class.java)
+        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+        }
+        adminLauncher.launch(intent)
+    }
+
+    private fun revokeAdminRights() {
+        val devicePolicyManager = requireContext().getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+        val adminComponent = ComponentName(requireContext(), AndroidAdminReceiverManager::class.java)
+        if (devicePolicyManager.isAdminActive(adminComponent)) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Revoke Admin Rights")
+                .setMessage("Are you sure? This will stop unlock attempt tracking.")
+                .setPositiveButton("Confirm") { _, _ ->
+                    devicePolicyManager.removeActiveAdmin(adminComponent)
+                    Toast.makeText(requireContext(), "Admin rights revoked", Toast.LENGTH_SHORT).show()
+                }
         }
     }
 }

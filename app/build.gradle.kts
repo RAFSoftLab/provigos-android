@@ -161,6 +161,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.material)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.mpandroidchart)
 
     // Fragment
     implementation(libs.androidx.fragment.ktx)

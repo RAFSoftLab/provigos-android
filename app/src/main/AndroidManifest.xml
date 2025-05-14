@@ -39,6 +39,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
+        <receiver android:name=".util.AndroidAdminReceiverManager"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin_policies"/>
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
+                <action android:name="android.app.action.ACTION_PASSWORD_FAILED"/>
+            </intent-filter>
+        </receiver>
         <activity android:name=".presentation.view.activities.LoginActivity"
             android:exported="true" android:launchMode="singleTask">
             <intent-filter>
@@ -57,10 +68,11 @@
         <activity android:name=".presentation.view.activities.LicenseActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.IntroActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.MainActivity" android:exported="true"/>
-        <activity android:name=".presentation.view.activities.Input2Activity" android:exported="true"/>
-        <activity android:name=".presentation.view.activities.InputActivity" android:exported="true"/>
+        <!--activity android:name=".presentation.view.activities.Input2Activity" android:exported="true"/-->
+        <!--activity android:name=".presentation.view.activities.InputActivity" android:exported="true"/-->
+        <activity android:name=".presentation.view.activities.DetailsActivity" android:exported="true"/>
         <activity android:name=".presentation.view.activities.OAuthActivity" android:exported="true" android:launchMode="singleTask">
-        <intent-filter android:priority="999">
+            <intent-filter android:priority="999">
             <action android:name="android.intent.action.VIEW"/>
             <category android:name="android.intent.category.DEFAULT"/>
             <category android:name="android.intent.category.BROWSABLE"/>

@@ -22,10 +22,8 @@
  */
 package com.provigos.android.data.api
 
-import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.os.Build
 import java.util.Calendar
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -53,32 +51,6 @@ class AndroidUsageStatsManager(private val context: Context) {
             ?.mapValues { (_, stats) ->
                 stats.sumOf { it.totalTimeInForeground }
             }?.values?.sum() ?: 0
-    }
-
-    fun getNotificationsNumber(days: Int = 1): Long {
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return 0
-        val calendar = Calendar.getInstance().apply {
-            add(Calendar.DAY_OF_YEAR, -days)
-            add(Calendar.HOUR_OF_DAY, 0)
-            add(Calendar.MINUTE, 0)
-            add(Calendar.SECOND, 0)
-            add(Calendar.MILLISECOND, 0)
-        }
-
-        val startTime = calendar.timeInMillis
-        val endTime = System.currentTimeMillis()
-
-        var notificationCount = 0
-        val usageEvents = usageStatsManager.queryEventsForSelf(startTime, endTime)
-        val event = UsageEvents.Event()
-
-        while (usageEvents.hasNextEvent()) {
-            usageEvents.getNextEvent(event)
-            if(event.eventType == 50)
-                notificationCount++
-
-        }
-        return notificationCount.toLong()
     }
 
     companion object {

@@ -23,6 +23,10 @@
 package com.provigos.android.data.local
 
 import android.content.SharedPreferences
+import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedPreferences) {
 
@@ -47,7 +51,8 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
         private const val ALLOW_SPOTIFY_ARTIST_GENRES = "allow_spotify_artist_genres"
         private const val ALLOW_SPOTIFY_ARTIST_POPULARITY = "allow_spotify_artist_popularity"
         private const val ALLOW_ANDROID_SCREEN_TIME = "allow_android_screen_time"
-        private const val ALLOW_ANDROID_NOTIFICATION_COUNT = "allow_android_notification_count"
+        private const val ALLOW_ANDROID_BIOMETRICS = "allow_android_biometrics"
+        private const val UNLOCK_ATTEMPTS_COUNT = "unlock_attempts_count"
     }
 
     fun setPrivacyPolicy(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(PRIVATE_POLICY_KEY, bool).apply() }
@@ -153,9 +158,20 @@ class SharedPreferenceDataSource(private val encryptedSharedPreferences: SharedP
     fun setAllowAndroidScreenTime(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(
         ALLOW_ANDROID_SCREEN_TIME, bool).apply() }
 
-    fun isAllowAndroidNotificationCount(): Boolean { return encryptedSharedPreferences.getBoolean(
-        ALLOW_ANDROID_NOTIFICATION_COUNT, false) }
+    fun isAllowAndroidBiometrics(): Boolean { return encryptedSharedPreferences.getBoolean(
+        ALLOW_ANDROID_BIOMETRICS, false) }
 
-    fun setAllowAndroidNotificationCount(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(
-        ALLOW_ANDROID_NOTIFICATION_COUNT, bool).apply() }
+    fun setAllowAndroidBiometrics(bool: Boolean) { encryptedSharedPreferences.edit().putBoolean(
+        ALLOW_ANDROID_BIOMETRICS, bool).apply() }
+
+    fun unlockAttemptsCount(): Int {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        return encryptedSharedPreferences.getInt(today, 0)
+    }
+
+    fun incrementUnlockAttemptsCount() {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val current = unlockAttemptsCount() + 1
+        encryptedSharedPreferences.edit().putInt(today, current).apply()
+    }
 }
