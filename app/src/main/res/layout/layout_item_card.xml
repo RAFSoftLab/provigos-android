@@ -48,6 +48,15 @@
                 android:textSize="14sp"
                 android:textColor="@android:color/white"
                 android:padding="4dp" />
+
+            <TextView
+                android:id="@+id/measurement_date"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+                android:textColor="@color/white"
+                android:textSize="14sp"/>
         </LinearLayout>
 
     </LinearLayout>

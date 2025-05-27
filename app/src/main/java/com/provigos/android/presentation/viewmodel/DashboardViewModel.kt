@@ -55,6 +55,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.lang.Thread.State
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -84,6 +85,7 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
 
     private val _dataToView = MutableStateFlow<Map<String, String>>(emptyMap())
     private val _dataToSend = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+    val dataToSend: StateFlow<Map<String, Map<String, String>>> get() = _dataToSend
 
     private val _mDashboardViewList = MutableStateFlow<List<DashboardViewItemModel>>(emptyList())
     val mDashboardViewList: StateFlow<List<DashboardViewItemModel>> get() = _mDashboardViewList
@@ -166,46 +168,51 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
             if (healthEnabled) putAll(_cachedHealthDataToSend.value)
             if (githubEnabled) putAll(_cachedGithubDataToSend.value)
             if (spotifyEnabled) putAll(_cachedSpotifyDataToSend.value)
+            if (androidEnabled) putAll(_cachedAndroidDataToSend.value)
         }
 
         Timber.d("combineCaches new data $newDataToView")
         _dataToView.value = newDataToView
-        _mDashboardViewList.value = transformData(_dataToView.value)
         _dataToSend.value = newDataToSend
+        _mDashboardViewList.value = transformData(_dataToSend.value)
     }
 
-    private fun transformData(map: Map<String, String>): List<DashboardViewItemModel> {
-        return map.mapNotNull { (k, v) ->
-            when(k) {
-                "steps" -> DashboardViewItemModel("steps", "Steps", v)
-                "weight" -> DashboardViewItemModel("weight", "Weight", "${v.toDouble().roundToLong()} kg")
-                "heartRate" -> DashboardViewItemModel("heartRate", "Heart rate", "${v.toDouble().roundToLong()} bpm")
-                "bodyFat" -> DashboardViewItemModel("bodyFat", "Body fat", "$v %")
-                "bloodPressure" -> DashboardViewItemModel("bloodPressure", "Blood pressure", "$v mmHg")
-                "height" -> DashboardViewItemModel("height", "Height", "$v cm")
-                "bodyTemperature" -> DashboardViewItemModel("bodyTemperature", "Body temperature", String.format(Locale.US, "%.1f ℃", v.toDouble()))
-                "oxygenSaturation" -> DashboardViewItemModel("oxygenSaturation", "Oxygen saturation", "$v %")
-                "bloodGlucose" -> DashboardViewItemModel("bloodGlucose", "Blood glucose", "$v mmol/L")
-                "respiratoryRate" -> DashboardViewItemModel("respiratoryRate", "Respiratory rate", "$v rpm")
-                "githubTotal" -> DashboardViewItemModel("githubTotal", "Total commits", v)
-                "githubDaily" -> DashboardViewItemModel("githubDaily", "Commits today", v)
-                "spotifyGenre" -> DashboardViewItemModel("spotifyGenre", "Most listened to genre", v)
-                "spotifyPopularity" -> DashboardViewItemModel("spotifyPopularity", "Average artist popularity", v)
-                "screenTime" -> DashboardViewItemModel("screenTime", "Daily screen time", v)
-                "unlockAttempts" -> DashboardViewItemModel("unlockAttempts", "Unlock attempts", v)
-                else -> transformCustomData(k, v)
+    private fun transformData(map: Map<String, Map<String, String>>): List<DashboardViewItemModel> {
+        return map.mapNotNull { (k, values) ->
+            val recentDate = values.keys.maxOrNull()
+            recentDate?.let { date ->
+                val v = values[date]
+                when (k) {
+                    "steps" -> DashboardViewItemModel("steps", "Steps", v!!, date)
+                    "weight" -> DashboardViewItemModel("weight", "Weight", "${v!!.toDouble().roundToLong()} kg", date)
+                    "heartRate" -> DashboardViewItemModel("heartRate", "Heart rate", "${v!!.toDouble().roundToLong()} bpm", date)
+                    "bodyFat" -> DashboardViewItemModel("bodyFat", "Body fat", "$v %", date)
+                    "bloodPressure" -> DashboardViewItemModel("bloodPressure", "Blood pressure", "$v mmHg", date)
+                    "height" -> DashboardViewItemModel("height", "Height", "$v cm", date)
+                    "bodyTemperature" -> DashboardViewItemModel("bodyTemperature", "Body temperature", String.format(Locale.US, "%.1f ℃", v!!.toDouble()), date)
+                    "oxygenSaturation" -> DashboardViewItemModel("oxygenSaturation", "Oxygen saturation", "$v %", date)
+                    "bloodGlucose" -> DashboardViewItemModel("bloodGlucose", "Blood glucose", "$v mmol/L", date)
+                    "respiratoryRate" -> DashboardViewItemModel("respiratoryRate", "Respiratory rate", "$v rpm", date)
+                    "githubTotal" -> DashboardViewItemModel("githubTotal", "Total commits", v!!, date)
+                    "githubDaily" -> DashboardViewItemModel("githubDaily", "Commits today", v!!, date)
+                    "spotifyGenre" -> DashboardViewItemModel("spotifyGenre", "Most listened to genre", v!!, date)
+                    "spotifyPopularity" -> DashboardViewItemModel("spotifyPopularity", "Average artist popularity", v!!, date)
+                    "screenTime" -> DashboardViewItemModel("screenTime", "Daily screen time", v!!, date)
+                    "unlockAttempts" -> DashboardViewItemModel("unlockAttempts", "Unlock attempts", v!!, date)
+                    else -> transformCustomData(k, v!!, date)
+                }
             }
         }
     }
 
-    private fun transformCustomData(key: String, value: String): DashboardViewItemModel? {
+    private fun transformCustomData(key: String, value: String, date: String): DashboardViewItemModel? {
         if(!sharedPrefs.isCustomUser()) return null
         val item = _customKeys.value.find { it.name == key }
         return if(item != null && sharedPrefs.isAllowCustomItem(item.name)) {
             val name = item.name
             val unit = item.units
             val label = item.label
-            DashboardViewItemModel(name, label, "$value $unit")
+            DashboardViewItemModel(name, label, "$value $unit", date)
         } else {
             null
         }
@@ -224,15 +231,15 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
             try {
                 coroutineScope {
                     val healthDataJob = if (healthConnect) async { readHealthConnectData() } else null
-                    //val githubDataJob = if (github) async { readGithubData() } else null
-                    //val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
-                    //val customDataJob = if (custom) async { readCustomData() } else null
+                    val githubDataJob = if (github) async { readGithubData() } else null
+                    val spotifyDataJob = if (spotify) async { readSpotifyData() } else null
+                    val customDataJob = if (custom) async { readCustomData() } else null
                     val androidDataJob = if (android) async { readAndroidData() } else null
 
                     healthDataJob?.await()
-                    //githubDataJob?.await()
-                    //spotifyDataJob?.await()
-                    //customDataJob?.await()
+                    githubDataJob?.await()
+                    spotifyDataJob?.await()
+                    customDataJob?.await()
                     androidDataJob?.await()
                 }
             } catch (e: Exception) {
@@ -245,7 +252,7 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
         }
     }
 
-    private fun sendData(dataToSend: Map<String, Map<String, String>>) {
+    private fun sendData(dataToSend: Map<String, Map<String, String>> = _dataToSend.value) {
         viewModelScope.launch {
             val result = mHttpManager.postProvigosData(dataToSend)
             result.onSuccess {
@@ -269,15 +276,15 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                 try {
                     coroutineScope {
                         val healthDataJob = async { refreshHealthData() }
-                        //val githubDataJob = async { refreshGithubData() }
-                        //val spotifyDataJob = async { refreshSpotifyData() }
-                        //val customDataJob = async { refreshCustomData() }
+                        val githubDataJob = async { refreshGithubData() }
+                        val spotifyDataJob = async { refreshSpotifyData() }
+                        val customDataJob = async { refreshCustomData() }
                         val androidDataJob = async { refreshAndroidData() }
 
                         healthDataJob.await()
-                        //githubDataJob.await()
-                        //spotifyDataJob.await()
-                        //customDataJob.await()
+                        githubDataJob.await()
+                        spotifyDataJob.await()
+                        customDataJob.await()
                         androidDataJob.await()
                     }
                 } catch (e: Exception) {
@@ -286,7 +293,7 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                 cacheMutex.withLock {
                     combineCaches()
                 }
-                //_sendData(_dataToSend.value)
+                //sendData(_dataToSend.value)
                 _uiState.value = UiState.Done
             }
         }
@@ -686,12 +693,12 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                 if (sharedPrefs.isAllowGithubTotalCommits()) {
                     val totalCommits = githubCommits.values.sumOf { it.toLong() }
                     _cachedGithubDataToView.update { current -> current + ("githubTotal" to totalCommits.toString()) }
-                    //_cachedGithubDataToSend.update { current -> current + ("githubTotal" to mapOf(pureZdt to totalCommits.toString())) }
+                    _cachedGithubDataToSend.update { current -> current + ("githubTotal" to mapOf(pureZdt to totalCommits.toString())) }
                 }
                 if (sharedPrefs.isAllowGithubDailyCommits()) {
                     val dailyCommits = githubCommits[pureZdt] ?: "0"
                     _cachedGithubDataToView.update { current -> current + ("githubDaily" to dailyCommits) }
-                    //_cachedGithubDataToSend.update { current -> current + ("githubDaily" to mapOf(pureZdt to dailyCommits)) }
+                    _cachedGithubDataToSend.update { current -> current + ("githubDaily" to mapOf(pureZdt to dailyCommits)) }
                 }
             }
         } catch (e: Exception) {
@@ -707,14 +714,14 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                     val popularGenre: String? = spotifyData["spotifyGenre"]
                     if (popularGenre != null) {
                         _cachedSpotifyDataToView.update { current -> current + ("spotifyGenre" to popularGenre) }
-                        //_cachedSpotifyDataToSend.update { current -> current + ("spotifyGenre" to mapOf(pureZdt to popularGenre)) }
+                        _cachedSpotifyDataToSend.update { current -> current + ("spotifyGenre" to mapOf(pureZdt to popularGenre)) }
                     }
                 }
                 if (sharedPrefs.isAllowSpotifyArtistPopularity()) {
                     val popularity = spotifyData["spotifyPopularity"]
                     if (popularity != null) {
                         _cachedSpotifyDataToView.update { current -> current + ("spotifyPopularity" to popularity) }
-                        //_cachedSpotifyDataToSend.update { current -> current + ("spotifyPopularity" to mapOf(pureZdt to popularity)) }
+                        _cachedSpotifyDataToSend.update { current -> current + ("spotifyPopularity" to mapOf(pureZdt to popularity)) }
                     }
                 }
             }
@@ -730,14 +737,14 @@ class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager
                     val screenTime = mAndroidUsageStatsManager.getScreenTime()
                     val formattedScreenTime = AndroidUsageStatsManager.formatDuration(screenTime)
                     _cachedAndroidDataToView.update { current -> current + ("screenTime" to formattedScreenTime) }
-                    //_cachedAndroidDataToSend.update { current -> current + ("screenTime" to mapOf(pureZdt to formattedScreenTime) }
+                    _cachedAndroidDataToSend.update { current -> current + ("screenTime" to mapOf(pureZdt to formattedScreenTime)) }
                 }
                 Timber.d("is allow biometrics ${sharedPrefs.isAllowAndroidBiometrics()}")
                 if (sharedPrefs.isAllowAndroidBiometrics()) {
                     val unlockAttempts = sharedPrefs.unlockAttemptsCount()
                     Timber.d("$unlockAttempts")
                     _cachedAndroidDataToView.update { current -> current + ("unlockAttempts" to unlockAttempts.toString()) }
-                    //_cachedAndroidDataToSend.update { current -> current + ("notificationCount" to mapOf(pureZdt to notificationCount) }
+                    _cachedAndroidDataToSend.update { current -> current + ("unlockAttempts" to mapOf(pureZdt to unlockAttempts.toString())) }
                 }
             }
         } catch (e: Exception) {

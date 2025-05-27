@@ -50,6 +50,7 @@ class DashboardRecyclerViewAdapter(private var data: List<DashboardViewItemModel
 
         holder.measurementType.text = item.label
         holder.measurementNumber.text = item.value
+        holder.measurementDate.text = item.date
         holder.itemView.setOnClickListener {
             if(isClickable) {
                 onItemClicked?.invoke(item.type)
@@ -67,6 +68,7 @@ class DashboardRecyclerViewAdapter(private var data: List<DashboardViewItemModel
     inner class DashboardRecyclerViewHolder(itemView: View): RecyclerView.ViewHolder(itemView)  {
         val measurementNumber: TextView = itemView.findViewById(R.id.measurement_number)
         val measurementType: TextView = itemView.findViewById(R.id.measurement_type)
+        val measurementDate: TextView = itemView.findViewById(R.id.measurement_date)
     }
 
     inner class DashboardDiffCallback(

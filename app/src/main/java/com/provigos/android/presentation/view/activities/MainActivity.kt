@@ -26,14 +26,23 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.BackoffPolicy
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.google.android.material.tabs.TabLayoutMediator
+import com.google.gson.Gson
 import com.provigos.android.R
 import com.provigos.android.databinding.ActivityMainBinding
 import com.provigos.android.presentation.view.adapters.MainPagerAdapter
 import com.provigos.android.presentation.view.fragments.DashboardFragment
 import com.provigos.android.presentation.view.fragments.SettingsFragment
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
+import com.provigos.android.util.DailyWorker
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.util.concurrent.TimeUnit
 
 class MainActivity: AppCompatActivity(R.layout.activity_main) {
 
@@ -62,6 +71,8 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
             tab.text = mainPagerAdapter.getTabTitle(position)
             tab.tag = mainPagerAdapter.getTabTag(position)
         }.attach()
+
+        scheduleDailySend()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -102,5 +113,24 @@ class MainActivity: AppCompatActivity(R.layout.activity_main) {
                     .build()
             )
         }
+    }
+
+    private fun scheduleDailySend() {
+        val constraints = androidx.work.Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val jsonString = Gson().toJson(mDashboardViewModel.dataToSend.value)
+        val inputData = workDataOf(
+            "map" to jsonString
+        )
+
+        val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyWorker>(24, TimeUnit.HOURS)
+            .setConstraints(constraints)
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 30, TimeUnit.SECONDS)
+            .setInputData(inputData)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork("dailyUpload", ExistingPeriodicWorkPolicy.KEEP, dailyWorkRequest)
     }
 }

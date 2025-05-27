@@ -103,6 +103,7 @@ dependencies {
     implementation(libs.play.services.base)
     implementation(platform(libs.firebase.bom))
     implementation(libs.org.jacoco.core)
+    implementation(libs.androidx.work.runtime.ktx)
 
     // TEST
     testImplementation(libs.junit)

@@ -25,5 +25,6 @@ package com.provigos.android.data.model
 data class DashboardViewItemModel(
     val type: String,
     val label: String,
-    val value: String
+    val value: String,
+    val date: String
 )
