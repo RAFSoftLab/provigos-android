@@ -38,6 +38,7 @@ import androidx.lifecycle.viewModelScope
 import com.provigos.android.data.api.AndroidUsageStatsManager
 import com.provigos.android.data.api.HealthConnectManager
 import com.provigos.android.data.api.HttpManager
+import com.provigos.android.data.local.SharedPreferenceDataSource
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.data.model.DashboardViewItemModel
 import com.provigos.android.data.model.custom.CustomItemModel
@@ -65,14 +66,14 @@ import kotlin.math.roundToLong
 
 class DashboardViewModel(private val mHealthConnectManager: HealthConnectManager,
     private val mHttpManager: HttpManager,
-    private val mAndroidUsageStatsManager: AndroidUsageStatsManager): ViewModel() {
+    private val mAndroidUsageStatsManager: AndroidUsageStatsManager,
+    private val sharedPrefs: SharedPreferenceDataSource = SharedPreferenceManager.get()): ViewModel() {
 
     private val refreshMutex = Mutex()
     private val cacheMutex = Mutex()
 
     private var currentRefreshJob: Job? = null
 
-    private val sharedPrefs = SharedPreferenceManager.get()
     private var zdt = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
     private var pureZdt = pureDate(zdt)
 

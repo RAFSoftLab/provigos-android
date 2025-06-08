@@ -38,7 +38,9 @@ android {
 
     testOptions {
         animationsDisabled = true
+        unitTests.isIncludeAndroidResources = true
     }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
@@ -54,10 +56,6 @@ android {
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
         }
-    }
-
-    tasks.withType<Test> {
-        useJUnitPlatform()
     }
 
     tasks.register<JacocoReport>("jacocoTestReport") {
@@ -114,6 +112,10 @@ dependencies {
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation("org.mockito:mockito-inline:5.2.0")
 
     // Koin
     implementation(project.dependencies.platform(libs.koin.bom))

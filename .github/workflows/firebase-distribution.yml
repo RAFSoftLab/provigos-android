@@ -6,9 +6,43 @@ on:
       - main
     tags:
       - 'v*'
+
 jobs:
-  build-and-distribute:
+  test:
+    name: Run Unit Tests
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache Gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/gradle-wrapper.properties', '**/build.gradle*', '**/gradle.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Unit Tests
+        run: ./gradlew test --stacktrace
+
+  build-and-distribute:
+    name: Build & Distribute APK
+    runs-on: ubuntu-latest
+    needs: test
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

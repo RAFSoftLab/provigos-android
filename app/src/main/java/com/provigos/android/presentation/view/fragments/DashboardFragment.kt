@@ -29,30 +29,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.unit.Constraints
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.work.BackoffPolicy
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.provigos.android.R
 import com.provigos.android.data.local.SharedPreferenceManager
 import com.provigos.android.databinding.FragmentDashboardBinding
 import com.provigos.android.presentation.view.activities.DetailsActivity
 import com.provigos.android.presentation.view.adapters.DashboardRecyclerViewAdapter
 import com.provigos.android.presentation.viewmodel.DashboardViewModel
-import com.provigos.android.util.DailyWorker
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
 
 class DashboardFragment: Fragment(R.layout.fragment_dashboard) {
 
