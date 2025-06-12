@@ -39,6 +39,8 @@ import timber.log.Timber
 
 class ProvigosApplication : Application() {
 
+    //test
+
     val healthConnectManager by lazy { HealthConnectManager(this) }
     val androidUsageStatsManager by lazy { AndroidUsageStatsManager(this) }
 
